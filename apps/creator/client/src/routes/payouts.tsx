@@ -38,17 +38,20 @@ export default function PayoutsPage() {
     queryKey: ['creator', 'payouts'],
     queryFn: async () => {
       const res = await creatorApi.getPayouts();
-      return res.success ? (res.data as PayoutsData) : null;
+      return creatorApi.assertSuccess<PayoutsData>(res);
     },
   });
 
   // The backend rejects payouts below the creator's configured minimum —
   // surface the real threshold instead of guessing one.
-  const { data: settings } = useQuery({
+  const {
+    data: settings,
+    isError: settingsFailed,
+  } = useQuery({
     queryKey: ['creator', 'settings'],
     queryFn: async () => {
       const res = await creatorApi.getSettings();
-      return res.success ? (res.data as CreatorSettings) : null;
+      return creatorApi.assertSuccess<CreatorSettings>(res);
     },
   });
   const minimumPayout = settings?.minimumPayout ?? 0;
@@ -173,12 +176,11 @@ export default function PayoutsPage() {
                   marginBottom: 6,
                 }}
               >
-                Method
+                Payout Method
               </label>
               <select value={method} onChange={(e) => setMethod(e.target.value)} style={inputStyle}>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="paypal">PayPal</option>
-                <option value="crypto">Crypto</option>
+                <option value="bank_transfer">Nigerian Bank Transfer (NUBAN Direct via Paystack)</option>
+                <option value="mobile_money">Mobile Money (OPay / PalmPay / Momo)</option>
               </select>
             </div>
             <button
@@ -206,6 +208,11 @@ export default function PayoutsPage() {
             {belowMinimum && (
               <p style={{ color: 'var(--creator-amber, #f59e0b)', fontSize: 13, marginTop: 8 }}>
                 Minimum payout is {formatNgn(minimumPayout)} (set in Settings).
+              </p>
+            )}
+            {settingsFailed && !belowMinimum && (
+              <p style={errorTextStyle()}>
+                Unable to check your minimum withdrawal balance right now. You can still submit your request for verification.
               </p>
             )}
             {requestMutation.isSuccess && (

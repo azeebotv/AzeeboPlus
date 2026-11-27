@@ -3,12 +3,14 @@
  * SEO-002: Add canonical URLs
  */
 
+import { getPublicBaseUrl } from '@azeebo/shared-types';
+
 interface CanonicalUrlProps {
   path?: string;
 }
 
 export function CanonicalUrl({ path = '' }: CanonicalUrlProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com';
+  const baseUrl = getPublicBaseUrl();
   const canonicalUrl = `${baseUrl}${path}`;
 
   return (
@@ -22,7 +24,7 @@ export function CanonicalUrl({ path = '' }: CanonicalUrlProps) {
  * Generate canonical metadata for Next.js
  */
 export function getCanonicalMetadata(path: string = '') {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com';
+  const baseUrl = getPublicBaseUrl();
   return {
     alternates: {
       canonical: `${baseUrl}${path}`,

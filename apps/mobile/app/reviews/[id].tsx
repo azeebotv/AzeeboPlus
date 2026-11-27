@@ -134,7 +134,7 @@ export default function ReviewsScreen() {
 
   const renderStars = (rating: number, interactive = false) => {
     return (
-      <View style={styles.starsContainer}>
+      <View accessibilityLabel="Screen Screen" style={styles.starsContainer}>
         {[1, 2, 3, 4, 5].map((star) => (
           <TouchableOpacity
             key={star}
@@ -281,7 +281,7 @@ export default function ReviewsScreen() {
               >
                 <Text style={styles.actionText}>👍 Helpful ({review.helpfulCount})</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={() => handleReport(review.id)}>
+              <TouchableOpacity accessibilityRole="button" style={styles.actionButton} onPress={() => handleReport(review.id)}>
                 <Text style={styles.actionText}>⚑ Report</Text>
               </TouchableOpacity>
             </View>

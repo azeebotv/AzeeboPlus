@@ -62,7 +62,11 @@ export default function MusicScreen() {
       activeOpacity={0.7}
     >
       <Image
-        source={{ uri: item.thumbnail || 'https://placehold.co/80x80/1a1a1a/ffffff?text=♪' }}
+        source={{
+          uri:
+            item.thumbnail ||
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=80&h=80&q=80',
+        }}
         style={styles.trackCover}
         resizeMode="cover"
       />
@@ -81,7 +85,7 @@ export default function MusicScreen() {
           <Text style={styles.trackDuration}>{item.duration}</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.playButton} onPress={() => togglePlay(item.id)}>
+      <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={() => togglePlay(item.id)}>
         <Text style={styles.playIcon}>{playingId === item.id ? '⏸' : '▶'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -97,7 +101,11 @@ export default function MusicScreen() {
         <Text style={styles.rankText}>{index + 1}</Text>
       </View>
       <Image
-        source={{ uri: item.thumbnail || 'https://placehold.co/60x60/1a1a1a/ffffff?text=♪' }}
+        source={{
+          uri:
+            item.thumbnail ||
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=60&h=60&q=80',
+        }}
         style={styles.trendingCover}
         resizeMode="cover"
       />
@@ -109,7 +117,7 @@ export default function MusicScreen() {
           {item.artist}
         </Text>
       </View>
-      <TouchableOpacity style={styles.playButtonSmall} onPress={() => togglePlay(item.id)}>
+      <TouchableOpacity accessibilityRole="button" style={styles.playButtonSmall} onPress={() => togglePlay(item.id)}>
         <Text style={styles.playIconSmall}>{playingId === item.id ? '⏸' : '▶'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -121,10 +129,10 @@ export default function MusicScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Music</Text>

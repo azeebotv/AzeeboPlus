@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/Icons';
 import { apiFetch } from '@/lib/api/base';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -160,7 +161,7 @@ function useHealthMonitor() {
   const query = useQuery({
     queryKey: ['admin', 'service-health-monitor'],
     queryFn: fetchHealth,
-    refetchInterval: 10_000,
+    refetchInterval: pollingIntervals.active,
     staleTime: 5_000,
   });
 

@@ -8,6 +8,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 model CultureStory {
@@ -250,6 +251,25 @@ model MusicEntry {
   @@index([genre])
   @@index([status])
   @@index([createdById])
+}
+
+model MusicArtist {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  slug             String   @unique
+  genre            String
+  bio              String?
+  image            String?
+  monthlyListeners Int      @default(0)
+  followersCount   Int      @default(0)
+  isVerified       Boolean  @default(true)
+  topTracks        Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([genre])
+  @@index([monthlyListeners])
+  @@map("music_artists")
 }
 
 model CelebrityEntry {

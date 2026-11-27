@@ -16,6 +16,7 @@ import { contentApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface MonetizationSettings {
   isMonetizationEnabled: boolean;
@@ -85,7 +86,7 @@ export default function MonetizationSettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Monetization Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading settings..." />
       </SafeAreaView>
     );
@@ -106,7 +107,7 @@ export default function MonetizationSettingsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Monetization Settings</Text>
@@ -126,7 +127,7 @@ export default function MonetizationSettingsScreen() {
                 onValueChange={(value) =>
                   setSettings({ ...settings, isMonetizationEnabled: value })
                 }
-                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: brand.flame }}
                 thumbColor="#fff"
               />
             </View>
@@ -148,7 +149,7 @@ export default function MonetizationSettingsScreen() {
                 onValueChange={(value) =>
                   setSettings({ ...settings, isSubscriptionEnabled: value })
                 }
-                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: brand.flame }}
                 thumbColor="#fff"
               />
             </View>
@@ -181,7 +182,7 @@ export default function MonetizationSettingsScreen() {
               <Switch
                 value={settings.isTipEnabled}
                 onValueChange={(value) => setSettings({ ...settings, isTipEnabled: value })}
-                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: brand.flame }}
                 thumbColor="#fff"
               />
             </View>
@@ -214,7 +215,7 @@ export default function MonetizationSettingsScreen() {
               <Switch
                 value={settings.isAdEnabled}
                 onValueChange={(value) => setSettings({ ...settings, isAdEnabled: value })}
-                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: brand.flame }}
                 thumbColor="#fff"
               />
             </View>
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -401,7 +402,7 @@ const styles = StyleSheet.create({
     color: colors.light[100],
   },
   saveButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

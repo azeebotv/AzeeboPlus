@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
 import type { AuditLogEntry } from '@/lib/api/admin';
-import { asArray, asRecord, num } from '@/lib/payload';
+import { asArray, asRecord, requireData, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 import { sourceStyleFor, archivedFromDetails } from '@/lib/audit-log-helpers';
 
@@ -164,8 +164,7 @@ export default function AuditLogsPage() {
       // Backend returns { logs, total, page, limit, totalPages } — normalize
       // through the shared guards so an envelope drift renders an empty table
       // instead of crashing.
-      if (!res.success) return { logs: [], total: 0 };
-      const rec = asRecord(res.data);
+      const rec = asRecord(requireData(res, null));
       return { logs: asArray<AuditLogEntry>(rec.logs, 'logs'), total: num(rec.total) };
     },
   });

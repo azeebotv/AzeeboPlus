@@ -75,6 +75,11 @@ generator makes such a plist impossible to emit.
 # Regenerate after editing the manifest (service-manifest.mjs):
 node scripts/launchd/gen-service-plists.mjs
 
+# Check app dev-server ports against the manifest (also a PR gate):
+# manifest dev entries (vite/next/expo) must equal each app's pinned
+# dev port — web 4000, admin 5173, creator 5174, mobile 8081, tv 8082.
+node scripts/launchd/dev-port-drift-gate.mjs
+
 # Reload one service to pick up its new plist:
 launchctl bootout gui/$(id -u)/com.azeebo.<label>
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.azeebo.<label>.plist
@@ -129,6 +134,11 @@ while the server is perfectly healthy. When probing anything by port:
   cannot race past each other). Redis unreachable → the store fails OPEN to
   the old per-process semantics with a warn; health verdicts never depend
   on it. Point it at a non-default Redis with OPS_REDIS_URL/REDIS_URL.
+  The store reads a DEDICATED DB index: a bare URL is rewritten to
+  `…/1` (ops telemetry) so its keys never share DB 0 with the feature-
+  flag cache (a flag-side FLUSHDB would otherwise wipe baselines and
+  hold-window flips). An explicit index in the URL wins; OPS_REDIS_DB
+  overrides the default number.
 - Scheduled jobs (freshness, retention, pool-audit, digest, drill) are NOT
   in the manifest — their scripts' own `install` modes remain their source
   of truth.

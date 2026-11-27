@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from 'react';
 interface ServiceWorkerState {
   isSupported: boolean;
   isRegistered: boolean;
-  isOnline: boolean;
   updateAvailable: boolean;
   offlineQueueCount: number;
 }
@@ -20,27 +19,9 @@ export function useServiceWorker(): ServiceWorkerState & {
     () => typeof window !== 'undefined' && 'serviceWorker' in navigator
   );
   const [isRegistered, setIsRegistered] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [offlineQueueCount, setOfflineQueueCount] = useState(0);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
-
-  useEffect(() => {
-    if (!isSupported) return;
-
-    setIsOnline(navigator.onLine);
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [isSupported]);
 
   const register = useCallback(async () => {
     if (!isSupported) return;
@@ -89,7 +70,6 @@ export function useServiceWorker(): ServiceWorkerState & {
         }
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn('[SW] Registration failed:', err);
     }
   }, [isSupported]);
@@ -121,7 +101,6 @@ export function useServiceWorker(): ServiceWorkerState & {
   return {
     isSupported,
     isRegistered,
-    isOnline,
     updateAvailable,
     offlineQueueCount,
     register,

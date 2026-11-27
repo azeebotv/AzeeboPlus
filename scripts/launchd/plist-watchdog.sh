@@ -45,6 +45,10 @@ STATE_FILE="${TMPDIR:-/tmp}/azeebo-plist-watchdog.state"
 PLIST_DIR="$HOME/Library/LaunchAgents"
 WATCHDOG_PLIST_ID="com.azeebo.plist-watchdog"
 WATCHDOG_PLIST_PATH="$PLIST_DIR/${WATCHDOG_PLIST_ID}.plist"
+# Operator kill-switch for the SERVICE fleet (not the job agents): while this
+# marker exists, the services leg reconciles KEEP only — it deletes strays and
+# never resurrects the suppressed labels. Written by service-agents.sh.
+SERVICE_DISABLE_MARKER="$PLIST_DIR/.com.azeebo.services.disabled"
 REPEAT_HOURS="${PLIST_WATCHDOG_REPEAT_HOURS:-12}"
 
 # Job plists: label → "script|args" (install mode = the recovery path).
@@ -102,10 +106,34 @@ bootstrap_service() { # $1 = label
 # --- services leg -----------------------------------------------------------
 reconcile_services() { # sets SERVICES_STATUS / SERVICES_DETAIL
   local out rc labels
+  if [ -f "$SERVICE_DISABLE_MARKER" ]; then
+    # Fleet disabled by the operator (local-dev.sh owns the ports). Two-phase
+    # reconcile so this leg enforces the disable instead of fighting it:
+    #   1. bootout any suppressed label that is still loaded (a stray plist
+    #      re-imported at login can already be running);
+    #   2. run write mode — it deletes every non-KEEP service plist on disk.
+    # Only then check, so a stray is never mistaken for missing-plist drift
+    # (the heal path below would otherwise bootstrap it back to life).
+    local label keep
+    keep="$(sed -n 's/^KEEP=//p' "$SERVICE_DISABLE_MARKER" 2>/dev/null || true)"
+    for label in $(node "$REPO_ROOT/scripts/launchd/gen-service-plists.mjs" --labels); do
+      case " $keep " in *" $label "*) continue ;; esac
+      launchctl bootout "gui/$(id -u)/com.azeebo.$label" 2>/dev/null || true
+    done
+    if ! node "$REPO_ROOT/scripts/launchd/gen-service-plists.mjs" >>"$LOG_FILE" 2>&1; then
+      SERVICES_STATUS="error"; SERVICES_DETAIL="disabled-fleet reconcile failed (generator error)"
+      return 1
+    fi
+  fi
   out="$(node "$REPO_ROOT/scripts/launchd/gen-service-plists.mjs" --check 2>&1)"
   rc=$?
   if [ "$rc" -eq 0 ]; then
-    SERVICES_STATUS="ok"; SERVICES_DETAIL=""
+    SERVICES_STATUS="ok"
+    if [ -f "$SERVICE_DISABLE_MARKER" ]; then
+      SERVICES_DETAIL="service fleet disabled by marker (KEEP only)"
+    else
+      SERVICES_STATUS="ok"; SERVICES_DETAIL=""
+    fi
     # "gen-service-plists --check: all 19 service plists match the manifest"
     SERVICES_COUNT="$(printf '%s\n' "$out" | grep -oE 'all [0-9]+' | grep -oE '[0-9]+')"
     return 0

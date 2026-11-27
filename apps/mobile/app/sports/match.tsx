@@ -45,7 +45,9 @@ export default function SportsMatchScreen() {
   if (matchQuery.isLoading) return <LoadingState text="Loading match..." />;
   if (matchQuery.error)
     return (
-      <ErrorState description={matchQuery.error.message} onRetry={() => matchQuery.refetch()} />
+      <View accessibilityLabel="Match Error Screen" style={styles.container}>
+        <ErrorState description={matchQuery.error.message} onRetry={() => matchQuery.refetch()} />
+      </View>
     );
   if (!match) return <ErrorState description="Match not found" />;
 
@@ -54,7 +56,7 @@ export default function SportsMatchScreen() {
       style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]} numberOfLines={1}>

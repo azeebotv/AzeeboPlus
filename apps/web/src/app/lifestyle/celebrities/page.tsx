@@ -42,7 +42,7 @@ function CelebritiesPageContent(): React.JSX.Element {
   });
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <PageHero
         badge="A-List Spotlights"
         title="Celebrity Culture"
@@ -52,7 +52,7 @@ function CelebritiesPageContent(): React.JSX.Element {
       <div className="max-w-7xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
         <Link
           href="/lifestyle"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Lifestyle Hub
@@ -61,7 +61,7 @@ function CelebritiesPageContent(): React.JSX.Element {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass rounded-2xl overflow-hidden p-4 space-y-3">
+              <div key={i} className="az-glass overflow-hidden p-4 space-y-3">
                 <Skeleton className="aspect-video w-full rounded-xl" />
                 <Skeleton className="h-5 w-3/4 rounded-md" />
                 <Skeleton className="h-4 w-1/2 rounded-md" />
@@ -77,10 +77,12 @@ function CelebritiesPageContent(): React.JSX.Element {
             />
           </div>
         ) : celebrities.length === 0 ? (
-          <div className="az-glass p-16 text-center rounded-3xl border border-white/10">
-            <Star className="w-12 h-12 text-white/30 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">No Celebrity Features Yet</h3>
-            <p className="text-xs text-white/50">Exclusive profiles and interviews are coming soon.</p>
+          <div className="az-glass p-16 text-center border border-az-glass-border">
+            <Star className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Celebrity Features Yet</h3>
+            <p className="text-xs text-az-ink/50">
+              Exclusive profiles and interviews are coming soon.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -89,29 +91,29 @@ function CelebritiesPageContent(): React.JSX.Element {
                 <Link href={`/watch/${item.id}`}>
                   <motion.article
                     whileHover={{ y: -3 }}
-                    className="az-glass rounded-2xl overflow-hidden border border-white/10 hover:border-[var(--brand-orange)]/40 transition-all flex flex-col group cursor-pointer"
+                    className="az-glass overflow-hidden border border-az-glass-border transition-all flex flex-col group cursor-pointer"
                   >
-                    <div className="relative aspect-video bg-white/5">
+                    <div className="relative aspect-video bg-az-glass-fill">
                       <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[var(--brand-orange)] border border-[var(--brand-orange)]/30 text-[10px] font-mono font-bold uppercase">
+                      <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[var(--color-az-flame)] border border-[var(--color-az-flame)]/30 text-[10px] font-mono font-bold uppercase">
                         Spotlight
                       </div>
                     </div>
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
-                        <h3 className="text-sm font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors truncate">
+                        <h3 className="text-sm font-bold text-az-ink group-hover:text-[var(--color-az-flame)] transition-colors truncate">
                           {item.title}
                         </h3>
-                        <p className="text-xs text-white/50 line-clamp-2 mt-1">
+                        <p className="text-xs text-az-ink/50 line-clamp-2 mt-1">
                           {item.description}
                         </p>
                       </div>
-                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs font-semibold text-[var(--brand-orange)]">
+                      <div className="pt-2 border-t border-az-ink/5 flex items-center justify-between text-xs font-semibold text-[var(--color-az-flame)]">
                         <span>Watch Profile</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -133,8 +135,8 @@ export default function CelebritiesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

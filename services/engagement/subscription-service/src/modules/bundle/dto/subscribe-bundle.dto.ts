@@ -17,4 +17,12 @@ export class SubscribeBundleDto {
   @IsString()
   @IsOptional()
   paymentReference?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Apply prorated credit from active single-universe passes',
+  })
+  @IsBoolean()
+  @IsOptional()
+  applyProration?: boolean;
 }

@@ -29,6 +29,7 @@ import type {
   WalletStats,
   LiveEventAdmin,
   BundlePassAdmin,
+  PartnerBankAdmin,
   PayoutRequest,
   PayoutStats,
   TippingConfig,
@@ -40,6 +41,22 @@ import type {
   Neighborhood,
   Partner,
   PartnerOffer,
+  MenuItem,
+  NavigationMenu,
+  AcdpPackageItem,
+  AcdpValidationResult,
+  MusicTrackAdmin,
+  MusicArtistAdmin,
+  RewardBadgeAdmin,
+  RewardMissionAdmin,
+  RewardLevelAdmin,
+  RewardAccountAdmin,
+  RewardStats,
+  ReferralItemAdmin,
+  ReferralConfigAdmin,
+  ReferralStats,
+  MerchProductAdmin,
+  MerchOrderAdmin,
 } from '../admin-types';
 
 export interface DashboardStats {
@@ -159,6 +176,26 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ reason, durationDays }),
     }),
+  createUser: (data: {
+    email: string;
+    displayName: string;
+    password?: string;
+    role?: string;
+    isVerified?: boolean;
+  }) => apiFetch<unknown>('/api/v1/admin/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (
+    id: string,
+    data: {
+      displayName?: string;
+      email?: string;
+      role?: string;
+      isVerified?: boolean;
+    }
+  ) =>
+    apiFetch<unknown>(`/api/v1/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
   deleteUser: (id: string) => apiFetch<unknown>(`/api/v1/admin/users/${id}`, { method: 'DELETE' }),
   revokeSuspension: (id: string, reason: string) =>
     apiFetch<unknown>(`/api/v1/admin/users/${id}/suspension/revoke`, {
@@ -242,6 +279,25 @@ export const adminApi = {
       body: JSON.stringify({ reason }),
     }),
 
+  // ─── ACDP Package Validation ─────────────────────────────────────────────
+  getAcdpPackages: (page = 1, limit = 20) =>
+    apiFetch<{ items: AcdpPackageItem[]; total: number }>(
+      `/api/v1/admin/acdp/packages?page=${page}&limit=${limit}`
+    ),
+  validateAcdpPackage: (packageId: string) =>
+    apiFetch<AcdpValidationResult>(`/api/v1/admin/acdp/packages/${packageId}/validate`, {
+      method: 'POST',
+    }),
+  approveAcdpPackage: (packageId: string) =>
+    apiFetch<unknown>(`/api/v1/admin/acdp/packages/${packageId}/approve`, {
+      method: 'POST',
+    }),
+  rejectAcdpPackage: (packageId: string, reason: string) =>
+    apiFetch<unknown>(`/api/v1/admin/acdp/packages/${packageId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+
   // ─── Challenge Entry Review ────────────────────────────────────────────
   getChallengeEntryQueue: (filters: { status?: string; challengeId?: string } = {}) => {
     const qs = new URLSearchParams(
@@ -292,18 +348,37 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify({ status }),
     }),
-  createRealityShow: (data: { title: string; description?: string; creatorId?: string }) =>
+  createRealityShow: (data: {
+    title: string;
+    description?: string;
+    creatorId?: string;
+    thumbnail?: string;
+    status?: string;
+    isExclusive?: boolean;
+    isPremiere?: boolean;
+  }) =>
     apiFetch<unknown>('/api/v1/admin/reality-shows', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  updateRealityShow: (id: string, data: { title?: string; description?: string }) =>
+  updateRealityShow: (
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      status?: string;
+      isExclusive?: boolean;
+      isPremiere?: boolean;
+    }
+  ) =>
     apiFetch<unknown>(`/api/v1/admin/reality-shows/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
   deleteRealityShow: (id: string) =>
     apiFetch<unknown>(`/api/v1/admin/reality-shows/${id}`, { method: 'DELETE' }),
+  getRealityContestants: () =>
+    apiFetch<{ contestants: Array<{ id: string; name: string; bio?: string; avatar?: string; status?: string; votes?: number; show?: { id: string; title: string } }> }>('/api/v1/admin/reality-shows/contestants'),
 
   // ─── Payment Gateways ──────────────────────────────────────────────────
   getPaymentGateways: () =>
@@ -507,6 +582,12 @@ export const adminApi = {
     }),
 
   getUniverseStats: () => apiFetch<unknown>('/api/v1/admin/universes/stats'),
+  resyncUniverse: (id: string) =>
+    apiFetch<{
+      name?: string;
+      isEnabled?: boolean;
+      flagSync?: { ok: boolean; failedKeys: string[] };
+    }>(`/api/v1/admin/universes/${id}/resync`, { method: 'POST' }),
   cloneUniverse: (id: string, data: Record<string, unknown>) =>
     apiFetch<unknown>(`/api/v1/admin/universes/${id}/copy`, {
       method: 'POST',
@@ -714,6 +795,24 @@ export const adminApi = {
   deleteBundlePass: (id: string) =>
     apiFetch<unknown>(`/api/v1/subscription/bundles/${id}`, { method: 'DELETE' }),
 
+  // ─── Borrow: approved lending partners ────────────────────────────────────
+  // Wallet-service admin surface; the public /borrow/banks read is a separate
+  // unauthenticated route, so this list includes inactive rows too.
+  getPartnerBanks: (limit = 100) =>
+    apiFetch<PartnerBankAdmin[]>(`/api/v1/borrow/admin/banks?page=1&limit=${limit}`),
+  createPartnerBank: (data: Record<string, unknown>) =>
+    apiFetch<PartnerBankAdmin>('/api/v1/borrow/admin/banks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updatePartnerBank: (id: string, data: Record<string, unknown>) =>
+    apiFetch<PartnerBankAdmin>(`/api/v1/borrow/admin/banks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deletePartnerBank: (id: string) =>
+    apiFetch<unknown>(`/api/v1/borrow/admin/banks/${id}`, { method: 'DELETE' }),
+
   // ─── Live Events (PPV) ────────────────────────────────────────────────────
   listLiveEvents: (status?: string) => {
     const q = status ? `?status=${status}` : '';
@@ -828,6 +927,10 @@ export const adminApi = {
   getOpsRunHistory: (hours?: number) =>
     apiFetch<OpsRunHistory>(`/api/v1/admin/ops/runs${hours ? `?hours=${hours}` : ''}`),
   getOpsPgbouncer: () => apiFetch<PgbouncerHealth>('/api/v1/admin/ops/pgbouncer'),
+  getOpsForeignPersistence: (hours?: number) =>
+    apiFetch<ForeignPersistence>(
+      `/api/v1/admin/ops/pgbouncer/foreign-persistence${hours ? `?hours=${hours}` : ''}`
+    ),
   getOpsTransportFlipTrend: (days?: number) =>
     apiFetch<TransportFlipTrend>(`/api/v1/admin/ops/transport-flips${days ? `?days=${days}` : ''}`),
   getGatewayHttp: () => apiFetch<GatewayHttpSummary>('/api/v1/admin/ops/gateway-http'),
@@ -1137,6 +1240,190 @@ export const adminApi = {
     apiFetch<{ deleted: boolean }>(`/api/v1/lifestyle/admin/offers/${id}`, {
       method: 'DELETE',
     }),
+
+  // Navigation Menus (Superadmin Menu Management)
+  listMenus: () => apiFetch<NavigationMenu[]>('/api/v1/admin/menus'),
+  getMenu: (id: string) =>
+    apiFetch<NavigationMenu>(`/api/v1/admin/menus/${encodeURIComponent(id)}`),
+  createMenu: (data: {
+    name: string;
+    location: string;
+    description?: string;
+    isActive?: boolean;
+    items?: MenuItem[];
+  }) =>
+    apiFetch<NavigationMenu>('/api/v1/admin/menus', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateMenu: (
+    id: string,
+    data: {
+      name?: string;
+      location?: string;
+      description?: string;
+      isActive?: boolean;
+      items: MenuItem[];
+    }
+  ) =>
+    apiFetch<NavigationMenu>(`/api/v1/admin/menus/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteMenu: (id: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      `/api/v1/admin/menus/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    ),
+  getPublicMenu: (location: string) =>
+    apiFetch<NavigationMenu>(`/api/v1/admin/menus/public/${encodeURIComponent(location)}`),
+
+  // ── Music Universe (lifestyle-service) ──
+
+  getMusicTracks: (params: { page?: number; limit?: number; type?: string; genre?: string; artistId?: string; status?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.type) q.set('type', params.type);
+    if (params.genre) q.set('genre', params.genre);
+    if (params.artistId) q.set('artistId', params.artistId);
+    if (params.status) q.set('status', params.status);
+    return apiFetch<{ items: MusicTrackAdmin[]; total: number }>(`/api/v1/lifestyle/music?${q}`);
+  },
+  createMusicTrack: (data: Partial<MusicTrackAdmin>) =>
+    apiFetch<MusicTrackAdmin>('/api/v1/lifestyle/music', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateMusicTrack: (id: string, data: Partial<MusicTrackAdmin>) =>
+    apiFetch<MusicTrackAdmin>(`/api/v1/lifestyle/music/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteMusicTrack: (id: string) =>
+    apiFetch<{ success: boolean }>(`/api/v1/lifestyle/music/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  getMusicArtists: (params: { page?: number; limit?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    return apiFetch<{ items: MusicArtistAdmin[]; total: number }>(`/api/v1/lifestyle/music/artists?${q}`);
+  },
+  getMusicGenres: () =>
+    apiFetch<string[]>('/api/v1/lifestyle/music/genres'),
+
+  // ── Rewards & Gamification (reward-service) ──
+
+  getRewardStats: () =>
+    apiFetch<RewardStats>('/api/v1/rewards/stats'),
+  getRewardBadges: (params: { page?: number; limit?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    return apiFetch<{ items: RewardBadgeAdmin[]; total: number }>(`/api/v1/rewards/badges?${q}`);
+  },
+  createRewardBadge: (data: { name: string; description?: string; icon: string; criteria?: string; points: number }) =>
+    apiFetch<RewardBadgeAdmin>('/api/v1/rewards/badges', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  assignRewardBadge: (badgeId: string, userId: string, reason?: string) =>
+    apiFetch<{ success: boolean }>(`/api/v1/rewards/badges/${encodeURIComponent(badgeId)}/assign`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, reason }),
+    }),
+  getRewardMissions: (params: { type?: string; isActive?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.type) q.set('type', params.type);
+    if (params.isActive) q.set('isActive', params.isActive);
+    return apiFetch<RewardMissionAdmin[]>(`/api/v1/rewards/missions?${q}`);
+  },
+  createRewardMission: (data: { title: string; description?: string; points: number; type: string; metadata?: Record<string, unknown> }) =>
+    apiFetch<RewardMissionAdmin>('/api/v1/rewards/missions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRewardMission: (id: string, data: Partial<RewardMissionAdmin>) =>
+    apiFetch<RewardMissionAdmin>(`/api/v1/rewards/missions/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getRewardLevels: () =>
+    apiFetch<RewardLevelAdmin[]>('/api/v1/rewards/levels'),
+  createRewardLevel: (data: { name: string; rank: number; minPoints: number; maxPoints?: number; icon?: string; color?: string; perks?: string }) =>
+    apiFetch<RewardLevelAdmin>('/api/v1/rewards/levels', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRewardLevel: (id: string, data: Partial<RewardLevelAdmin>) =>
+    apiFetch<RewardLevelAdmin>(`/api/v1/rewards/levels/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getRewardAccounts: (params: { page?: number; limit?: number; minPoints?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.minPoints) q.set('minPoints', String(params.minPoints));
+    return apiFetch<{ items: RewardAccountAdmin[]; total: number }>(`/api/v1/rewards/admin/accounts?${q}`);
+  },
+  adjustRewardBalance: (userId: string, pointsDelta: number, reason: string) =>
+    apiFetch<{ success: boolean; newBalance: number }>('/api/v1/rewards/admin/adjust', {
+      method: 'POST',
+      body: JSON.stringify({ userId, pointsDelta, reason }),
+    }),
+
+  // ── Referral Program (referral-service) ──
+
+  getReferralStats: () =>
+    apiFetch<ReferralStats>('/api/v1/referrals/stats'),
+  getReferrals: (page = 1, limit = 20) =>
+    apiFetch<{ items: ReferralItemAdmin[]; total: number }>(`/api/v1/referrals?page=${page}&limit=${limit}`),
+  getReferralConfig: () =>
+    apiFetch<ReferralConfigAdmin[]>('/api/v1/referrals/config'),
+  updateReferralConfig: (data: { key: string; value?: number; description?: string; isActive?: boolean }) =>
+    apiFetch<ReferralConfigAdmin>('/api/v1/referrals/config', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // ── Merchandise & Store (cart & orders) ──
+
+  getMerchProducts: (params: { page?: number; limit?: number; category?: string; universe?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.category) q.set('category', params.category);
+    if (params.universe) q.set('universe', params.universe);
+    return apiFetch<{ items: MerchProductAdmin[]; total: number }>(`/api/v1/cart/products?${q}`);
+  },
+  createMerchProduct: (data: Partial<MerchProductAdmin>) =>
+    apiFetch<MerchProductAdmin>('/api/v1/cart/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateMerchProduct: (id: string, data: Partial<MerchProductAdmin>) =>
+    apiFetch<MerchProductAdmin>(`/api/v1/cart/products/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteMerchProduct: (id: string) =>
+    apiFetch<{ success: boolean }>(`/api/v1/cart/products/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+  getMerchOrders: (params: { page?: number; limit?: number; status?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    if (params.status) q.set('status', params.status);
+    return apiFetch<{ items: MerchOrderAdmin[]; total: number }>(`/api/v1/cart/orders?${q}`);
+  },
+  updateMerchOrderStatus: (id: string, status: string, trackingNumber?: string) =>
+    apiFetch<MerchOrderAdmin>(`/api/v1/cart/orders/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, trackingNumber }),
+    }),
 };
 
 /** Outcome of a manual "Run now" job execution. */
@@ -1197,7 +1484,20 @@ export interface OpsTransportFlip {
 export interface OpsServicesSnapshot {
   services: OpsServiceHealth[];
   transportFlips: OpsTransportFlip[];
+  /** Backing of the transport store right now — drives the header chip. */
+  transportStore: TransportStoreStatus | null;
   checkedAt: string;
+}
+
+/** Backing of the ops transport store (baselines + flip hold window). */
+export type TransportStoreMode = 'redis' | 'memory';
+
+/** GET /admin/ops/services → transportStore — Redis-backed vs degraded memory. */
+export interface TransportStoreStatus {
+  mode: TransportStoreMode;
+  detail: string;
+  /** Redis DB index the store writes to, or null when it couldn't be resolved. */
+  redisDb: number | null;
 }
 
 /** GET /admin/ops/transport-flips — ledger-backed flip persistence trend. */
@@ -1216,10 +1516,23 @@ export interface TransportFlipTrendRow {
 export interface TransportFlipTrend {
   windowDays: number;
   rows: TransportFlipTrendRow[];
+  /** Individual detected transitions (ledger events), newest first. */
+  events: TransportFlipEventRow[];
   servicesWithFlips: number;
   totalFlips: number;
   totalFamilyFlips: number;
   detail?: string;
+}
+
+/** One persisted transport transition (job_runs job `transport-flip-event`). */
+export interface TransportFlipEventRow {
+  service: string;
+  port: number;
+  from: string;
+  to: string;
+  familyChanged: boolean;
+  /** ISO of the probe sweep that observed the new transport. */
+  detectedAt: string;
 }
 
 export interface OpsStatus {
@@ -1265,6 +1578,44 @@ export interface PgbouncerBypass {
   connections: number;
 }
 
+/** GET /admin/ops/pgbouncer/foreign-persistence — per-workspace foreign-dialer
+ * persistence over a caller-chosen window (the card's 48h/7d/14d toggle).
+ * Same row shape the pgbouncer snapshot embeds; the window is explicit here. */
+export interface ForeignPersistence {
+  windowHours: number;
+  /** Sustained threshold applied (mirrors POOL_FOREIGN_MIN_SPAN_H default). */
+  sustainedMinSpanHours: number;
+  rows: Array<{
+    workspace: string;
+    passes: number;
+    spanHours: number;
+    lastSeen: string;
+    conns: number | null;
+    sustained: boolean;
+    approved: boolean;
+    /** Owning project via POOL_FOREIGN_PROJECT_ROOTS prefix match (longest
+     * root wins), or the workspace itself when nothing matched — the card
+     * groups on this. Optional: absent on a pre-attribution backend. */
+    project?: string;
+    /** Flagged passes per bucket over windowHours, oldest → newest —
+     * the row's frequency sparkline. Fixed 24 buckets regardless of window. */
+    history: number[];
+    /** Peak connection count per history bucket, oldest → newest (null when
+     * that bucket had no pass recording a count) — the row's intensity
+     * sparkline: dial hardness alongside dial frequency. Optional so the
+     * client degrades gracefully against a pre-intensity backend during
+     * rolling deploys. */
+    connHistory?: Array<number | null>;
+    /** Seconds per history bucket (windowHours / 24). */
+    bucketSeconds: number;
+  }>;
+  /** Pool-health tracking issue URL when resolvable — sustained rows link
+   * to it; null/unset degrades the card to plain badges. */
+  trackingIssueUrl?: string | null;
+  /** Present when the ledger read failed: why the rows are empty. */
+  detail?: string;
+}
+
 export interface PgbouncerHealth {
   available: boolean;
   detail?: string;
@@ -1289,20 +1640,7 @@ export interface PgbouncerHealth {
    * `sustained` marks rows at/over the tracking-issue threshold (24h+);
    * `approved` marks rows on POOL_FOREIGN_ALLOWLIST — visible (the budget
    * impact is real) but never sustained, so never tracked. */
-  foreignPersistence?: {
-    windowHours: number;
-    sustainedMinSpanHours: number;
-    rows: Array<{
-      workspace: string;
-      passes: number;
-      spanHours: number;
-      lastSeen: string;
-      conns: number | null;
-      sustained: boolean;
-      approved: boolean;
-    }>;
-    detail?: string;
-  };
+  foreignPersistence?: ForeignPersistence;
   /** Present when the bypass scan itself failed (e.g. lsof unavailable). */
   bypassesDetail?: string;
   checkedAt: string;

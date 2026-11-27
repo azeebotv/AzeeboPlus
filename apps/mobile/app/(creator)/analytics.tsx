@@ -6,6 +6,7 @@ import { creatorApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 // Analytics data interface for UI
 interface AnalyticsData {
@@ -68,7 +69,7 @@ export default function CreatorAnalyticsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Analytics Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading analytics..." />
       </SafeAreaView>
     );
@@ -89,7 +90,7 @@ export default function CreatorAnalyticsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Creator Analytics</Text>
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   timeRangeButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   timeRangeText: {
     color: colors.light[100],
@@ -360,7 +361,7 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 4,
   },
   metricLabel: {
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
   rankText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     marginRight: 12,
     width: 30,
   },
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
   },
   demographicFill: {
     height: '100%',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 4,
   },
   demographicValue: {

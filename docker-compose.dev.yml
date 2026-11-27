@@ -21,7 +21,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-azeebo_dev}
       POSTGRES_DB: ${POSTGRES_DB:-azeebo_dev}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Loopback-only by default; set DEV_BIND_IP=0.0.0.0 to expose on the LAN.
+      - "${DEV_BIND_IP:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
     healthcheck:
@@ -35,7 +36,8 @@ services:
     image: redis:7-alpine
     container_name: azeebo-dev-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      # Loopback-only by default; set DEV_BIND_IP=0.0.0.0 to expose on the LAN.
+      - "${DEV_BIND_IP:-127.0.0.1}:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-dev-data:/data
     healthcheck:

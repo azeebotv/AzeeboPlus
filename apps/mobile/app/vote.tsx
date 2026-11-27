@@ -11,12 +11,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '@azeebo/react-data/api/client';
-import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { votePackages as defaultVotePackages } from '../src/config/prices';
 import { realityApi } from '@azeebo/react-data/api/engagement';
 import type { RealityShow, RealityContestant } from '@azeebo/react-data/api/engagement';
 import { colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -121,7 +122,13 @@ export default function VotePage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Navigates to previous screen"
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Vote</Text>
@@ -136,25 +143,36 @@ export default function VotePage() {
 
         <Text style={styles.sectionTitle}>Select Contestant</Text>
         <View style={styles.contestantList}>
-          {contestants.map((contestant) => (
-            <TouchableOpacity
-              key={contestant.id}
-              style={[
-                styles.contestantItem,
-                selectedContestant?.id === contestant.id && styles.contestantSelected,
-              ]}
-              onPress={() => setSelectedContestant(contestant)}
-            >
-              <View style={styles.contestantAvatar}>
-                <Text style={styles.contestantInitial}>{contestant.name[0]}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.contestantName}>{contestant.name}</Text>
-                <Text style={styles.contestantRank}>#{contestant.rank}</Text>
-              </View>
-              {selectedContestant?.id === contestant.id && <Text style={styles.checkmark}>✓</Text>}
-            </TouchableOpacity>
-          ))}
+          {contestants.length === 0 ? (
+            <EmptyState
+              icon="🗳️"
+              title="No active contestants"
+              description="Voting is closed or no contestants are currently up for eviction."
+            />
+          ) : (
+            contestants.map((contestant) => (
+              <TouchableOpacity
+                key={contestant.id}
+                style={[
+                  styles.contestantItem,
+                  selectedContestant?.id === contestant.id && styles.contestantSelected,
+                ]}
+                onPress={() => setSelectedContestant(contestant)}
+                accessibilityRole="button"
+                accessibilityLabel={`Vote for ${contestant.name}, rank ${contestant.rank}`}
+                accessibilityState={{ selected: selectedContestant?.id === contestant.id }}
+              >
+                <View style={styles.contestantAvatar}>
+                  <Text style={styles.contestantInitial}>{contestant.name[0]}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.contestantName}>{contestant.name}</Text>
+                  <Text style={styles.contestantRank}>#{contestant.rank}</Text>
+                </View>
+                {selectedContestant?.id === contestant.id && <Text style={styles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Vote Package</Text>
@@ -164,6 +182,9 @@ export default function VotePage() {
               key={pkg.id}
               style={[styles.packageCard, selectedPackage.id === pkg.id && styles.packageSelected]}
               onPress={() => setSelectedPackage(pkg)}
+              accessibilityRole="button"
+              accessibilityLabel={`${pkg.votes} votes, ₦${pkg.price.toLocaleString()}`}
+              accessibilityState={{ selected: selectedPackage.id === pkg.id }}
             >
               <Text style={styles.packageVotes}>{pkg.votes} votes</Text>
               <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
@@ -177,11 +198,18 @@ export default function VotePage() {
           <TouchableOpacity
             style={styles.quantityBtn}
             onPress={() => setQuantity(Math.max(1, quantity - 1))}
+            accessibilityRole="button"
+            accessibilityLabel="Decrease quantity"
           >
             <Text style={styles.quantityText}>-</Text>
           </TouchableOpacity>
           <Text style={styles.quantityValue}>{quantity}</Text>
-          <TouchableOpacity style={styles.quantityBtn} onPress={() => setQuantity(quantity + 1)}>
+          <TouchableOpacity
+            style={styles.quantityBtn}
+            onPress={() => setQuantity(quantity + 1)}
+            accessibilityRole="button"
+            accessibilityLabel="Increase quantity"
+          >
             <Text style={styles.quantityText}>+</Text>
           </TouchableOpacity>
         </View>
@@ -200,6 +228,15 @@ export default function VotePage() {
           ]}
           onPress={handleVote}
           disabled={!selectedContestant || !canAfford || isSubmitting}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isSubmitting
+              ? 'Submitting vote'
+              : canAfford
+                ? `Vote now for ${totalVotes.toLocaleString()} votes`
+                : 'Insufficient balance'
+          }
+          accessibilityState={{ disabled: !selectedContestant || !canAfford || isSubmitting }}
         >
           <Text style={styles.voteText}>
             {isSubmitting ? 'Submitting...' : canAfford ? 'Vote Now' : 'Insufficient Balance'}
@@ -220,9 +257,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.secondary,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -249,7 +286,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -269,9 +306,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  packageSelected: { borderColor: '#E8420A' },
+  packageSelected: { borderColor: brand.flame },
   packageVotes: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  packagePrice: { color: '#E8420A', fontSize: 14, fontWeight: '600', marginTop: 4 },
+  packagePrice: { color: brand.flame, fontSize: 14, fontWeight: '600', marginTop: 4 },
   packageBonus: { color: colors.category.green, fontSize: 12, marginTop: 2 },
   quantityRow: {
     flexDirection: 'row',
@@ -308,7 +345,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

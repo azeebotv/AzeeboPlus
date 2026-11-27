@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { NotificationTemplate } from '@/lib/admin-types';
-import { unwrapList } from '@/lib/payload';
+import { requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function NotificationsPage() {
@@ -17,8 +17,8 @@ export default function NotificationsPage() {
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['admin', 'notifications'],
     queryFn: async () => {
-      const res = await adminApi.getNotificationTemplates();
-      return res.success ? unwrapList<NotificationTemplate>(res.data).items : [];
+      const data = requireData(await adminApi.getNotificationTemplates(), []);
+      return unwrapList<NotificationTemplate>(data).items;
     },
   });
 
@@ -26,8 +26,7 @@ export default function NotificationsPage() {
   const { data: stats } = useQuery({
     queryKey: ['admin', 'notification-stats'],
     queryFn: async () => {
-      const res = await adminApi.getNotificationStats();
-      return res.success ? (res.data ?? null) : null;
+      return requireData(await adminApi.getNotificationStats(), null);
     },
   });
 

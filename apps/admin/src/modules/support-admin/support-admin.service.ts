@@ -1,5 +1,49 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { mapAndThrow } from '@azeebo/security';
 import { upstreamAuthContext } from '../../common/upstream-auth.middleware';
+
+// support-service has answered these endpoints with more than one shape over
+// time (nested `user`, `tickets` vs `items`, `message` vs `body`), and this
+// service is the normaliser, so every field below it probes is optional.
+interface UpstreamUser {
+  email?: string;
+  displayName?: string;
+}
+
+interface UpstreamMessage {
+  id?: string;
+  ticketId?: string;
+  senderId?: string;
+  authorId?: string;
+  userId?: string;
+  senderName?: string;
+  authorName?: string;
+  senderType?: string;
+  authorRole?: string;
+  message?: string;
+  body?: string;
+  createdAt?: string;
+}
+
+interface UpstreamTicket {
+  // The admin UI keys every row off these two, and the normaliser below already
+  // treats them as present.
+  id: string;
+  userId: string;
+  subject?: string;
+  description?: string;
+  userEmail?: string;
+  userName?: string;
+  user?: UpstreamUser;
+  status?: string;
+  priority?: string;
+  category?: string;
+  assignedTo?: string | null;
+  assignedToName?: string | null;
+  messages?: UpstreamMessage[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface SupportTicketItem {
   id: string;
@@ -13,9 +57,31 @@ export interface SupportTicketItem {
   category: string;
   assignedTo?: string | null;
   assignedToName?: string | null;
-  messages?: any[];
+  messages?: UpstreamMessage[];
   createdAt: string;
   updatedAt: string;
+}
+
+interface UpstreamStats {
+  open?: number;
+  openTickets?: number;
+  inProgress?: number;
+  inProgressTickets?: number;
+  resolved?: number;
+  resolvedTickets?: number;
+  closed?: number;
+  closedTickets?: number;
+  avgResponseTimeMs?: number;
+}
+
+/**
+ * Passthrough of support-service's SCREAMING enums into the panel's lowercase
+ * unions. Not a validator: the upstream states carry members this union does not
+ * (`PENDING_INFO`, `ESCALATED`), and folding those into a known state would
+ * discard a status the ticket list can already render.
+ */
+function asState<T extends string>(raw: string | undefined, fallback: T): T {
+  return (raw || fallback).toLowerCase() as T;
 }
 
 @Injectable()
@@ -47,14 +113,27 @@ export class SupportAdminService {
     let res: Response;
     try {
       res = await fetch(url, { ...init, headers, signal: AbortSignal.timeout(6_000) });
-    } catch (e) {
-      this.logger.warn(`support-service unreachable at ${url}: ${e instanceof Error ? e.message : e}`);
-      throw new Error('support-service is currently unavailable');
+    } catch (error) {
+      this.logger.warn(
+        `support-service unreachable at ${url}: ${error instanceof Error ? error.message : error}`
+      );
+      // The try wraps the transport only, so whatever reaches here is an
+      // unreachable or timed-out upstream. Carrying a network `code` is what makes
+      // mapAndThrow answer 503 rather than flattening an outage into a generic 500.
+      mapAndThrow(
+        Object.assign(new Error('support-service is currently unavailable'), {
+          cause: error,
+          code: (error as { code?: string }).code ?? 'ECONNREFUSED',
+        }),
+        `reaching support-service at ${url}`
+      );
     }
 
-    const body = (await res.json().catch(() => null)) as
-      | { success?: boolean; data?: T; message?: string }
-      | null;
+    const body = (await res.json().catch(() => null)) as {
+      success?: boolean;
+      data?: T;
+      message?: string;
+    } | null;
 
     if (!res.ok || !body) {
       throw new Error(body?.message || `support-service error (${res.status})`);
@@ -65,7 +144,7 @@ export class SupportAdminService {
 
   async getStats() {
     try {
-      const stats = await this.upstream<any>('/support/dashboard/stats');
+      const stats = await this.upstream<UpstreamStats>('/support/dashboard/stats');
       return {
         open: Number(stats?.openTickets || stats?.open || 0),
         inProgress: Number(stats?.inProgressTickets || stats?.inProgress || 0),
@@ -103,21 +182,29 @@ export class SupportAdminService {
     if (query.category && query.category !== 'all') q.set('category', query.category.toUpperCase());
 
     try {
-      const res = await this.upstream<{ items?: any[]; tickets?: any[]; total?: number; meta?: any }>(
-        `/support/tickets?${q.toString()}`
-      );
-      const rawList = res.tickets || res.items || (Array.isArray(res) ? res : []);
-      const total = res.meta?.total || res.total || rawList.length;
+      const res = await this.upstream<
+        | UpstreamTicket[]
+        | {
+            items?: UpstreamTicket[];
+            tickets?: UpstreamTicket[];
+            total?: number;
+            meta?: { total?: number };
+          }
+      >(`/support/tickets?${q.toString()}`);
+      // The list endpoint has answered with a bare array as well as a wrapper.
+      const envelope = Array.isArray(res) ? { items: res } : res;
+      const rawList = envelope.tickets || envelope.items || [];
+      const total = envelope.meta?.total || envelope.total || rawList.length;
 
-      const items: SupportTicketItem[] = rawList.map((t: any) => ({
+      const items: SupportTicketItem[] = rawList.map((t) => ({
         id: t.id,
         subject: t.subject || 'Support Request',
         description: t.description || '',
         userId: t.userId,
         userEmail: t.userEmail || t.user?.email || 'user@azeebo.tv',
         userName: t.userName || t.user?.displayName || 'Azeebo User',
-        status: (t.status || 'open').toLowerCase(),
-        priority: (t.priority || 'medium').toLowerCase(),
+        status: asState<SupportTicketItem['status']>(t.status, 'open'),
+        priority: asState<SupportTicketItem['priority']>(t.priority, 'medium'),
         category: t.category || 'General',
         assignedTo: t.assignedTo || null,
         assignedToName: t.assignedToName || (t.assignedTo ? 'Agent' : null),
@@ -146,7 +233,9 @@ export class SupportAdminService {
 
   async getTicketById(id: string) {
     try {
-      const res = await this.upstream<{ ticket?: any }>(`/support/tickets/${id}`);
+      const res = await this.upstream<UpstreamTicket & { ticket?: UpstreamTicket }>(
+        `/support/tickets/${id}`
+      );
       const t = res.ticket || res;
       return {
         id: t.id,
@@ -160,7 +249,7 @@ export class SupportAdminService {
         category: t.category || 'General',
         assignedTo: t.assignedTo || null,
         assignedToName: t.assignedToName,
-        messages: (t.messages || []).map((m: any) => ({
+        messages: (t.messages || []).map((m) => ({
           id: m.id,
           ticketId: m.ticketId || id,
           authorId: m.senderId || m.authorId || m.userId,
@@ -172,7 +261,7 @@ export class SupportAdminService {
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
       };
-    } catch (e) {
+    } catch (err) {
       return null;
     }
   }

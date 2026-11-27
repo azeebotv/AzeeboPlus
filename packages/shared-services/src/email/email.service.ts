@@ -206,7 +206,7 @@ export class EmailService implements OnModuleInit {
           <li>Remove the flag (it falls back to its registered default), or</li>
           <li>Renew its <code>staleAfter</code> if the feature is still active.</li>
         </ul>
-        <p><a href="{{adminUrl}}" style="background-color: #E8420A; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Review in the Admin Panel</a></p>
+        <p><a href="{{adminUrl}}" style="background-color: #E31E24; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Review in the Admin Panel</a></p>
         <p>Best regards,<br>The Azeebo+ Platform Team</p>
       </div>
     `

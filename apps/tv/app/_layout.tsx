@@ -46,10 +46,28 @@ function RootNavigator() {
                   }}
                 >
                   <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="browse" options={{ headerShown: false }} />
+                  <Stack.Screen name="search" options={{ headerShown: false }} />
+                  <Stack.Screen name="library" options={{ headerShown: false }} />
                   <Stack.Screen name="signin" options={{ headerShown: false }} />
                   <Stack.Screen name="settings" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth/device-link" options={{ headerShown: false }} />
+                  <Stack.Screen name="profile/account" options={{ headerShown: false }} />
+                  <Stack.Screen name="detail/[id]" options={{ headerShown: false }} />
+                  <Stack.Screen name="live/[id]" options={{ headerShown: false }} />
                   <Stack.Screen name="wallet/fund" options={{ headerShown: false }} />
                   <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
+                  <Stack.Screen name="reality" options={{ headerShown: false }} />
+                  <Stack.Screen name="movies" options={{ headerShown: false }} />
+                  <Stack.Screen name="comedy" options={{ headerShown: false }} />
+                  <Stack.Screen name="sports" options={{ headerShown: false }} />
+                  <Stack.Screen name="lifestyle" options={{ headerShown: false }} />
+                  <Stack.Screen name="music" options={{ headerShown: false }} />
+                  <Stack.Screen name="vertical" options={{ headerShown: false }} />
+                  <Stack.Screen name="games" options={{ headerShown: false }} />
+                  <Stack.Screen name="watch-party" options={{ headerShown: false }} />
+                  <Stack.Screen name="bundles" options={{ headerShown: false }} />
+                  <Stack.Screen name="creator" options={{ headerShown: false }} />
                 </Stack>
               </WalletProvider>
             </FlagsProvider>

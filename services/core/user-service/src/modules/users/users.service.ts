@@ -6,9 +6,11 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { createHmac } from 'crypto';
 import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { EventBusService, EventTypes, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { FeatureFlagService, userFlags } from '@azeebo/feature-flags';
@@ -39,11 +41,12 @@ export class UsersService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CacheService) private readonly cache: CacheService,
     @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService,
+    @Inject(EVENT_BUS_SERVICE) private readonly eventBus: EventBusService,
     private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -380,24 +383,47 @@ export class UsersService {
     }
   }
 
-  async getProfile(userId: string): Promise<Record<string, unknown>> {
+  async getProfile(
+    userId: string,
+    authClaims?: { email?: string; role?: string }
+  ): Promise<Record<string, unknown>> {
     try {
       const cacheK = cacheKey('user', `profile:${userId}`);
       const cached = await this.cache.get<Record<string, unknown>>(cacheK);
       if (cached) return cached;
 
-      const user = await this.prisma.user.findUnique({
+      const userSelect = {
+        id: true,
+        email: true,
+        displayName: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      } as const;
+
+      let user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          displayName: true,
-          avatar: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: userSelect,
       });
+
+      // auth-service and user-service own separate databases (azeebo_auth vs
+      // azeebo_user); lazily provision the shadow user row from verified JWT
+      // claims on first /users/me access so newly registered users resolve.
+      if (!user && authClaims?.email) {
+        const fallbackDisplayName = authClaims.email.split('@')[0] || 'User';
+        user = await this.prisma.user.upsert({
+          where: { id: userId },
+          update: {},
+          create: {
+            id: userId,
+            email: authClaims.email,
+            displayName: fallbackDisplayName,
+            role: authClaims.role || 'user',
+          },
+          select: userSelect,
+        });
+      }
 
       if (!user) {
         throw new NotFoundException(`User not found`);
@@ -714,6 +740,10 @@ export class UsersService {
         where: { id: userId },
       });
 
+      // `avatar` is the canonical field; `avatarUrl` is what the web setup
+      // screen posts, and both name the same uploaded image.
+      const avatar = dto.avatar ?? dto.avatarUrl;
+
       if (!user && email) {
         user = await this.prisma.user.create({
           data: {
@@ -733,7 +763,7 @@ export class UsersService {
         where: { id: userId },
         data: {
           ...(dto.displayName && { displayName: dto.displayName }),
-          ...(dto.avatar && { avatar: dto.avatar }),
+          ...(avatar && { avatar }),
           ...(dto.role && { role: dto.role }),
         },
         select: {
@@ -812,6 +842,23 @@ export class UsersService {
     const anonymizedName = 'Deleted User';
 
     try {
+      // Fan-out signal FIRST so the other service DBs (auth, payment,
+      // messaging, media) purge in parallel with this DB's local purge.
+      // A failed publish must not abort the local erasure — it is logged
+      // and the completion record lets ops detect a missed fan-out.
+      try {
+        await this.eventBus.publish(
+          EventTypes.USER_ERASURE_REQUESTED,
+          { userId, requestedAt: new Date().toISOString() },
+          { userId }
+        );
+      } catch (eventError: unknown) {
+        this.logger.error(
+          `Failed to publish ${EventTypes.USER_ERASURE_REQUESTED} for ${userId}`,
+          eventError
+        );
+      }
+
       // Update user record to anonymize PII
       await this.prisma.user.update({
         where: { id: userId },
@@ -839,13 +886,61 @@ export class UsersService {
       await this.prisma.following?.deleteMany({ where: { followerId: userId } });
       await this.prisma.following?.deleteMany({ where: { followingId: userId } });
 
+      // PII-holding rows the purge previously missed
+      await this.prisma.userPreferences?.deleteMany({ where: { userId } });
+      await this.prisma.userUniverseAffinity?.deleteMany({ where: { userId } });
+      await this.prisma.auditLog?.deleteMany({ where: { actorId: userId } });
+
+      const deletedAt = new Date();
+      const deletedData = [
+        'user_profile',
+        'preferences',
+        'watch_history',
+        'saved_items',
+        'following',
+        'universe_affinities',
+        'audit_logs',
+      ];
+
       // Mark any scheduled deletion request as completed
       await this.prisma.dataDeletionRequest.updateMany({
         where: { userId, status: 'scheduled' },
-        data: { status: 'completed', completedAt: new Date() },
+        data: { status: 'completed', completedAt: deletedAt },
       });
 
-      return { userId, deletedAt: new Date(), status: 'deleted' };
+      // Signed completion record — verifiable proof of what was erased and
+      // when, so downstream consumers and auditors can validate the receipt.
+      const signingSecret = this.configService.get<string>('ERASURE_SIGNING_SECRET');
+      const signature = signingSecret
+        ? createHmac('sha256', signingSecret)
+            .update(`${userId}|${deletedAt.toISOString()}|${deletedData.join(',')}`)
+            .digest('hex')
+        : undefined;
+      if (!signingSecret) {
+        this.logger.warn(
+          `ERASURE_SIGNING_SECRET not set — erasure completion record for ${userId} will be unsigned`
+        );
+      }
+
+      try {
+        await this.eventBus.publish(
+          EventTypes.USER_ERASURE_COMPLETED,
+          {
+            userId,
+            deletedAt: deletedAt.toISOString(),
+            deletedData,
+            signature,
+          },
+          { userId }
+        );
+      } catch (eventError: unknown) {
+        this.logger.error(
+          `Failed to publish ${EventTypes.USER_ERASURE_COMPLETED} for ${userId}`,
+          eventError
+        );
+      }
+
+      return { userId, deletedAt, status: 'deleted', deletedData };
     } catch (error) {
       this.logger.error(`Failed to delete user data for ${userId}`, error);
       mapAndThrow(error, 'deleting user data');
@@ -942,6 +1037,33 @@ export class UsersService {
     } catch (error: unknown) {
       this.logger.error(`Failed to get universe engagement for user ${userId}`, error);
       mapAndThrow(error, 'Failed to retrieve universe engagement');
+    }
+  }
+
+  /** Record (or refresh) a watch-history entry. Upserts on (userId, contentId). */
+  async addWatchHistoryEntry(
+    userId: string,
+    input: {
+      contentId: string;
+      contentType?: string;
+      universe?: string;
+    }
+  ): Promise<void> {
+    try {
+      await this.prisma.watchHistory.upsert({
+        where: { userId_contentId: { userId, contentId: input.contentId } },
+        create: {
+          userId,
+          contentId: input.contentId,
+          contentType: input.contentType ?? 'unknown',
+          universe: input.universe ?? 'unknown',
+        },
+        update: { watchedAt: new Date() },
+      });
+      this.logger.log(`Recorded watch history for user ${userId}, content ${input.contentId}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to record watch history for user ${userId}`, error);
+      mapAndThrow(error, 'Failed to record watch history');
     }
   }
 

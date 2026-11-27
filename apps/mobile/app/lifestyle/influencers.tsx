@@ -54,7 +54,9 @@ export default function InfluencersScreen() {
     >
       <Image
         source={{
-          uri: item.photo || 'https://placehold.co/120x120/1a1a1a/ffffff?text=★',
+          uri:
+            item.photo ||
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
         }}
         style={styles.influencerPhoto}
         resizeMode="cover"
@@ -96,7 +98,9 @@ export default function InfluencersScreen() {
     >
       <Image
         source={{
-          uri: item.photo || 'https://placehold.co/200x280/1a1a1a/ffffff?text=★',
+          uri:
+            item.photo ||
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=280&q=80',
         }}
         style={styles.featuredImage}
         resizeMode="cover"
@@ -118,10 +122,10 @@ export default function InfluencersScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Influencers Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Influencers</Text>

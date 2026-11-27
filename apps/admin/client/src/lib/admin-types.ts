@@ -69,6 +69,8 @@ export interface AdminCreator {
   id: string;
   userId: string;
   name: string;
+  email?: string;
+  walletBalance?: number;
   status: 'pending' | 'approved' | 'rejected' | 'suspended';
   contentCount: number;
   subscriberCount: number;
@@ -91,6 +93,7 @@ export interface RealityShow {
   id: string;
   title: string;
   description?: string;
+  thumbnail?: string;
   /** ContentItem status of the underlying row (reality universe). */
   status: string;
   creator?: { id: string; displayName: string; email: string };
@@ -417,6 +420,39 @@ export interface BundlePassAdmin {
   _count?: { subscriptions: number };
 }
 
+/**
+ * Approved lending partner shown on the public Borrow page. Money and rate
+ * columns are Prisma Decimals, which serialize to decimal STRINGS — read them
+ * with num() for display and never do arithmetic on the parsed value.
+ */
+export interface PartnerBankAdmin {
+  id: string;
+  slug: string;
+  name: string;
+  productName: string | null;
+  logoUrl: string | null;
+  licenceRef: string | null;
+  registrationNumber: string | null;
+  minAmount: string;
+  maxAmount: string;
+  minTenorMonths: number;
+  maxTenorMonths: number;
+  interestRateMin: string;
+  interestRateMax: string;
+  feeDisclosure: string | null;
+  totalCostExample: string | null;
+  eligibility: string | null;
+  applyUrl: string;
+  termsUrl: string | null;
+  privacyUrl: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  /** Dev/placeholder row — the public page labels it as sample data. */
+  isSample: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LiveEventAdmin {
   id: string;
   title: string;
@@ -629,3 +665,227 @@ export interface Partner {
   updatedAt: string;
   offers?: PartnerOffer[];
 }
+
+// ─── Navigation Menus (Superadmin Menu Management) ───────────────────────────
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  href: string;
+  icon?: string;
+  isVisible: boolean;
+  order: number;
+  badge?: string;
+  target?: string;
+  roles?: string[];
+}
+
+export interface NavigationMenu {
+  id: string;
+  name: string;
+  location: string;
+  description?: string;
+  isActive: boolean;
+  isDefault?: boolean;
+  items: MenuItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── ACDP Package Validation ─────────────────────────────────────────────────
+
+export interface AcdpComponentStatus {
+  component: string;
+  status: 'valid' | 'invalid' | 'missing' | 'warning';
+  details?: string;
+}
+
+export interface AcdpPackageItem {
+  id: string;
+  contentId: string;
+  title: string;
+  universe: string;
+  version: string;
+  status: 'draft' | 'under_review' | 'compliant' | 'rejected' | 'published';
+  universeFitScore: number;
+  masterVideoValid: boolean;
+  verticalDerivativeValid: boolean;
+  audioTracksValid: boolean;
+  subtitlesValid: boolean;
+  talentClearanceStatus: 'cleared' | 'pending' | 'flagged';
+  aiDisclosureStatus: 'disclosed' | 'not_applicable' | 'undisclosed';
+  components: AcdpComponentStatus[];
+  submittedAt: string;
+  submittedBy: string;
+}
+
+export interface AcdpValidationResult {
+  packageId: string;
+  isCompliant: boolean;
+  universeFitScore: number;
+  errors: string[];
+  warnings: string[];
+}
+
+// ─── Music Universe ─────────────────────────────────────────────────────────
+
+export interface MusicTrackAdmin {
+  id: string;
+  title: string;
+  type?: string;
+  artistName?: string;
+  artistId?: string;
+  albumName?: string;
+  duration?: number;
+  genre?: string;
+  coverImage?: string;
+  trackUrl?: string;
+  status: string;
+  isPremium?: boolean;
+  views?: number;
+  createdAt: string;
+}
+
+export interface MusicArtistAdmin {
+  id: string;
+  name: string;
+  bio?: string;
+  image?: string;
+  genre?: string;
+  isVerified?: boolean;
+  monthlyListeners?: number;
+  createdAt: string;
+}
+
+// ─── Rewards & Gamification ──────────────────────────────────────────────────
+
+export interface RewardBadgeAdmin {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  criteria?: string;
+  points: number;
+  createdAt?: string;
+}
+
+export interface RewardMissionAdmin {
+  id: string;
+  title: string;
+  description?: string;
+  points: number;
+  type: string;
+  isActive: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface RewardLevelAdmin {
+  id: string;
+  name: string;
+  rank: number;
+  minPoints: number;
+  maxPoints?: number;
+  icon?: string;
+  color?: string;
+  perks?: string;
+}
+
+export interface RewardAccountAdmin {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  points: number;
+  lifetimePoints?: number;
+  currentStreak?: number;
+  longestStreak?: number;
+  levelId?: string;
+  levelName?: string;
+  updatedAt?: string;
+}
+
+export interface RewardStats {
+  totalPointsIssued: number;
+  totalPointsRedeemed: number;
+  activeMissionsCount: number;
+  totalBadgesAwarded: number;
+  totalUsersWithRewards: number;
+}
+
+// ─── Referral Program ────────────────────────────────────────────────────────
+
+export interface ReferralItemAdmin {
+  id: string;
+  referrerId: string;
+  referrerEmail?: string;
+  referrerName?: string;
+  referredId?: string;
+  referredEmail?: string;
+  code: string;
+  status: 'pending' | 'completed' | 'expired' | 'blocked' | string;
+  rewardPoints: number;
+  rewardCoins?: number;
+  createdAt: string;
+  completedAt?: string | null;
+}
+
+export interface ReferralConfigAdmin {
+  id?: string;
+  key: string;
+  value: number;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface ReferralStats {
+  totalReferrals: number;
+  completedReferrals: number;
+  pendingReferrals: number;
+  totalRewardPointsIssued: number;
+  conversionRate: number;
+}
+
+// ─── Merchandise & Orders ────────────────────────────────────────────────────
+
+export interface MerchProductAdmin {
+  id: string;
+  name: string;
+  description?: string;
+  priceNgn: number;
+  priceCoins?: number;
+  images: string[];
+  category: string;
+  universe?: string;
+  stockQuantity: number;
+  isActive: boolean;
+  isFeatured?: boolean;
+  createdAt: string;
+}
+
+export interface MerchOrderAdmin {
+  id: string;
+  orderNumber: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  items: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPriceNgn: number;
+  }>;
+  totalAmountNgn: number;
+  totalAmountCoins?: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  shippingAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  trackingNumber?: string;
+  createdAt: string;
+}
+
+

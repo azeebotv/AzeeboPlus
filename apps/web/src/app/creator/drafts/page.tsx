@@ -76,7 +76,7 @@ export default function DraftsPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Work in Progress"
         title="Unpublished Drafts"
@@ -87,7 +87,7 @@ export default function DraftsPage(): React.JSX.Element {
             onClick={() => router.push('/creator/upload')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="az-btn-primary px-6 py-3 rounded-full text-xs font-bold flex items-center gap-2"
+            className="az-btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             New Content
@@ -99,23 +99,23 @@ export default function DraftsPage(): React.JSX.Element {
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="az-glass p-5 rounded-2xl border border-white/10 space-y-2">
+              <div key={i} className="az-glass p-5 border border-az-glass-border space-y-2">
                 <Skeleton className="h-6 w-48" />
                 <Skeleton className="h-4 w-32" />
               </div>
             ))}
           </div>
         ) : drafts.length === 0 ? (
-          <div className="az-glass p-16 text-center rounded-3xl border border-white/10">
-            <FileText className="w-12 h-12 text-white/30 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">No Drafts Stored</h3>
-            <p className="text-xs text-white/50 max-w-sm mx-auto mb-6">
+          <div className="az-glass p-16 text-center border border-az-glass-border">
+            <FileText className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Drafts Stored</h3>
+            <p className="text-xs text-az-ink/50 max-w-sm mx-auto mb-6">
               All your creations have either been published or not yet started.
             </p>
             <button
               type="button"
               onClick={() => router.push('/creator/upload')}
-              className="az-btn-primary px-6 py-2.5 rounded-full text-xs font-bold"
+              className="az-btn-primary"
             >
               Start New Creation
             </button>
@@ -124,9 +124,9 @@ export default function DraftsPage(): React.JSX.Element {
           <div className="space-y-3">
             {drafts.map((draft: DraftContent) => (
               <ScrollReveal key={draft.id}>
-                <div className="az-glass p-4 sm:p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="az-glass p-4 sm:p-5 border border-az-glass-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-white/5 relative overflow-hidden flex-shrink-0 border border-white/10">
+                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-az-glass-fill relative overflow-hidden flex-shrink-0 border border-az-glass-border">
                       {draft.thumbnail ? (
                         <OptimizedImage
                           src={draft.thumbnail}
@@ -135,14 +135,14 @@ export default function DraftsPage(): React.JSX.Element {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                        <div className="w-full h-full flex items-center justify-center text-az-ink/30">
                           <Film className="w-5 h-5" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-white truncate">{draft.title}</h3>
-                      <p className="text-xs text-white/40 mt-1">
+                      <h3 className="text-sm font-bold text-az-ink truncate">{draft.title}</h3>
+                      <p className="text-xs text-az-ink/40 mt-1">
                         Last edited {new Date(draft.lastEdited).toLocaleDateString()}
                         {draft.duration ? ` • ${Math.floor(draft.duration / 60)}m` : ''}
                       </p>
@@ -153,7 +153,7 @@ export default function DraftsPage(): React.JSX.Element {
                     <button
                       type="button"
                       onClick={() => router.push(`/creator/upload?edit=${draft.id}`)}
-                      className="az-btn-primary px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1.5"
+                      className="az-btn-primary flex items-center gap-1.5"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       Resume Edit
@@ -173,7 +173,7 @@ export default function DraftsPage(): React.JSX.Element {
                           },
                         });
                       }}
-                      className="p-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors"
+                      className="p-2 rounded-full bg-az-error-500/10 border border-az-error-500/20 text-az-error-400 hover:bg-az-error-500/20 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

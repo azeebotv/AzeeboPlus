@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { creatorApi } from '@/lib/api/creator';
+import { useConfirm } from '@/components/ui';
 import {
   formatDate,
   inputStyle,
@@ -121,6 +122,7 @@ function PlaybackModal({
 }
 
 export default function ContentPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
@@ -377,8 +379,14 @@ export default function ContentPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm('Delete this content?')) deleteMutation.mutate(item.id);
+                          onClick={async () => {
+                            const confirmed = await confirm({
+                              title: 'Delete Content',
+                              message: `Are you sure you want to delete "${item.title}"? This cannot be undone.`,
+                              variant: 'danger',
+                              confirmText: 'Delete',
+                            });
+                            if (confirmed) deleteMutation.mutate(item.id);
                           }}
                           disabled={deleteMutation.isPending}
                           style={{

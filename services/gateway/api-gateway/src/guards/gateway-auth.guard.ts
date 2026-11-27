@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
+import { timingSafeEqual } from 'crypto';
 import { IS_PUBLIC_KEY } from '@azeebo/security';
 
 /**
@@ -50,17 +51,63 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/docs(\/.*)?$/,
     // Public settings/universes (no user context needed)
     /^\/api\/v\d+\/public\//,
+    // Public navigation menus
+    /^\/api\/v\d+\/admin\/menus\/public\/[a-zA-Z0-9_-]+$/,
     // Public content browsing — read-only listings (no personalization)
     /^\/api\/v\d+\/content\/(home|watch|featured|trending|new-releases|featured-slides|popular-region|categories|tags)$/,
     // Content detail (read-only)
-    /^\/api\/v\d+\/content\/[^/]+$/,
+    /^\/api\/v\d+\/content\/[a-zA-Z0-9_-]+$/,
     // Content comments and related
-    /^\/api\/v\d+\/content\/[^/]+\/(comments|related)$/,
+    /^\/api\/v\d+\/content\/[a-zA-Z0-9_-]+\/(comments|related)$/,
     // Universe-specific content by slug
-    /^\/api\/v\d+\/content\/universe\/[^/]+$/,
-    /^\/api\/v\d+\/content\/category\/[^/]+$/,
+    /^\/api\/v\d+\/content\/universe\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/content\/category\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/content\/categories\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/content\/tags\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/content\/available$/,
+    // Public creator discovery and public profiles
+    /^\/api\/v\d+\/creators\/discover$/,
+    /^\/api\/v\d+\/creators\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/creators\/[a-zA-Z0-9_-]+\/content$/,
+    /^\/api\/v\d+\/creators\/boards\/[a-zA-Z0-9_-]+$/,
+    // Reality universe public browsing
+    /^\/api\/v\d+\/reality\/(shows|shows\/current|shows\/live|contestants|clips|featured|pricing|premium-extras)$/,
+    /^\/api\/v\d+\/reality\/shows\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/reality\/shows\/[a-zA-Z0-9_-]+\/(episodes|contestants|leaderboard|votes|predictions|likes|comments)$/,
+    /^\/api\/v\d+\/reality\/contestants\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/reality\/episodes\/[a-zA-Z0-9_-]+$/,
+    // Movies universe public browsing
+    /^\/api\/v\d+\/movies(\/(premieres|passes|genres|featured|trending|african|hollywood|rental|dbo\/overview|viewing-windows\/active))?$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/movies\/[a-zA-Z0-9_-]+\/(viewing-windows|availability)$/,
+    /^\/api\/v\d+\/movies\/genre\/[a-zA-Z0-9_-]+(\/\d+)?$/,
+    // Comedy universe public browsing
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|trending|categories|top-rated|challenges)$/,
+    /^\/api\/v\d+\/comedy\/(comedians|specials|series|clips|challenges)\/[a-zA-Z0-9_-]+$/,
+    // Games universe public browsing
+    /^\/api\/v\d+\/games(\/(home|tournaments|challenges|trending|trivia|leaderboard))?$/,
+    /^\/api\/v\d+\/games\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/games\/tournaments\/[a-zA-Z0-9_-]+\/leaderboard$/,
+    // Sports universe public browsing
+    /^\/api\/v\d+\/sports\/(home|categories|live|fixtures|upcoming|highlights|predictions|leaderboard|fan-contests|live-scores)$/,
+    /^\/api\/v\d+\/sports\/fixtures\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/sports\/highlights\/[a-zA-Z0-9_-]+$/,
+    // Live events universe public browsing
+    /^\/api\/v\d+\/live-events$/,
+    /^\/api\/v\d+\/live-events\/[a-zA-Z0-9_-]+$/,
+    // Vertical universe public browsing
+    /^\/api\/v\d+\/vertical\/(storyworlds|characters|locations|lore|titles|crossovers|timeline)$/,
+    /^\/api\/v\d+\/vertical\/(storyworlds|characters|lore|titles|crossovers)\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/vertical\/titles\/[a-zA-Z0-9_-]+\/(episodes|characters|related)$/,
+    /^\/api\/v\d+\/vertical\/storyworlds\/[a-zA-Z0-9_-]+\/(titles|characters|theories|realms|orisa)$/,
+    // Lifestyle universe public events & city guide
+    /^\/api\/v\d+\/lifestyle\/(events|city-guide|city-guide\/featured|city-guide\/tags|influencers|celebrities)$/,
+    /^\/api\/v\d+\/lifestyle\/events\/[a-zA-Z0-9_-]+$/,
+    /^\/api\/v\d+\/lifestyle\/events\/[a-zA-Z0-9_-]+\/attendees$/,
+    /^\/api\/v\d+\/lifestyle\/city-guide\/[a-zA-Z0-9_-]+$/,
     // Universe detail
-    /^\/api\/v\d+\/universe\/[^/]+$/,
+    /^\/api\/v\d+\/universe\/[a-zA-Z0-9_-]+$/,
     // Search suggestions and trending searches
     /^\/api\/v\d+\/search\/(trending|suggestions)$/,
     // Lifestyle music — read-only listings/detail served on the public
@@ -74,6 +121,11 @@ export class GatewayAuthGuard implements CanActivate {
     // everything under /lifestyle/admin stays auth-gated (exact segments only).
     /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)$/,
     /^\/api\/v\d+\/lifestyle\/(itineraries|neighborhoods|partners|offers)\/[a-z0-9-]+$/,
+    // Borrow page — the approved-partner catalogue is public marketing surface
+    // (no personalization, no application data). /borrow/admin/* stays gated:
+    // the slug segment pattern deliberately excludes 'admin'.
+    /^\/api\/v\d+\/borrow\/banks$/,
+    /^\/api\/v\d+\/borrow\/banks\/[a-z0-9-]+$/,
     // Participation result page (writes — votes, quiz submits — still require auth)
     /^\/api\/v\d+\/participation\/[a-z0-9-]+\/result$/,
     // Participation hub + detail pages — read-only listings (votes/quiz attempts
@@ -84,7 +136,7 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/api\/v\d+\/moderation\/report-types$/,
     // Public challenge boards — read-only leaderboard data behind the shared
     // /boards/:challengeId pages (writes and everything else stay gated)
-    /^\/api\/v\d+\/creator\/boards\/[^/]+$/,
+    /^\/api\/v\d+\/creator\/boards\/[a-zA-Z0-9_-]+$/,
   ];
 
   constructor(
@@ -98,17 +150,58 @@ export class GatewayAuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
+    const request = context.switchToHttp().getRequest();
+
+    // SECURITY (AUD-01): Strip untrusted client identity headers before route processing
+    delete request.headers['x-user-id'];
+    delete request.headers['x-user-email'];
+    delete request.headers['x-user-role'];
+    delete request.headers['x-gateway-secret'];
+
     if (isPublic) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-
     // Check if the path matches a known public pattern
     const requestPath = request.path || request.url;
-    const isPublicPath = GatewayAuthGuard.PUBLIC_PATH_PATTERNS.some((pattern) =>
-      pattern.test(requestPath)
-    );
+
+    // AUD-19: Swagger docs are only public in local dev when SWAGGER_ENABLED=true
+    if (requestPath.startsWith('/docs')) {
+      const isLocalDev =
+        process.env.NODE_ENV === 'development' || process.env.DEPLOY_ENV === 'local';
+      if (!isLocalDev || process.env.SWAGGER_ENABLED !== 'true') {
+        const internalKey = request.headers['x-internal-api-key'];
+        const configuredKey = this.configService.get<string>('INTERNAL_API_KEY');
+        // Timing-safe compare so the key check doesn't leak its value one
+        // byte at a time through response timing.
+        const provided = Buffer.from(typeof internalKey === 'string' ? internalKey : '');
+        const expected = Buffer.from(configuredKey ?? '');
+        if (
+          !configuredKey ||
+          provided.length !== expected.length ||
+          !timingSafeEqual(provided, expected)
+        ) {
+          throw new UnauthorizedException('Swagger documentation is restricted');
+        }
+      }
+      return true;
+    }
+
+    // AUD-05: Public content/lifestyle/search patterns only permit safe read-only methods
+    const isPublicPath = GatewayAuthGuard.PUBLIC_PATH_PATTERNS.some((pattern) => {
+      if (!pattern.test(requestPath)) return false;
+      if (
+        requestPath.includes('/auth/') ||
+        requestPath.includes('/health') ||
+        requestPath.includes('/ready') ||
+        requestPath.includes('/live') ||
+        requestPath.includes('/feature-flags/')
+      ) {
+        return true;
+      }
+      const method = (request.method || 'GET').toUpperCase();
+      return method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+    });
 
     if (isPublicPath) {
       return true;

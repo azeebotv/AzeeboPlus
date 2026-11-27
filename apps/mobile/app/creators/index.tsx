@@ -77,7 +77,7 @@ export default function CreatorUniverseHome() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={styles.container}>
         <LoadingState text="Loading creators..." />
       </SafeAreaView>
     );
@@ -133,7 +133,7 @@ export default function CreatorUniverseHome() {
             contentContainerStyle={styles.categoriesList}
           >
             {categories.map((category) => (
-              <TouchableOpacity key={category.id} style={styles.categoryButton}>
+              <TouchableOpacity accessibilityRole="button" key={category.id} style={styles.categoryButton}>
                 <Text style={styles.categoryEmoji}>{category.emoji}</Text>
                 <Text style={styles.categoryName}>{category.name}</Text>
               </TouchableOpacity>
@@ -146,7 +146,7 @@ export default function CreatorUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Featured Creators
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -172,7 +172,7 @@ export default function CreatorUniverseHome() {
                   <Text style={styles.creatorStatSeparator}>•</Text>
                   <Text style={styles.creatorStat}>{item.content}</Text>
                 </View>
-                <TouchableOpacity style={styles.followButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.followButton}>
                   <Text style={styles.followText}>Follow</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -226,7 +226,7 @@ export default function CreatorUniverseHome() {
                   {card.title}
                 </Text>
                 <Text style={styles.cardDesc}>{card.description}</Text>
-                <TouchableOpacity style={styles.cardButton}>
+                <TouchableOpacity accessibilityRole="button" style={styles.cardButton}>
                   <Text style={styles.cardButtonText}>{card.action}</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -235,23 +235,23 @@ export default function CreatorUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
             <Text style={[styles.navLabel, { color: colors.category.teal }]}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

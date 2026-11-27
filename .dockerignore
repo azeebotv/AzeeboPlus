@@ -70,5 +70,6 @@ scripts/*
 !scripts/build-package.sh
 !scripts/install-git-hooks.sh
 !scripts/lib
+!scripts/generate-domain-env.mjs
 !scripts/demo-content
 test/

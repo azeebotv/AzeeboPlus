@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api';
+import { messageOf, requireArray } from '@/lib/payload';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-import { Skeleton } from '@azeebo/ui/web';
+import { ErrorState, Skeleton } from '@azeebo/ui/web';
 import { GitBranch, Clock, DollarSign, Zap } from 'lucide-react';
 
 interface Workflow {
@@ -21,29 +22,39 @@ interface Workflow {
   lastAnalyzed: string;
 }
 
-const RISK_COLORS: Record<string, string> = {
-  low: 'var(--brand-emerald)',
-  medium: 'var(--brand-amber)',
-  high: 'var(--brand-red)',
+const RISK_CLASSES: Record<Workflow['riskLevel'], string> = {
+  low: 'bg-az-success-500/20 text-az-success-400',
+  medium: 'bg-az-warning-500/20 text-az-warning-400',
+  high: 'bg-az-error-500/20 text-az-error-400',
 };
 
-const AUTOMATION_COLORS: Record<string, string> = {
-  ready: 'var(--brand-emerald)',
-  partial: 'var(--brand-amber)',
-  not_ready: 'var(--brand-grey)',
+const AUTOMATION_CLASSES: Record<Workflow['automationReadiness'], string> = {
+  ready: 'bg-az-success-500/20 text-az-success-400',
+  partial: 'bg-az-warning-500/20 text-az-warning-400',
+  not_ready: 'bg-az-ink/10 text-az-ink-muted',
 };
 
 export default function ProcessMiningPage(): React.JSX.Element {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
-  const { data: workflows, isLoading } = useQuery({
+  const {
+    data: workflows,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['process-mining', selectedDepartment],
     queryFn: async () => {
       const params = selectedDepartment !== 'all' ? `?department=${selectedDepartment}` : '';
       const res = await apiFetch<Workflow[]>(`/admin/process-mining/workflows${params}`);
-      return res.success ? res.data || [] : [];
+      return requireArray(res);
     },
   });
+
+  // '—' while the read failed: "0 workflows, ₦0/month" is the finding this
+  // page is supposed to produce, not the state of a service that never answered.
+  const dash = '—';
 
   const stats = {
     totalWorkflows: workflows?.length || 0,
@@ -53,49 +64,21 @@ export default function ProcessMiningPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
+    <div className="min-h-screen bg-az-surface-root text-az-ink">
       <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
+      <main className="mx-auto max-w-7xl px-4 pb-16 pt-24 sm:px-6 sm:pt-28 lg:px-8">
         {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 32,
-          }}
-        >
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Process Mining</h1>
-            <p style={{ color: 'var(--text-muted, #9A8A7A)' }}>
+            <h1 className="az-section-title mb-1 text-az-ink">Process Mining</h1>
+            <p className="az-body text-az-ink-muted">
               Inventory of recurring workflows with hours, cost, risk, and automation readiness
             </p>
           </div>
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 8,
-              border: '1px solid var(--glass-border)',
-              backgroundColor: 'var(--glass-bg)',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-            }}
+            className="az-body rounded-az-control border border-az-glass-border bg-az-glass-fill px-4 py-2.5 text-az-ink"
           >
             <option value="all">All Departments</option>
             <option value="content">Content</option>
@@ -107,169 +90,94 @@ export default function ProcessMiningPage(): React.JSX.Element {
         </div>
 
         {/* Stats Cards */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 16,
-            marginBottom: 32,
-          }}
-        >
+        {isError && (
+          <ErrorState
+            title="Workflow data unavailable"
+            description={`${messageOf(error)} Totals are withheld rather than shown as zero.`}
+            onButtonPress={() => refetch()}
+          />
+        )}
+
+        <div className="mb-8 grid grid-cols-4 gap-4">
           <StatCard
             icon={<GitBranch size={20} />}
             label="Total Workflows"
-            value={stats.totalWorkflows}
-            color="#3B82F6"
+            value={isError ? dash : stats.totalWorkflows}
+            tone="bg-az-secondary-500/20 text-az-secondary-400"
           />
           <StatCard
             icon={<Clock size={20} />}
             label="Total Hours/Month"
-            value={stats.totalHours.toLocaleString()}
-            color="#8B5CF6"
+            value={isError ? dash : stats.totalHours.toLocaleString()}
+            tone="bg-az-category-violet/20 text-az-category-violet"
           />
           <StatCard
             icon={<DollarSign size={20} />}
             label="Total Cost/Month"
-            value={`₦${stats.totalCost.toLocaleString()}`}
-            color="#F59E0B"
+            value={isError ? dash : `₦${stats.totalCost.toLocaleString()}`}
+            tone="bg-az-warning-500/20 text-az-warning-400"
           />
           <StatCard
             icon={<Zap size={20} />}
             label="Ready for Automation"
-            value={stats.readyForAutomation}
-            color="#10B981"
+            value={isError ? dash : stats.readyForAutomation}
+            tone="bg-az-success-500/20 text-az-success-400"
           />
         </div>
 
         {/* Workflows Table */}
-        <div
-          style={{
-            padding: 24,
-            borderRadius: 16,
-            border: '1px solid var(--glass-border)',
-            backgroundColor: 'var(--glass-bg)',
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Workflow Inventory</h2>
+        <div className="az-glass p-6">
+          <h2 className="az-title mb-4 text-az-ink">Workflow Inventory</h2>
           {isLoading ? (
             <Skeleton height="400px" borderRadius="8px" />
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          ) : isError ? null : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Workflow
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
+                  <tr className="border-b border-az-glass-border">
+                    <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Workflow</th>
+                    <th className="az-overline px-4 py-3 text-left text-az-ink-muted">
                       Department
                     </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
+                    <th className="az-overline px-4 py-3 text-right text-az-ink-muted">
                       Frequency/Month
                     </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
+                    <th className="az-overline px-4 py-3 text-right text-az-ink-muted">
                       Avg Hours
                     </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
+                    <th className="az-overline px-4 py-3 text-right text-az-ink-muted">
                       Cost/Execution
                     </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
-                      Risk
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        color: 'var(--text-muted)',
-                        fontSize: 12,
-                      }}
-                    >
+                    <th className="az-overline px-4 py-3 text-center text-az-ink-muted">Risk</th>
+                    <th className="az-overline px-4 py-3 text-center text-az-ink-muted">
                       Automation
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {workflows?.map((wf) => (
-                    <tr key={wf.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                      <td style={{ padding: '12px 16px', fontWeight: 500 }}>{wf.name}</td>
-                      <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>
+                    <tr key={wf.id} className="border-b border-az-glass-border last:border-b-0">
+                      <td className="az-body-strong px-4 py-3 text-az-ink">{wf.name}</td>
+                      <td className="az-body px-4 py-3 capitalize text-az-ink-muted">
                         {wf.department}
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>{wf.frequency}</td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <td className="az-body px-4 py-3 text-right text-az-ink">{wf.frequency}</td>
+                      <td className="az-body px-4 py-3 text-right text-az-ink">
                         {wf.avgHours} hrs
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <td className="az-body px-4 py-3 text-right text-az-ink">
                         ₦{wf.costPerExecution.toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <td className="px-4 py-3 text-center">
                         <span
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor: `${RISK_COLORS[wf.riskLevel]}20`,
-                            color: RISK_COLORS[wf.riskLevel],
-                            textTransform: 'capitalize',
-                          }}
+                          className={`az-caption inline-block rounded-az-pill px-2.5 py-1 capitalize ${RISK_CLASSES[wf.riskLevel]}`}
                         >
                           {wf.riskLevel}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <td className="px-4 py-3 text-center">
                         <span
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor: `${AUTOMATION_COLORS[wf.automationReadiness]}20`,
-                            color: AUTOMATION_COLORS[wf.automationReadiness],
-                            textTransform: 'capitalize',
-                          }}
+                          className={`az-caption inline-block rounded-az-pill px-2.5 py-1 capitalize ${AUTOMATION_CLASSES[wf.automationReadiness]}`}
                         >
                           {wf.automationReadiness.replace('_', ' ')}
                         </span>
@@ -283,83 +191,34 @@ export default function ProcessMiningPage(): React.JSX.Element {
         </div>
 
         {/* Automation Roadmap */}
-        <div
-          style={{
-            marginTop: 24,
-            padding: 24,
-            borderRadius: 16,
-            border: '1px solid var(--glass-border)',
-            backgroundColor: 'var(--glass-bg)',
-          }}
-        >
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Automation Roadmap</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                border: '1px solid #10B981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: 'var(--brand-emerald)',
-                  marginBottom: 8,
-                }}
-              >
-                Ready Now
-              </h3>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {workflows?.filter((w) => w.automationReadiness === 'ready').length || 0} workflows
-                ready for full automation
+        <div className="az-glass mt-6 p-6">
+          <h2 className="az-title mb-4 text-az-ink">Automation Roadmap</h2>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded-az-card border border-az-success-500/30 bg-az-success-500/10 p-4">
+              <h3 className="az-body-strong mb-2 text-az-success-400">Ready Now</h3>
+              <p className="az-caption text-az-ink-muted">
+                {isError
+                  ? dash
+                  : workflows?.filter((w) => w.automationReadiness === 'ready').length || 0}{' '}
+                workflows ready for full automation
               </p>
             </div>
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                border: '1px solid #F59E0B',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: 'var(--brand-amber)',
-                  marginBottom: 8,
-                }}
-              >
-                Partial Automation
-              </h3>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {workflows?.filter((w) => w.automationReadiness === 'partial').length || 0}{' '}
+            <div className="rounded-az-card border border-az-warning-500/30 bg-az-warning-500/10 p-4">
+              <h3 className="az-body-strong mb-2 text-az-warning-400">Partial Automation</h3>
+              <p className="az-caption text-az-ink-muted">
+                {isError
+                  ? dash
+                  : workflows?.filter((w) => w.automationReadiness === 'partial').length || 0}{' '}
                 workflows with partial automation
               </p>
             </div>
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 12,
-                border: '1px solid #6B7280',
-                backgroundColor: 'rgba(107, 114, 128, 0.1)',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: 'var(--brand-grey)',
-                  marginBottom: 8,
-                }}
-              >
-                Not Ready
-              </h3>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {workflows?.filter((w) => w.automationReadiness === 'not_ready').length || 0}{' '}
+            <div className="rounded-az-card border border-az-ink/10 bg-az-ink/5 p-4">
+              <h3 className="az-body-strong mb-2 text-az-ink-muted">Not Ready</h3>
+              <p className="az-caption text-az-ink-muted">
+                {isError
+                  ? dash
+                  : workflows?.filter((w) => w.automationReadiness === 'not_ready').length ||
+                    0}{' '}
                 workflows need process redesign
               </p>
             </div>
@@ -375,40 +234,20 @@ function StatCard({
   icon,
   label,
   value,
-  color,
+  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
-  color: string;
+  tone: string;
 }) {
   return (
-    <div
-      style={{
-        padding: 20,
-        borderRadius: 16,
-        border: '1px solid var(--glass-border)',
-        backgroundColor: 'var(--glass-bg)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            backgroundColor: `${color}20`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color,
-          }}
-        >
-          {icon}
-        </div>
-        <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{label}</span>
+    <div className="az-glass p-5">
+      <div className="mb-3 flex items-center gap-3">
+        <div className={`grid size-10 place-items-center rounded-az-card ${tone}`}>{icon}</div>
+        <span className="az-caption text-az-ink-muted">{label}</span>
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700 }}>{value}</div>
+      <div className="az-section-title text-az-ink">{value}</div>
     </div>
   );
 }

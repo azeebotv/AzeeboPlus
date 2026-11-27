@@ -102,6 +102,7 @@ jest.mock('ioredis', () => {
     constructor(..._args: unknown[]) {}
     quit = jest.fn(async () => 'OK' as never);
     get = jest.fn(async () => null);
+    mget = jest.fn(async (keys: string[]) => keys.map(() => null));
     set = jest.fn(async () => 'OK' as never);
     del = jest.fn(async () => 0);
     scan = jest.fn(async () => ['0', []]);
@@ -119,6 +120,7 @@ jest.mock('ioredis', () => {
 
 import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { FeatureFlagService } from '@azeebo/feature-flags';
 import { AppModule } from './app.module';
 
 describe('AppModule shared-module instance counts (A-3/A-13 regression guard)', () => {
@@ -166,5 +168,35 @@ describe('AppModule shared-module instance counts (A-3/A-13 regression guard)', 
     await app.close();
     app = undefined;
     expect(mockRegisterState).toEqual(EXPECTED);
+  });
+
+  it('serves every registered client-driven flag through the bootstrap path', async () => {
+    // GET /feature-flags/bootstrap is FeatureFlagService.getPublicFlags():
+    // publicFlagKeys evaluated against registered defaults, with no stored
+    // Redis record. Regression guard for flags never registered here (the TV
+    // client reads tv_autoplay via the same bootstrap as web/mobile).
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    const instance = moduleFixture.createNestApplication();
+    await instance.init();
+
+    const flags = await instance.get(FeatureFlagService).getPublicFlags();
+    expect(flags).toEqual(
+      expect.arrayContaining([
+        { key: 'tv_autoplay', enabled: true },
+        { key: 'mobile_autoplay', enabled: true },
+        { key: 'web_autoplay', enabled: true },
+        { key: 'web_maintenance_mode', enabled: false },
+        // The web login page gates the Google/Apple buttons on these two
+        // (prd-social-login.md FR-7). A provider missing from this payload does
+        // not fail loudly — the button just never renders — so the bootstrap
+        // contract is pinned here rather than discovered in production.
+        { key: 'auth_social_google', enabled: true },
+        { key: 'auth_social_apple', enabled: true },
+      ])
+    );
+
+    await instance.close();
   });
 });

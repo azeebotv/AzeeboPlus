@@ -15,6 +15,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { referralApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ReferralStats {
   referralCode: string;
@@ -98,8 +99,8 @@ export default function ReferralScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Referral Screen" style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading referral data...</Text>
       </SafeAreaView>
     );
@@ -125,11 +126,11 @@ export default function ReferralScreen() {
           <Text style={styles.codeLabel}>Your Referral Code</Text>
           <View style={styles.codeContainer}>
             <Text style={styles.codeText}>{stats.referralCode}</Text>
-            <TouchableOpacity style={styles.copyButton} onPress={copyReferralCode}>
+            <TouchableOpacity accessibilityRole="button" style={styles.copyButton} onPress={copyReferralCode}>
               <Text style={styles.copyButtonText}>Copy</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.shareButton} onPress={shareReferralLink}>
+          <TouchableOpacity accessibilityRole="button" style={styles.shareButton} onPress={shareReferralLink}>
             <Text style={styles.shareButtonText}>Share Referral Link</Text>
           </TouchableOpacity>
         </View>
@@ -264,12 +265,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     textAlign: 'center',
     letterSpacing: 4,
   },
   copyButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   shareButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     paddingVertical: 14,
     width: '100%',
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 4,
   },
   earningsValue: {

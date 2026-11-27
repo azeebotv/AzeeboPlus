@@ -1,22 +1,76 @@
-import { Analytics as AzeeboAnalytics } from '@azeebo/analytics-sdk';
+import { Analytics as AzeeboAnalytics, ConsentCategory } from '@azeebo/analytics-sdk';
 import { webLogger } from '@/lib/logger';
+import { hasConsent } from '@/lib/consent';
 
 type EventProperties = Record<string, unknown>;
 
-// Initialize the shared analytics SDK
+// AUD-07: non-essential consent starts OFF. The cookie banner's stored choice
+// (lib/consent.ts) is the single source of truth — it is pushed into the SDK
+// on load below and re-pushed by the banner on every save, so collection runs
+// only while an explicit opt-in exists. The SDK double-checks per event
+// (ConsentManager), so even a desynced state cannot leak events.
 const sdk = new AzeeboAnalytics({
   enabled: process.env.NODE_ENV !== 'test',
   defaultConsent: {
     essential: true,
-    analytics: true,
+    analytics: false,
     marketing: false,
   },
+  // AUD-45: deliver consent-gated batches to this app's own ingest relay
+  // (api/v1/analytics/events), which re-verifies the consent cookie
+  // server-side before forwarding to the analytics service. Client sampling
+  // stays off — the bootstrap endpoint lives on the analytics service and
+  // web gating is consent-only.
+  endpoint: '/api',
+  clientSampling: false,
 });
+
+/**
+ * Push the banner's stored choice into the analytics SDK. Called on load
+ * (reconciling any legacy SDK-local state with the banner) and exported for
+ * the CookieConsent banner to call the moment the user saves a new choice —
+ * accept starts collection, decline stops it, no page reload required.
+ */
+export function applyAnalyticsConsent(analyticsGranted: boolean, marketingGranted: boolean): void {
+  sdk.setConsent(ConsentCategory.ANALYTICS, analyticsGranted);
+  sdk.setConsent(ConsentCategory.MARKETING, marketingGranted);
+}
+
+// Reconcile SDK state with the banner on load — deny-by-default on the
+// server and for first-time visitors (no stored choice ⇒ false).
+applyAnalyticsConsent(hasConsent('analytics'), hasConsent('marketing'));
 
 class Analytics {
   private userId: string | null = null;
 
+  /**
+   * Search terms can be special-category data (health, religion, sexuality),
+   * so only a truncated, hashed form of a query is ever queued. djb2 keeps
+   * cardinality for funnel analysis without retaining the raw text.
+   */
+  private hashQuery(query: string): string {
+    const trimmed = query.trim().slice(0, 120);
+    let hash = 5381;
+    for (let i = 0; i < trimmed.length; i++) {
+      hash = ((hash << 5) + hash + trimmed.charCodeAt(i)) >>> 0;
+    }
+    return `h${hash.toString(36)}.${trimmed.length}`;
+  }
+
+  /** Strip direct identifiers from outgoing event payloads. */
+  private sanitizeProps(properties?: EventProperties): EventProperties | undefined {
+    if (!properties) return properties;
+    const clean: EventProperties = { ...properties };
+    if (typeof clean.query === 'string') clean.query = this.hashQuery(clean.query);
+    delete clean.transactionId;
+    return clean;
+  }
+
   private track(eventName: string, properties?: EventProperties): void {
+    // AUD-07 defense-in-depth: without the banner's analytics opt-in, don't
+    // even queue the event (the SDK performs the same check per event).
+    if (!hasConsent('analytics')) return;
+
     if (process.env.NODE_ENV === 'development') {
       webLogger.log(`[Analytics] ${eventName}`, properties);
     }
@@ -24,7 +78,7 @@ class Analytics {
     sdk.track({
       name: eventName,
       properties: {
-        ...properties,
+        ...this.sanitizeProps(properties),
         userId: this.userId ?? undefined,
         environment: process.env.NODE_ENV,
         url: typeof window !== 'undefined' ? window.location.pathname : undefined,
@@ -424,6 +478,94 @@ class Analytics {
 
   homepageRedirected(from: string, to: string, reason: string, properties?: EventProperties): void {
     this.track('homepage_redirected', { from, to, reason, ...properties });
+  }
+
+  /** Global nav interactions (header links, cart, universe dropdown). */
+  navClicked(params: {
+    label: string;
+    href: string;
+    position: 'header' | 'mobile' | 'footer';
+  }): void {
+    this.track('nav_clicked', params);
+  }
+
+  // --- 20 Canonical Revenue-Path Events (PMR Task 06.2 / R-11 / G-07) ---
+  authCompleted(method: string, userId?: string, referralCode?: string): void {
+    this.track('auth_completed', { method, userId, referralCode });
+  }
+
+  voteSubmitted(showId: string, contestantId: string, votes: number, amount: number): void {
+    this.track('vote_submitted', { showId, contestantId, votes, amount });
+  }
+
+  supervoteSubmitted(showId: string, contestantId: string, votes: number, amount: number): void {
+    this.track('supervote_submitted', { showId, contestantId, votes, amount });
+  }
+
+  ppvTicketPurchased(ticketId: string, eventId: string, amount: number): void {
+    this.track('ppv_ticket_purchased', { ticketId, eventId, amount });
+  }
+
+  cinemaPassPurchased(passId: string, passName: string, amount: number): void {
+    this.track('cinema_pass_purchased', { passId, passName, amount });
+  }
+
+  creatorTipped(creatorId: string, amount: number, tier?: string): void {
+    this.track('creator_tipped', { creatorId, amount, tier });
+  }
+
+  creatorPayoutRequested(amount: number, method?: string): void {
+    this.track('creator_payout_requested', { amount, method });
+  }
+
+  merchandiseCheckoutStarted(cartId: string, itemCount: number, totalAmount: number): void {
+    this.track('merchandise_checkout_started', { cartId, itemCount, totalAmount });
+  }
+
+  merchandisePurchased(
+    orderId: string,
+    totalAmount: number,
+    items: Array<{ id: string; price: number }>
+  ): void {
+    this.track('merchandise_purchased', { orderId, totalAmount, items });
+  }
+
+  predictionStaked(
+    predictionId: string,
+    universe: string,
+    stakeAmount: number,
+    potentialWin: number
+  ): void {
+    this.track('prediction_staked', { predictionId, universe, stakeAmount, potentialWin });
+  }
+
+  predictionWon(predictionId: string, winAmount: number): void {
+    this.track('prediction_won', { predictionId, winAmount });
+  }
+
+  predictionLost(predictionId: string, lostAmount: number): void {
+    this.track('prediction_lost', { predictionId, lostAmount });
+  }
+
+  videoPlaybackStarted(
+    contentId: string,
+    title?: string,
+    universe?: string,
+    isPremium?: boolean
+  ): void {
+    this.track('video_playback_started', { contentId, title, universe, isPremium });
+  }
+
+  videoPlaybackCompleted(contentId: string, watchDuration: number, totalDuration?: number): void {
+    this.track('video_playback_completed', { contentId, watchDuration, totalDuration });
+  }
+
+  checkoutAbandoned(itemType: string, itemId: string, amount: number, step?: string): void {
+    this.track('checkout_abandoned', { itemType, itemId, amount, step });
+  }
+
+  checkoutFailed(itemType: string, itemId: string, amount: number, error: string): void {
+    this.track('checkout_failed', { itemType, itemId, amount, error });
   }
 }
 

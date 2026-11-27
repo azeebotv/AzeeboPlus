@@ -14,6 +14,7 @@ import { contentApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ContestantResult {
   id: string;
@@ -94,9 +95,9 @@ export default function ResultsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Results Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading results...</Text>
         </View>
       </SafeAreaView>
@@ -106,7 +107,7 @@ export default function ResultsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   episodeButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   episodeButtonText: {
     color: colors.light[100],

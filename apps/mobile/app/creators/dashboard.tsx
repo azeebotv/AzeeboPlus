@@ -51,7 +51,7 @@ export default function CreatorDashboardScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Dashboard Screen" style={styles.container}>
         <LoadingState text="Loading dashboard..." />
       </SafeAreaView>
     );
@@ -128,13 +128,13 @@ export default function CreatorDashboardScreen() {
       <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Creator Dashboard
             </Text>
-            <TouchableOpacity style={styles.settingsButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.settingsButton}>
               <Text style={styles.settingsIcon}>⚙️</Text>
             </TouchableOpacity>
           </View>
@@ -148,7 +148,7 @@ export default function CreatorDashboardScreen() {
               </Text>
               <Text style={styles.creatorCategory}>Creator</Text>
             </View>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.editButton}>
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>
@@ -177,7 +177,7 @@ export default function CreatorDashboardScreen() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Weekly Views
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See Details</Text>
             </TouchableOpacity>
           </View>
@@ -204,7 +204,7 @@ export default function CreatorDashboardScreen() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Recent Content
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -232,7 +232,7 @@ export default function CreatorDashboardScreen() {
                     </View>
                     <Text style={styles.timeText}>{item.time}</Text>
                   </View>
-                  <TouchableOpacity style={styles.moreButton}>
+                  <TouchableOpacity accessibilityRole="button" style={styles.moreButton}>
                     <Text style={styles.moreIcon}>⋮</Text>
                   </TouchableOpacity>
                 </TouchableOpacity>
@@ -286,34 +286,34 @@ export default function CreatorDashboardScreen() {
         </View>
 
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
             <Text style={styles.actionIcon}>📤</Text>
             <Text style={styles.actionText}>Upload New Content</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, styles.secondaryAction]}>
+          <TouchableOpacity accessibilityRole="button" style={[styles.actionButton, styles.secondaryAction]}>
             <Text style={styles.actionIcon}>📊</Text>
             <Text style={styles.actionText}>View Full Analytics</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
             <Text style={styles.navIcon}>✨</Text>
             <Text style={[styles.navLabel, { color: colors.category.teal }]}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

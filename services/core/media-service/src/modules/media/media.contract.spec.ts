@@ -13,6 +13,7 @@ import { FileValidationService } from '../../common/services/file-validation.ser
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { FeatureFlagGuard, FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
+import { EventBusModule, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 
 class MockRateLimitGuard implements CanActivate {
   canActivate(_context: ExecutionContext) {
@@ -41,11 +42,30 @@ describe('Media Controller Contract Tests', () => {
       imports: [
         UploadModule,
         AdminModule,
+        // UploadModule declares ErasureConsumerService, which injects the event
+        // bus. EventBusModule is @Global() and app.module registers it, so the
+        // real service resolves it; a TestingModule that imports UploadModule
+        // alone is outside that scope and DI fails before any test runs.
+        // `enableEnhanced: false` keeps it to one provider and opens no Redis;
+        // the override below replaces that provider with a stub regardless.
+        EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'media-service-test', {
+          enableEnhanced: false,
+        }),
         // Stub redis so the real (soon-overridden) FeatureFlagService never
         // opens a connection that would keep the test worker alive.
         FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
       ],
     })
+      .overrideProvider(EVENT_BUS_SERVICE)
+      .useValue({
+        // ErasureConsumerService.onModuleInit calls subscribe().catch(), so the
+        // stub has to return a promise; a bare jest.fn() returns undefined and
+        // would throw on `.catch`.
+        subscribe: jest.fn().mockResolvedValue(undefined),
+        unsubscribe: jest.fn().mockResolvedValue(undefined),
+        publish: jest.fn().mockResolvedValue(undefined),
+        disconnect: jest.fn().mockResolvedValue(undefined),
+      })
       .overrideProvider(UploadService)
       .useValue({
         uploadImage: jest.fn(),

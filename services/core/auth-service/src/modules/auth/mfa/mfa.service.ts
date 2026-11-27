@@ -15,7 +15,7 @@ const MFA_PENDING_TTL = 600; // 10 minutes
 @Injectable()
 export class MfaService {
   private readonly logger = new Logger(MfaService.name);
-  private readonly saltRounds = 10;
+  private readonly saltRounds = 12;
 
   constructor(
     @Inject(AuthRepository) private readonly authRepository: AuthRepository,

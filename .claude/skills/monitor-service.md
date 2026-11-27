@@ -33,9 +33,9 @@ Examples:
 # Check specific service health
 curl http://localhost:[PORT]/health
 
-# Check database connections
+# Check database migration status
 cd services/[category]/[service-name]
-npx prisma db push --accept-data-loss 2>&1 | head -5
+npx prisma migrate status
 
 # Check Redis
 redis-cli info memory

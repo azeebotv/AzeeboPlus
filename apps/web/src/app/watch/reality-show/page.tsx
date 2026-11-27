@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { apiFetch } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -88,16 +87,11 @@ export default function RealityShowViewerPage(): React.JSX.Element {
   }, [showId]);
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Reality" />
-
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+    <PageShell maxWidth="2xl" activeNav="Reality">
+      <div className="pb-10">
         <Link
           href="/reality"
-          className="text-sm text-white/50 hover:text-white mb-6 inline-flex items-center gap-1.5 transition-colors"
+          className="az-caption mb-6 inline-flex items-center gap-1.5 text-az-ink/50 transition-colors hover:text-az-ink"
         >
           ← Back to Reality Universe
         </Link>
@@ -119,8 +113,8 @@ export default function RealityShowViewerPage(): React.JSX.Element {
           />
         ) : (
           <div className="space-y-10">
-            {/* Show Stage / Video Player Header */}
-            <div className="relative rounded-3xl overflow-hidden min-h-[460px] flex items-end p-8 sm:p-12 border border-white/10 shadow-2xl">
+            {/* Show Stage / Video Player Header — the show artwork is this page's hero */}
+            <div className="relative rounded-az-panel overflow-hidden min-h-[460px] flex items-end p-8 sm:p-12 border border-az-glass-border shadow-az-lifted">
               {show.thumbnail && (
                 <OptimizedImage
                   src={show.thumbnail}
@@ -130,47 +124,42 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                   priority
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
+              <div className="absolute inset-0 az-scrim--hero" />
 
               <div className="relative z-10 max-w-2xl">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white uppercase tracking-wider animate-pulse flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-white" />
+                  <span className="az-caption inline-flex items-center gap-1.5 rounded-az-pill bg-az-scarlet px-3 py-1 font-bold uppercase tracking-wider text-az-ink animate-pulse">
+                    <span className="h-2 w-2 rounded-full bg-az-ink" />
                     LIVE REALITY
                   </span>
                   {show.viewerCount !== undefined && (
-                    <span className="text-xs text-white/70 font-semibold">
+                    <span className="az-caption font-semibold text-az-ink/70">
                       {show.viewerCount.toLocaleString()} watching
                     </span>
                   )}
                 </div>
 
-                <h1 className="text-3xl sm:text-5xl font-extrabold text-white mb-4 leading-tight">
-                  {show.title}
-                </h1>
-                <p className="text-white/70 text-base line-clamp-3 mb-6">
+                <h1 className="az-headline text-3xl sm:text-5xl text-az-ink mb-4">{show.title}</h1>
+                <p className="az-body text-az-ink/70 line-clamp-3 mb-6">
                   {show.description || 'Watch drama unfold live and vote for who stays.'}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4">
                   <Link
                     href={`/reality/episode?id=${show.id}`}
-                    className="px-8 py-3.5 rounded-full font-bold text-white transition-all hover:scale-105 shadow-xl inline-flex items-center gap-2"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                    }}
+                    className="az-btn-primary az-btn-primary--inline az-btn-primary--sm inline-flex items-center gap-2"
                   >
                     <span></span> Stream Episode
                   </Link>
                   <Link
                     href={`/vote?showId=${show.id}`}
-                    className="px-6 py-3.5 rounded-full font-semibold text-white bg-[var(--brand-orange)] hover:opacity-90 transition-all"
+                    className="rounded-az-pill px-6 py-3.5 az-body-strong bg-az-flame text-az-surface-root transition-all hover:opacity-90"
                   >
                     Vote Now
                   </Link>
                   <Link
                     href={`/reality/results?showId=${show.id}`}
-                    className="px-6 py-3.5 rounded-full font-semibold text-white/80 bg-white/10 hover:bg-white/20 transition-all"
+                    className="rounded-az-pill px-6 py-3.5 az-body-strong bg-az-glass-card text-az-ink/80 transition-all hover:bg-az-ink/20"
                   >
                     Results & Leaderboard
                   </Link>
@@ -182,21 +171,18 @@ export default function RealityShowViewerPage(): React.JSX.Element {
             {contestants.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Featured Contestants</h2>
+                  <h2 className="az-section-title text-az-ink">Featured Contestants</h2>
                   <Link
                     href={`/vote?showId=${show.id}`}
-                    className="text-sm font-semibold text-[var(--brand-orange)] hover:underline"
+                    className="az-body-strong text-az-flame hover:underline"
                   >
                     Vote For Contestants →
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   {contestants.map((c) => (
-                    <div
-                      key={c.id}
-                      className="az-glass p-4 rounded-2xl text-center border border-white/5 hover:border-[var(--brand-orange)]/50 transition-all"
-                    >
-                      <div className="relative w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden border-2 border-white/10">
+                    <div key={c.id} className="az-glass p-4 text-center transition-all">
+                      <div className="relative w-16 h-16 mx-auto mb-3 rounded-full overflow-hidden border-2 border-az-glass-border">
                         {c.avatar ? (
                           <OptimizedImage
                             src={c.avatar}
@@ -205,15 +191,15 @@ export default function RealityShowViewerPage(): React.JSX.Element {
                             className="object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-white/10 font-bold text-white">
+                          <div className="w-full h-full flex items-center justify-center bg-az-glass-card font-bold text-az-ink">
                             {c.name.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <h4 className="text-xs font-semibold text-white truncate">{c.name}</h4>
+                      <h4 className="az-caption truncate font-semibold text-az-ink">{c.name}</h4>
                       <Link
                         href={`/vote?showId=${show.id}&contestantId=${c.id}`}
-                        className="mt-3 block w-full py-1.5 rounded-full text-xs font-bold text-white bg-[var(--brand-orange)]/80 hover:bg-[var(--brand-orange)] transition-colors"
+                        className="az-caption mt-3 block w-full rounded-az-pill py-1.5 font-bold text-az-surface-root bg-az-flame/80 transition-colors hover:bg-az-flame"
                       >
                         Vote
                       </Link>
@@ -224,9 +210,7 @@ export default function RealityShowViewerPage(): React.JSX.Element {
             )}
           </div>
         )}
-      </main>
-
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }

@@ -1,10 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { MediaClientService } from '../api/clients/media-client.service';
@@ -74,7 +68,7 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
     }
     this.timer = setInterval(() => void this.sweep(), intervalMs);
     // Never hold the process open on the sweeper's account.
-    this.timer.unref?.();
+    (this.timer as unknown as { unref?: () => void })?.unref?.();
     this.logger.log(
       `Archived-content sweeper armed: interval ${Math.round(intervalMs / 1000)}s, TTL ${this.ttlDays}d`
     );
@@ -85,12 +79,8 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
   }
 
   private get ttlDays(): number {
-    const raw = Number(
-      this.configService.get<string>('ARCHIVED_HARD_DELETE_TTL_DAYS')
-    );
-    return Number.isFinite(raw) && raw > 0
-      ? raw
-      : ArchivedContentSweeperService.DEFAULT_TTL_DAYS;
+    const raw = Number(this.configService.get<string>('ARCHIVED_HARD_DELETE_TTL_DAYS'));
+    return Number.isFinite(raw) && raw > 0 ? raw : ArchivedContentSweeperService.DEFAULT_TTL_DAYS;
   }
 
   /**
@@ -105,6 +95,13 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
     this.running = true;
     try {
       return await this.runPass();
+    } catch (error) {
+      // A bad pass must never escape sweep(): on the timer path a rejection
+      // would be unhandled and crash the whole portal (Node >=15), and admin
+      // triggers should get a no-op result, not a 500. Log and retry next
+      // interval — the idempotent mediaPurgedAt marker means nothing is lost.
+      this.logger.error(`Archived-content sweep pass failed: ${error}`);
+      return { scanned: 0, purged: 0, nothingStored: 0, deferred: 0, alreadyGone: 0 };
     } finally {
       this.running = false;
     }
@@ -191,9 +188,7 @@ export class ArchivedContentSweeperService implements OnModuleInit, OnModuleDest
       return 'nothing-stored';
     }
 
-    const outcomes = await Promise.all(
-      keys.map((key) => this.mediaClient.deleteObject(key))
-    );
+    const outcomes = await Promise.all(keys.map((key) => this.mediaClient.deleteObject(key)));
 
     // null = media-service unreachable/refused → defer, retry next pass.
     if (outcomes.some((o) => o === null)) {

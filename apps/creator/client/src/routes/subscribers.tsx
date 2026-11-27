@@ -17,7 +17,7 @@ export default function SubscribersPage() {
     queryKey: ['creator', 'subscribers'],
     queryFn: async () => {
       const res = await creatorApi.getSubscribers();
-      return res.success ? (res.data as SubscribersData) : null;
+      return creatorApi.assertSuccess<SubscribersData>(res);
     },
   });
 

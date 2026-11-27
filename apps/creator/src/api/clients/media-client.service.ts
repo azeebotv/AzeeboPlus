@@ -132,9 +132,9 @@ export class MediaClientService {
         signal: AbortSignal.timeout(10_000),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | MediaServiceResponse<MediaSignedUrlResult>
-        | null;
+      const payload = (await response
+        .json()
+        .catch(() => null)) as MediaServiceResponse<MediaSignedUrlResult> | null;
 
       if (!response.ok || !payload?.success || !payload.data?.url) {
         this.logger.warn(
@@ -157,7 +157,11 @@ export class MediaClientService {
    * POST /v1/media/premium/url. Used for exclusive content where playback
    * must be attributable + revocable, not just expiry-limited.
    */
-  async getPremiumUrl(contentId: string, userId: string, expiresIn = 600): Promise<MediaSignedUrlResult & { expiresAt?: string; token?: string } | null> {
+  async getPremiumUrl(
+    contentId: string,
+    userId: string,
+    expiresIn = 600
+  ): Promise<(MediaSignedUrlResult & { expiresAt?: string; token?: string }) | null> {
     const url = `${this.mediaServiceUrl.replace(/\/$/, '')}/v1/media/premium/url`;
     try {
       const response = await fetch(url, {
@@ -172,9 +176,9 @@ export class MediaClientService {
         signal: AbortSignal.timeout(10_000),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | MediaServiceResponse<MediaSignedUrlResult & { expiresAt?: string; token?: string }>
-        | null;
+      const payload = (await response.json().catch(() => null)) as MediaServiceResponse<
+        MediaSignedUrlResult & { expiresAt?: string; token?: string }
+      > | null;
 
       if (!response.ok || !payload?.success || !payload.data?.url) {
         this.logger.warn(
@@ -201,9 +205,7 @@ export class MediaClientService {
    * and null when media-service is unreachable or refused (caller decides
    * whether that degrades or fails).
    */
-  async deleteObject(
-    key: string
-  ): Promise<'deleted' | 'missing' | null> {
+  async deleteObject(key: string): Promise<'deleted' | 'missing' | null> {
     const url = `${this.mediaServiceUrl.replace(/\/$/, '')}/v1/media/${encodeURIComponent(key)}`;
     try {
       const response = await fetch(url, {
@@ -219,9 +221,9 @@ export class MediaClientService {
       if (response.status === 404) return 'missing';
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | MediaServiceResponse<unknown>
-          | null;
+        const payload = (await response
+          .json()
+          .catch(() => null)) as MediaServiceResponse<unknown> | null;
         this.logger.warn(
           `media-service object delete rejected (HTTP ${response.status}): ${
             payload?.error ?? payload?.message ?? 'no body'

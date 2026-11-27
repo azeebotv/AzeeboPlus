@@ -18,6 +18,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { paymentPresetAmounts } from '../../src/config/prices';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PAYMENT_AMOUNTS = paymentPresetAmounts.map((value) => ({
   value,
@@ -189,7 +190,7 @@ export default function PaymentScreen() {
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
         </View>
       </SafeAreaView>
     );
@@ -206,7 +207,7 @@ export default function PaymentScreen() {
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             Please log in to make payments
           </Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
+          <TouchableOpacity accessibilityRole="button" style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -258,7 +259,7 @@ export default function PaymentScreen() {
                   {
                     backgroundColor:
                       !showCustomAmount && selectedAmount === item.value
-                        ? '#E8420A'
+                        ? brand.flame
                         : colorScheme === 'dark'
                           ? '#1a1a1a'
                           : '#f5f5f5',
@@ -328,7 +329,7 @@ export default function PaymentScreen() {
                   styles.providerOption,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                    borderColor: isSelected ? '#E8420A' : 'transparent',
+                    borderColor: isSelected ? brand.flame : 'transparent',
                   },
                 ]}
               >
@@ -343,7 +344,9 @@ export default function PaymentScreen() {
                   </Text>
                   <Text style={styles.providerDescription}>{meta.description || ''}</Text>
                 </View>
-                <View style={[styles.radioOuter, { borderColor: isSelected ? '#E8420A' : '#666' }]}>
+                <View
+                  style={[styles.radioOuter, { borderColor: isSelected ? brand.flame : '#666' }]}
+                >
                   {isSelected && <View style={styles.radioInner} />}
                 </View>
               </TouchableOpacity>
@@ -396,7 +399,10 @@ export default function PaymentScreen() {
                 Total
               </Text>
               <Text
-                style={[styles.summaryValue, { color: '#E8420A', fontWeight: '700', fontSize: 18 }]}
+                style={[
+                  styles.summaryValue,
+                  { color: brand.flame, fontWeight: '700', fontSize: 18 },
+                ]}
               >
                 ₦{displayAmount}
               </Text>
@@ -449,7 +455,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,
@@ -552,7 +558,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   summarySection: {
     paddingHorizontal: 16,
@@ -580,7 +586,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   payButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     marginHorizontal: 16,
     padding: 16,
     borderRadius: 12,

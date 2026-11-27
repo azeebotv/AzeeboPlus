@@ -111,6 +111,43 @@ CREATE TABLE IF NOT EXISTS moderation_cases (
 CREATE TABLE IF NOT EXISTS creator_profiles (
   id text PRIMARY KEY, "displayName" text NOT NULL DEFAULT '', "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- Remaining SWAPS tables (federate-admin-db.sh): IMPORT FOREIGN SCHEMA of a
+-- table the source DB lacks creates a zero-column foreign table that only
+-- fails later at query time, so every SWAPS relation needs a stub here.
+CREATE TABLE IF NOT EXISTS categories (
+  id text PRIMARY KEY, name text NOT NULL DEFAULT '', "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS tags (
+  id text PRIMARY KEY, name text NOT NULL DEFAULT '', "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS media_assets (
+  id text PRIMARY KEY, url text, "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS content_relationships (
+  id text PRIMARY KEY, "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS universe_feature_flags (
+  id text PRIMARY KEY, "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS system_settings (
+  id text PRIMARY KEY, "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+-- Quoted: Prisma's implicit M2M join tables are mixed-case, and every
+-- federation reference quotes them — an unquoted identifier here would fold to
+-- lowercase and IMPORT FOREIGN SCHEMA LIMIT TO ("_CategoryToContentItem")
+-- would silently import nothing (no error, missing relation at query time).
+CREATE TABLE IF NOT EXISTS "_CategoryToContentItem" (
+  "A" text NOT NULL, "B" text NOT NULL, PRIMARY KEY ("A", "B")
+);
+CREATE TABLE IF NOT EXISTS "_ContentItemToTag" (
+  "A" text NOT NULL, "B" text NOT NULL, PRIMARY KEY ("A", "B")
+);
+CREATE TABLE IF NOT EXISTS refunds (
+  id text PRIMARY KEY, amount numeric(14,2) NOT NULL DEFAULT 0, "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS reports (
+  id text PRIMARY KEY, status text NOT NULL DEFAULT 'open', "createdAt" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ── seed rows (only meaningful in azeebo_auth / azeebo_wallet, applied everywhere harmlessly) ──
 INSERT INTO users (id, email, password, "displayName", role, "updatedAt") VALUES

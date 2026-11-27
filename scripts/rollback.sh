@@ -1,77 +1,166 @@
 #!/usr/bin/env bash
 # ============================================================
-# Azeebo+ Rollback Script
+# Azeebo+ Rollback
 # ============================================================
-# Rolls back the Azeebo+ platform to a previous Docker image tag.
-# Stops current container, starts previous version, runs health checks,
-# and rolls back database if needed.
+# Rolls the deployed platform back to a previously published image tag.
 #
-# Usage: ./rollback.sh <previous-tag>
-# Example: ./rollback.sh v1.2.3
+# What is actually deployed: ONE container built from Dockerfile.all-in-one
+# (Postgres, Redis, PgBouncer, every service and every frontend inside it).
+# cd.yml / .github/workflows/cd.yml ships it as
+#
+#   ghcr.io/azeebotv/azeebo-all-in-one:<tag>
+#     cd.yml publishes staging-<sha>, staging, production-<sha>, latest;
+#     cd-all-in-one.yml publishes dev and <sha>.
+#
+# and runs it with `docker run --name azeebo[-staging] -p 3013 -p 4000
+# -p 4014 -p 4016 --env-file /opt/azeebo/.env.<env>`. This script reproduces
+# exactly that, so a rollback starts the same artifact the deploy started.
+# (The old per-service `docker-compose.prod.yml` sed of `${service}:.*` matched
+# nothing: that file builds from Dockerfiles and has no registry tags.)
+#
+# Usage:
+#   ./rollback.sh <tag> [--dry-run] [--yes]
+#   ./rollback.sh staging-1a2b3c4
+#   ./rollback.sh dev --yes
+#
+# The tag is pulled BEFORE the running container is touched; if the pull fails
+# the stack keeps serving the current image. If the rolled-back container fails
+# its health check, the previous image is restored automatically.
+#
+# Env overrides:
+#   ENVIRONMENT=staging|production   selects container name + env file
+#                                   (staging -> azeebo-staging + .env.staging,
+#                                    production -> azeebo + .env.production)
+#   IMAGE_REPOS="<repo> <repo>"      registry repos to try, in order
+#   IMAGE_REPO=<repo>                single repo shortcut (implies IMAGE_REPOS)
+#   CONTAINER_NAME=<name>            override the container name
+#   ENV_FILE=<path>                  override the env file passed to docker run
+#   PORTS="3013 4000 4014 4016"      host ports to publish
+#   HEALTH_CHECK_URL=<url>           default http://localhost:3013/health
+#   HEALTH_CHECK_RETRIES / HEALTH_CHECK_INTERVAL
+#   ASSUME_YES=1                     never prompt (same as --yes)
+#   ROLLBACK_LOG=<path>              default /var/log/azeebo/rollback_<ts>.log
+#   SLACK_WEBHOOK_URL=<url>          optional success/failure notification
+#
+# This script does NOT touch data. Rolling the image back does not reverse
+# migrations the newer image already applied; see the note it prints at the end.
 # ============================================================
 
 set -euo pipefail
 
-# ---- Configuration ----
-PREVIOUS_TAG="${1:-}"
-ENVIRONMENT="${ENVIRONMENT:-staging}"
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.${ENVIRONMENT}.yml}"
-HEALTH_CHECK_URL="${HEALTH_CHECK_URL:-http://localhost:3000/health}"
-HEALTH_CHECK_RETRIES="${HEALTH_CHECK_RETRIES:-30}"
-HEALTH_CHECK_INTERVAL="${HEALTH_CHECK_INTERVAL:-2}"
-ROLLBACK_LOG="/var/log/azeebo/rollback_$(date +%Y%m%d_%H%M%S).log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Service definitions
-SERVICES=(
-    "azeebo-gateway"
-    "azeebo-auth-service"
-    "azeebo-user-service"
-    "azeebo-wallet-service"
-    "azeebo-payment-service"
-    "azeebo-content-service"
-    "azeebo-media-service"
-    "azeebo-search-service"
-    "azeebo-notification-service"
-    "azeebo-reward-service"
-    "azeebo-analytics-service"
-    "azeebo-recommendation-service"
-    "azeebo-reality-service"
-    "azeebo-movie-service"
-    "azeebo-games-service"
-    "azeebo-comedy-service"
-    "azeebo-sports-service"
-    "azeebo-lifestyle-service"
-    "azeebo-vertical-service"
-    "azeebo-creator-service"
-    "azeebo-support-service"
-    "azeebo-moderation-service"
-    "azeebo-queue-service"
-    "azeebo-engagement-service"
-    "azeebo-messaging-service"
-    "azeebo-referral-service"
-    "azeebo-subscription-service"
-    "azeebo-admin-service"
-)
+# ---- Domain registry ----
+# Source the generated hostnames so the operator sees which public domain this
+# rollback converges on, and so a failure surfaces a missing registry file
+# before any container moves (the helper exits non-zero in that case).
+# shellcheck source=lib/domain-env.sh
+. "${SCRIPT_DIR}/lib/domain-env.sh"
 
-# ---- Functions ----
+# ---- Arguments ----
+TARGET_TAG=""
+DRY_RUN=0
+ASSUME_YES="${ASSUME_YES:-0}"
 
-log() {
-    local message="$1"
-    local timestamp
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[${timestamp}] ${message}" | tee -a "${ROLLBACK_LOG}"
+usage() {
+    sed -n '/^# Usage:/,/^#$/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run) DRY_RUN=1 ;;
+        -y | --yes) ASSUME_YES=1 ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        -*)
+            echo "ERROR: unknown flag: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+        *)
+            if [[ -n "${TARGET_TAG}" ]]; then
+                echo "ERROR: only one tag may be given (got '${TARGET_TAG}' and '$1')" >&2
+                exit 1
+            fi
+            TARGET_TAG="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z "${TARGET_TAG}" ]]; then
+    echo "ERROR: no image tag given." >&2
+    usage >&2
+    exit 1
+fi
+
+# ---- Configuration ----
+ENVIRONMENT="${ENVIRONMENT:-staging}"
+case "${ENVIRONMENT}" in
+    staging)
+        DEFAULT_CONTAINER="azeebo-staging"
+        DEFAULT_ENV_FILE="/opt/azeebo/.env.staging"
+        PUBLIC_HOST="${STAGING_HOST}"
+        ;;
+    production | prod)
+        ENVIRONMENT="production"
+        DEFAULT_CONTAINER="azeebo"
+        DEFAULT_ENV_FILE="/opt/azeebo/.env.production"
+        PUBLIC_HOST="${BASE_DOMAIN}"
+        ;;
+    *)
+        echo "ERROR: ENVIRONMENT must be 'staging' or 'production' (got '${ENVIRONMENT}')" >&2
+        exit 1
+        ;;
+esac
+
+CONTAINER_NAME="${CONTAINER_NAME:-${DEFAULT_CONTAINER}}"
+ENV_FILE="${ENV_FILE:-${DEFAULT_ENV_FILE}}"
+PORTS="${PORTS:-3013 4000 4014 4016}"
+HEALTH_CHECK_URL="${HEALTH_CHECK_URL:-http://localhost:3013/health}"
+HEALTH_CHECK_RETRIES="${HEALTH_CHECK_RETRIES:-60}"
+HEALTH_CHECK_INTERVAL="${HEALTH_CHECK_INTERVAL:-5}"
+# The one image cd.yml publishes, the compose files interpolate, and the
+# rollback workflow verifies. IMAGE_REPO overrides it for a fork or a mirror;
+# keep the ref lowercase — Docker rejects uppercase repository names.
+IMAGE_REPOS="${IMAGE_REPOS:-${IMAGE_REPO:-ghcr.io/azeebotv/azeebo-all-in-one}}"
+read -r -a IMAGE_REPO_LIST <<<"${IMAGE_REPOS}"
+read -r -a PORT_LIST <<<"${PORTS}"
+ORIGINAL_IMAGE=""
+
+# ---- Logging ----
+
+init_log() {
+    if [[ -z "${ROLLBACK_LOG:-}" ]]; then
+        local stamp; stamp="$(date +%Y%m%d_%H%M%S)"
+        if mkdir -p /var/log/azeebo 2>/dev/null && [[ -w /var/log/azeebo ]]; then
+            ROLLBACK_LOG="/var/log/azeebo/rollback_${stamp}.log"
+        else
+            ROLLBACK_LOG="${TMPDIR:-/tmp}/azeebo-rollback_${stamp}.log"
+        fi
+    fi
+    : >"${ROLLBACK_LOG}" 2>/dev/null || ROLLBACK_LOG="/dev/null"
+}
+
+log() {
+    local timestamp; timestamp="$(date +"%Y-%m-%d %H:%M:%S")"
+    printf '[%s] %s\n' "${timestamp}" "$*" | tee -a "${ROLLBACK_LOG}"
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+init_log
+
 send_slack_notification() {
-    local status="$1"
-    local message="$2"
-    local color="$3"
-    
+    local status="$1" message="$2" color="$3"
     if [[ -z "${SLACK_WEBHOOK_URL:-}" ]]; then
-        log "WARNING: SLACK_WEBHOOK_URL not set, skipping Slack notification"
         return 0
     fi
-    
     local payload
     payload=$(cat <<EOF
 {
@@ -81,26 +170,10 @@ send_slack_notification() {
             "title": "Azeebo+ Rollback - ${ENVIRONMENT}",
             "text": "${message}",
             "fields": [
-                {
-                    "title": "Status",
-                    "value": "${status}",
-                    "short": true
-                },
-                {
-                    "title": "Environment",
-                    "value": "${ENVIRONMENT}",
-                    "short": true
-                },
-                {
-                    "title": "Previous Tag",
-                    "value": "${PREVIOUS_TAG}",
-                    "short": true
-                },
-                {
-                    "title": "Timestamp",
-                    "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")",
-                    "short": true
-                }
+                { "title": "Status", "value": "${status}", "short": true },
+                { "title": "Environment", "value": "${ENVIRONMENT}", "short": true },
+                { "title": "Target Tag", "value": "${TARGET_TAG}", "short": true },
+                { "title": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")", "short": true }
             ],
             "footer": "Azeebo+ DevOps",
             "ts": $(date +%s)
@@ -109,341 +182,252 @@ send_slack_notification() {
 }
 EOF
 )
-    
-    curl -s -X POST -H 'Content-type: application/json' --data "${payload}" "${SLACK_WEBHOOK_URL}" >/dev/null 2>&1 || \
-        log "WARNING: Failed to send Slack notification"
+    curl -s -X POST -H 'Content-type: application/json' --data "${payload}" "${SLACK_WEBHOOK_URL}" >/dev/null 2>&1 ||
+        log "WARNING: failed to send Slack notification"
 }
+
+confirm() {
+    local prompt="$1"
+    if [[ "${ASSUME_YES}" == "1" ]]; then
+        log "${prompt} — assumed yes (--yes)"
+        return 0
+    fi
+    if [[ ! -t 0 ]]; then
+        log "ERROR: ${prompt} needs confirmation but stdin is not a terminal; re-run with --yes"
+        return 1
+    fi
+    read -r -p "${prompt} (y/N): " reply
+    [[ "${reply}" =~ ^[Yy]$ ]]
+}
+
+# ---- Validation ----
 
 validate_tag() {
     local tag="$1"
-    
-    if [[ -z "${tag}" ]]; then
-        log "ERROR: No tag provided"
-        echo "Usage: $0 <previous-tag>"
-        echo "Example: $0 v1.2.3"
-        exit 1
+    if [[ ! "${tag}" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]; then
+        die "invalid image tag '${tag}': expected a docker tag (letters, digits, '.', '_', '-')"
     fi
-    
-    # Check if tag format is valid
-    if ! [[ "${tag}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-        log "WARNING: Tag format '${tag}' does not follow semantic versioning"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            log "Rollback cancelled by user"
-            exit 0
-        fi
-    fi
-    
-    log "Validated tag: ${tag}"
-}
-
-get_current_tag() {
-    local service="$1"
-    local container_name="${service}-${ENVIRONMENT}"
-    
-    # Try to get the current image tag from the container
-    local current_image
-    current_image=$(docker inspect --format='{{.Config.Image}}' "${container_name}" 2>/dev/null || echo "unknown")
-    
-    # Extract tag from image
-    if [[ "${current_image}" == *":"* ]]; then
-        echo "${current_image##*:}"
-    else
-        echo "latest"
+    if [[ ! "${tag}" =~ ^(v?[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?|staging-[0-9a-fA-F]{7,40}|production-[0-9a-fA-F]{7,40}|sha-[0-9a-fA-F]{7,40}|[0-9a-fA-F]{7,40}|dev|latest)$ ]]; then
+        log "WARNING: '${tag}' is not one of the tags the pipeline publishes (dev, <sha>, staging-<sha>, production-<sha>); continuing"
     fi
 }
 
-stop_current_containers() {
-    log "Stopping current containers..."
-    
-    local stopped_count=0
-    
-    for service in "${SERVICES[@]}"; do
-        local container_name="${service}-${ENVIRONMENT}"
-        
-        if docker ps -q -f "name=${container_name}" | grep -q .; then
-            log "Stopping ${container_name}..."
-            if docker stop "${container_name}" 2>/dev/null; then
-                stopped_count=$((stopped_count + 1))
-                log "Stopped ${container_name}"
-            else
-                log "WARNING: Failed to stop ${container_name}"
-            fi
-        fi
-    done
-    
-    log "Stopped ${stopped_count} containers"
-    return 0
-}
-
-pull_previous_image() {
-    local service="$1"
-    local tag="$2"
-    
-    local registry="${DOCKER_REGISTRY:-registry.azeebo.ng}"
-    local image_prefix="${DOCKER_IMAGE_PREFIX:-azeebo}"
-    local image_name="${registry}/${image_prefix}/${service}:${tag}"
-    
-    log "Pulling image: ${image_name}"
-    
-    if docker pull "${image_name}" 2>>"${ROLLBACK_LOG}"; then
-        log "Successfully pulled ${image_name}"
-        return 0
-    else
-        log "ERROR: Failed to pull ${image_name}"
-        return 1
+# The commit a sha-shaped tag points at, with any environment prefix removed.
+tag_sha_hint() {
+    local tag="$1" sha
+    sha="${tag#staging-}"
+    sha="${sha#production-}"
+    sha="${sha#sha-}"
+    if [[ "${sha}" =~ ^[0-9a-fA-F]{7,40}$ ]]; then
+        printf '%s' "${sha}"
     fi
 }
 
-start_previous_version() {
-    log "Starting containers with tag: ${PREVIOUS_TAG}"
-    
-    # Update image tags in compose file
-    local compose_file="${COMPOSE_FILE}"
-    
-    if [[ ! -f "${compose_file}" ]]; then
-        log "ERROR: Compose file not found: ${compose_file}"
-        return 1
-    fi
-    
-    # Create backup of current compose file
-    cp "${compose_file}" "${compose_file}.backup.$(date +%Y%m%d_%H%M%S)"
-    
-    # Update image tags in compose file
-    for service in "${SERVICES[@]}"; do
-        local image_pattern="${service}:.*"
-        local replacement="${service}:${PREVIOUS_TAG}"
-        
-        if [[ "$(uname)" == "Darwin" ]]; then
-            sed -i '' "s|${image_pattern}|${replacement}|g" "${compose_file}"
-        else
-            sed -i "s|${image_pattern}|${replacement}|g" "${compose_file}"
-        fi
-    done
-    
-    # Start containers
-    if docker-compose -f "${compose_file}" up -d; then
-        log "Containers started successfully"
-        return 0
-    else
-        log "ERROR: Failed to start containers"
-        return 1
-    fi
-}
+# ---- Docker helpers ----
 
-run_health_checks() {
-    log "Running health checks..."
-    
-    local healthy_services=0
-    local unhealthy_services=()
-    
-    for service in "${SERVICES[@]}"; do
-        local container_name="${service}-${ENVIRONMENT}"
-        local health_url="${HEALTH_CHECK_URL}"
-        
-        # Adjust health check URL for gateway
-        if [[ "${service}" == "azeebo-gateway" ]]; then
-            health_url="http://localhost:3000/health"
-        else
-            # For internal services, check container health
-            local container_id
-            container_id=$(docker ps -q -f "name=${container_name}" 2>/dev/null | head -1)
-            
-            if [[ -n "${container_id}" ]]; then
-                # Check if container is running
-                local status
-                status=$(docker inspect --format='{{.State.Status}}' "${container_id}" 2>/dev/null)
-                
-                if [[ "${status}" == "running" ]]; then
-                    healthy_services=$((healthy_services + 1))
-                    log "HEALTHY: ${container_name}"
-                    continue
-                fi
-            fi
-            
-            unhealthy_services+=("${container_name}")
-            log "UNHEALTHY: ${container_name} (not running)"
-            continue
-        fi
-        
-        # HTTP health check for gateway
-        local retries=0
-        local healthy=false
-        
-        while [[ ${retries} -lt ${HEALTH_CHECK_RETRIES} ]]; do
-            if curl -sf "${health_url}" >/dev/null 2>&1; then
-                healthy=true
-                break
-            fi
-            
-            retries=$((retries + 1))
-            sleep "${HEALTH_CHECK_INTERVAL}"
-        done
-        
-        if [[ "${healthy}" == "true" ]]; then
-            healthy_services=$((healthy_services + 1))
-            log "HEALTHY: ${service}"
-        else
-            unhealthy_services+=("${service}")
-            log "UNHEALTHY: ${service}"
-        fi
-    done
-    
-    log "Health check summary: ${healthy_services}/${#SERVICES[@]} services healthy"
-    
-    if [[ ${#unhealthy_services[@]} -gt 0 ]]; then
-        log "Unhealthy services: ${unhealthy_services[*]}"
-        return 1
-    fi
-    
-    return 0
-}
-
-rollback_database() {
-    local service="$1"
-    local db_name="${ENVIRONMENT}_${service}"
-    
-    log "Checking database rollback for: ${service}"
-    
-    # Check if database backup exists for this tag
-    local backup_dir="/opt/azeebo/backups/${ENVIRONMENT}"
-    local backup_file="${backup_dir}/${db_name}_${PREVIOUS_TAG}.sql.gz"
-    
-    if [[ ! -f "${backup_file}" ]]; then
-        log "No database backup found for ${db_name} at tag ${PREVIOUS_TAG}"
-        log "Skipping database rollback for ${service}"
+current_image() {
+    if ! command -v docker >/dev/null 2>&1; then
         return 0
     fi
-    
-    read -p "Rollback database for ${service}? (y/N): " -n 1 -r
-    echo
-    
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log "Rolling back database: ${db_name}"
-        
-        # Restore database from backup
-        if gunzip -c "${backup_file}" | PGPASSWORD="${DB_PASSWORD:-}" psql \
-            -h "${DB_HOST:-db-staging.internal}" \
-            -p "${DB_PORT:-5432}" \
-            -U "${DB_USER:-azeebo_staging}" \
-            -d "${db_name}" \
-            -q 2>>"${ROLLBACK_LOG}"; then
-            
-            log "Database ${db_name} rolled back successfully"
+    docker inspect --format='{{.Config.Image}}' "${CONTAINER_NAME}" 2>/dev/null || true
+}
+
+container_exists() {
+    command -v docker >/dev/null 2>&1 &&
+        [[ -n "$(docker ps -aq -f "name=^/${CONTAINER_NAME}$" 2>/dev/null)" ]]
+}
+
+# Pulls <repo>:<tag> from the first registry repo that has it. Runs BEFORE the
+# live container is stopped, so a typo or an unpublished tag costs nothing.
+RESOLVED_IMAGE=""
+resolve_image() {
+    local tag="$1" repo ref
+    for repo in "${IMAGE_REPO_LIST[@]}"; do
+        ref="${repo}:${tag}"
+        log "Pulling ${ref}"
+        if docker pull "${ref}" >>"${ROLLBACK_LOG}" 2>&1; then
+            # Sets a global instead of printing: log() writes to stdout, so a
+            # command substitution would capture the log lines as the image ref.
+            RESOLVED_IMAGE="${ref}"
             return 0
-        else
-            log "ERROR: Failed to rollback database ${db_name}"
-            return 1
         fi
-    else
-        log "Skipping database rollback for ${service}"
+        log "WARNING: pull failed for ${ref}"
+    done
+    return 1
+}
+
+run_container() {
+    local image="$1" name="$2"
+    local args=(-d --name "${name}" --restart unless-stopped --env-file "${ENV_FILE}")
+    local port
+    for port in "${PORT_LIST[@]}"; do
+        args+=(-p "${port}:${port}")
+    done
+    docker run "${args[@]}" "${image}"
+}
+
+# Starts the target image under the real container name and waits for health.
+start_target() {
+    local image="$1"
+    if container_exists; then
+        log "Stopping ${CONTAINER_NAME}"
+        docker stop "${CONTAINER_NAME}" >>"${ROLLBACK_LOG}" 2>&1 || true
+        docker rm "${CONTAINER_NAME}" >>"${ROLLBACK_LOG}" 2>&1 || true
+    fi
+    log "Starting ${CONTAINER_NAME} with ${image}"
+    if ! run_container "${image}" "${CONTAINER_NAME}" >>"${ROLLBACK_LOG}" 2>&1; then
+        log "ERROR: docker run failed for ${image} (see ${ROLLBACK_LOG})"
+        return 1
+    fi
+    return 0
+}
+
+wait_for_health() {
+    local retries=0
+    while [[ ${retries} -lt ${HEALTH_CHECK_RETRIES} ]]; do
+        if curl -sf --max-time 5 "${HEALTH_CHECK_URL}" >/dev/null 2>&1; then
+            log "HEALTHY: ${HEALTH_CHECK_URL} responded after $((retries * HEALTH_CHECK_INTERVAL))s"
+            return 0
+        fi
+        retries=$((retries + 1))
+        sleep "${HEALTH_CHECK_INTERVAL}"
+    done
+    log "UNHEALTHY: ${HEALTH_CHECK_URL} did not respond after $((HEALTH_CHECK_RETRIES * HEALTH_CHECK_INTERVAL))s"
+    return 1
+}
+
+# Confirms the container is serving the commit the tag names, the way cd.yml's
+# staging health check does. Only runs when /version exposes a commitSha.
+verify_deployed_sha() {
+    local hint; hint="$(tag_sha_hint "$1")"
+    if [[ -z "${hint}" ]]; then
         return 0
     fi
+    local version_url="${HEALTH_CHECK_URL%/health}/version"
+    local body deployed
+    body="$(curl -sf --max-time 10 "${version_url}" 2>/dev/null || true)"
+    deployed="$(printf '%s' "${body}" | grep -o '"commitSha"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    if [[ -z "${deployed}" || "${deployed}" == "dev" ]]; then
+        log "WARNING: ${version_url} did not report a commitSha; skipping tag/SHA verification"
+        return 0
+    fi
+    if [[ "${hint}" == "${deployed}"* || "${deployed}" == "${hint}"* ]]; then
+        log "VERIFIED: running commit ${deployed} matches tag ${TARGET_TAG}"
+        return 0
+    fi
+    log "ERROR: running commit ${deployed} does not match tag ${TARGET_TAG} (expected ${hint})"
+    return 1
 }
 
-cleanup() {
-    log "Cleaning up..."
-    
-    # Remove temporary compose file backups older than 7 days
-    find . -name "*.backup.*" -mtime +7 -delete 2>/dev/null || true
-    
-    log "Cleanup complete"
+# Puts the pre-rollback image back. Best effort: it reports what the operator
+# must do by hand rather than leaving the host without a container.
+restore_previous() {
+    if [[ -z "${ORIGINAL_IMAGE}" ]]; then
+        log "WARNING: no previous image recorded; nothing to restore automatically"
+        return 1
+    fi
+    log "Restoring previous image ${ORIGINAL_IMAGE}"
+    # A failed `docker run` can still have created (or claimed the name of) a
+    # container, so clear it unconditionally before starting the old image.
+    docker rm -f "${CONTAINER_NAME}" >>"${ROLLBACK_LOG}" 2>&1 || true
+    if run_container "${ORIGINAL_IMAGE}" "${CONTAINER_NAME}" >>"${ROLLBACK_LOG}" 2>&1 &&
+        wait_for_health; then
+        log "RESTORED: previous image ${ORIGINAL_IMAGE} is healthy again"
+        return 0
+    fi
+    log "ERROR: automatic restore to ${ORIGINAL_IMAGE} failed; start it manually:"
+    log "  docker run -d --name ${CONTAINER_NAME} --restart unless-stopped --env-file ${ENV_FILE} \\"
+    log "    $(printf -- '-p %s ' "${PORT_LIST[@]}")${ORIGINAL_IMAGE}"
+    return 1
 }
 
-# ---- Main Execution ----
+# ---- Main ----
 
 main() {
     log "=================================================="
-    log "Starting Azeebo+ rollback to tag: ${PREVIOUS_TAG}"
+    log "Azeebo+ rollback to tag: ${TARGET_TAG}"
     log "Environment: ${ENVIRONMENT}"
+    log "Container:   ${CONTAINER_NAME}"
+    log "Public host: ${PUBLIC_HOST:-<unset>}"
+    if [[ "${DRY_RUN}" == "1" ]]; then
+        log "Mode:        DRY RUN — no container is changed"
+    fi
     log "=================================================="
-    
-    # Create log directory if it doesn't exist
-    mkdir -p "$(dirname "${ROLLBACK_LOG}")"
-    
-    # Validate tag
-    validate_tag "${PREVIOUS_TAG}"
-    
-    # Get current tag for comparison
-    local current_tag
-    current_tag=$(get_current_tag "azeebo-gateway")
-    log "Current tag: ${current_tag}"
-    log "Target tag: ${PREVIOUS_TAG}"
-    
-    if [[ "${current_tag}" == "${PREVIOUS_TAG}" ]]; then
-        log "WARNING: Current tag is same as target tag"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            log "Rollback cancelled by user"
+
+    validate_tag "${TARGET_TAG}"
+
+    # Fail before stopping anything if the deployment's env file is missing:
+    # docker run would otherwise start a container with defaults and no secrets.
+    if [[ ! -f "${ENV_FILE}" ]]; then
+        die "env file not found: ${ENV_FILE} (set ENV_FILE=<path> to override)"
+    fi
+    if ! command -v curl >/dev/null 2>&1; then
+        die "curl is required for the post-rollback health check"
+    fi
+
+    if [[ "${DRY_RUN}" == "1" ]]; then
+        log "Image candidates: ${IMAGE_REPOS}"
+        log "Ports:            ${PORTS}"
+        log "Env file:         ${ENV_FILE}"
+        log "Health check:     ${HEALTH_CHECK_URL}"
+        if command -v docker >/dev/null 2>&1; then
+            log "Current image:    $(current_image)"
+        else
+            log "Current image:    <docker not available>"
+        fi
+        log "Plan: docker pull <candidate>:${TARGET_TAG}, replace ${CONTAINER_NAME}, poll ${HEALTH_CHECK_URL}"
+        return 0
+    fi
+
+    if ! command -v docker >/dev/null 2>&1; then
+        die "docker is not installed or not on PATH"
+    fi
+
+    ORIGINAL_IMAGE="$(current_image)"
+    if [[ -z "${ORIGINAL_IMAGE}" ]]; then
+        log "WARNING: no running ${CONTAINER_NAME} container found; this is a cold start, not a rollback"
+    else
+        log "Current image: ${ORIGINAL_IMAGE}"
+        if [[ "${ORIGINAL_IMAGE##*:}" == "${TARGET_TAG}" ]]; then
+            log "WARNING: ${CONTAINER_NAME} already runs tag ${TARGET_TAG}"
+            confirm "Roll back to the same tag anyway?" || {
+                log "Rollback cancelled"
+                exit 0
+            }
+        elif ! confirm "Roll ${ENVIRONMENT} from ${ORIGINAL_IMAGE} back to ${TARGET_TAG}?"; then
+            log "Rollback cancelled"
             exit 0
         fi
     fi
-    
-    # Stop current containers
-    stop_current_containers
-    
-    # Pull previous images
-    log "Pulling previous images..."
-    local pull_failed=0
-    for service in "${SERVICES[@]}"; do
-        if ! pull_previous_image "${service}" "${PREVIOUS_TAG}"; then
-            pull_failed=$((pull_failed + 1))
-        fi
-    done
-    
-    if [[ ${pull_failed} -gt 0 ]]; then
-        log "ERROR: Failed to pull ${pull_failed} images"
-        send_slack_notification "FAILED" "Failed to pull ${pull_failed} images for rollback" "#ff0000"
+
+    if ! resolve_image "${TARGET_TAG}"; then
+        send_slack_notification "FAILED" "Image tag ${TARGET_TAG} not found in ${IMAGE_REPOS}" "#ff0000"
+        die "could not pull ${TARGET_TAG} from any of: ${IMAGE_REPOS} (nothing was stopped)"
+    fi
+    local resolved="${RESOLVED_IMAGE}"
+    log "Resolved image: ${resolved}"
+
+    if ! start_target "${resolved}"; then
+        restore_previous || true
+        send_slack_notification "FAILED" "Container failed to start with ${TARGET_TAG}" "#ff0000"
         exit 1
     fi
-    
-    # Start previous version
-    if ! start_previous_version; then
-        log "ERROR: Failed to start containers"
-        send_slack_notification "FAILED" "Failed to start containers for rollback" "#ff0000"
+
+    if ! wait_for_health || ! verify_deployed_sha "${TARGET_TAG}"; then
+        log "Rollback target ${TARGET_TAG} is not healthy"
+        restore_previous || true
+        send_slack_notification "FAILED" "Rollback to ${TARGET_TAG} failed its health check; previous image restored" "#ff0000"
         exit 1
     fi
-    
-    # Run health checks
-    if ! run_health_checks; then
-        log "WARNING: Some services failed health checks"
-        send_slack_notification "PARTIAL FAILURE" "Rollback completed but some services are unhealthy" "#ff9900"
-    else
-        log "All services are healthy"
-    fi
-    
-    # Ask about database rollback
-    log ""
-    log "Database Rollback Options:"
-    log "  Some services may require database rollback"
-    log "  This should only be done if the new version made breaking schema changes"
-    log ""
-    
-    read -p "Check for database rollbacks? (y/N): " -n 1 -r
-    echo
-    
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        for service in "${SERVICES[@]}"; do
-            rollback_database "${service}"
-        done
-    fi
-    
-    # Cleanup
-    cleanup
-    
-    # Send success notification
-    send_slack_notification "SUCCESS" "Rollback to ${PREVIOUS_TAG} completed successfully" "#36a64f"
-    
+
+    send_slack_notification "SUCCESS" "Rollback to ${TARGET_TAG} completed" "#36a64f"
+
     log "=================================================="
-    log "Rollback completed successfully"
-    log "Rolled back to tag: ${PREVIOUS_TAG}"
+    log "Rollback completed: ${CONTAINER_NAME} now runs ${resolved}"
+    log "Data was NOT touched. If the reverted release applied migrations,"
+    log "verify schema compatibility before calling this resolved."
     log "Log file: ${ROLLBACK_LOG}"
     log "=================================================="
-    
-    exit 0
 }
 
-# Run main function
 main "$@"

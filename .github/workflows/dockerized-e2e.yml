@@ -66,9 +66,9 @@ permissions:
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [Dev-Branch]
   push:
-    branches: [main, develop]
+    branches: [Dev-Branch]
   workflow_dispatch:
 
 env:
@@ -97,7 +97,7 @@ jobs:
     name: Actionlint (workflow syntax)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Run actionlint on all workflows
         run: |
           # GitHub release downloads from runner IPs are occasionally
@@ -119,10 +119,10 @@ jobs:
     outputs:
       docker: ${{ steps.filter.outputs.docker || steps.manual.outputs.docker }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - id: filter
         if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@15192bc058cc28a13dbf6cde61f19e18988b7af6 # v3
         with:
           filters: |
             docker:
@@ -146,7 +146,7 @@ jobs:
     timeout-minutes: 120
     if: ${{ github.event_name != 'pull_request' || needs.docker-changes.outputs.docker == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Build all-in-one image
         run: |
@@ -166,8 +166,8 @@ jobs:
             -e REDIS_PASSWORD=smoke_redis_pw \
             -e JWT_ACCESS_SECRET=smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef \
             -e JWT_REFRESH_SECRET=smoke_jwt_refresh_secret_0123456789abcdef0123456789abcdef0123456789abcdef \
-            -e INTERNAL_API_KEY=smoke_internal_api_key \
-            -e GATEWAY_SECRET=smoke_gateway_secret \
+            -e INTERNAL_API_KEY=smoke_internal_api_key_0123456789abcdef \
+            -e GATEWAY_SECRET=smoke_gateway_secret_0123456789abcdef \
             -e WEBHOOK_SECRET=smoke_webhook_secret \
             -e ALLOWED_ORIGINS=http://localhost:80,http://localhost:3013 \
             azeebo-all-in-one:smoke
@@ -219,6 +219,9 @@ jobs:
       - name: Service health smoke checks (nginx → gateway → services)
         run: bash scripts/docker-smoke-tests.sh http://localhost:80
 
+      - name: All-in-one dynamic gateway routing table & health smoke test
+        run: ALL_IN_ONE_E2E=1 ALL_IN_ONE_IMAGE=azeebo-all-in-one:smoke node --test scripts/__tests__/all-in-one-smoke.test.mjs
+
       # Full gateway sweep: every registered GET route, minted dev token,
       # fails on any 5xx. Uses the same secrets the container was booted with.
       # The admin/creator standalone apps are skipped (out of smoke scope here).
@@ -231,6 +234,21 @@ jobs:
           JWT_AUDIENCE: azeebo-api
           SMOKE_SKIP_SERVICES: admin,creator
           SMOKE_CONCURRENCY: '2'
+      # Ops API contract smoke (REAL payload, unlike the mocked Playwright
+      # render sweep): /admin/ops/services + /admin/ops/transport-flips
+      # field-shape assertions — transport enum per answered service, flip
+      # counter invariants, store mode, trend totals. Mints the same dev JWT
+      # as the gateway smoke (the admin JwtStrategy is stateless), so no
+      # seeded user is needed in the container. Fails fast on payload drift:
+      # the Ops cards' fields changing shape breaks CI here instead of
+      # shipping blanks behind the mocked e2e.
+      - name: Ops API contract smoke (services + transport-flips)
+        run: node scripts/ops-smoke.mjs
+        env:
+          ADMIN_URL: http://localhost:4016
+          JWT_ACCESS_SECRET: smoke_jwt_access_secret_0123456789abcdef0123456789abcdef0123456789abcdef
+          JWT_ISSUER: azeebo-auth
+          JWT_AUDIENCE: azeebo-api
 
       - name: Dump container logs on failure
         if: failure()
@@ -273,11 +291,11 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'

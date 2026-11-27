@@ -204,20 +204,29 @@ export default function DualControlPage() {
   };
 
   const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    first_approved: 'bg-blue-100 text-blue-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    executed: 'bg-gray-100 text-gray-800',
+    pending: 'bg-az-warning-500/20 text-az-warning-500',
+    first_approved: 'bg-az-secondary-500/20 text-az-secondary-500',
+    approved: 'bg-az-success-500/20 text-az-success-500',
+    rejected: 'bg-az-error-500/15 text-az-error-500',
+    executed: 'bg-az-glass-fill text-az-ink-muted',
   };
 
+  const stepCircle = (state: 'done' | 'waiting' | 'idle') =>
+    `flex size-6 items-center justify-center rounded-full az-micro-label ${
+      state === 'done'
+        ? 'bg-az-success-500 text-az-surface-root'
+        : state === 'waiting'
+          ? 'bg-az-warning-500 text-az-surface-root'
+          : 'bg-az-glass-fill-hover text-az-ink-muted'
+    }`;
+
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8 flex items-start justify-between">
+    <div className="min-h-screen bg-az-surface-root p-6 text-az-ink">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Dual-Control Actions</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="az-heading text-az-ink">Dual-Control Actions</h1>
+            <p className="az-lead mt-2 text-az-ink-muted">
               High-risk operations requiring two-person approval before execution
             </p>
           </div>
@@ -226,7 +235,7 @@ export default function DualControlPage() {
               setShowForm((prev) => !prev);
               setFormError(null);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
+            className="rounded-az-control bg-az-glass-fill px-4 py-2 az-body-strong text-az-ink transition-colors hover:bg-az-glass-fill-hover"
           >
             {showForm ? 'Cancel' : '+ New Request'}
           </button>
@@ -234,17 +243,15 @@ export default function DualControlPage() {
 
         {/* Create-request form */}
         {showForm && (
-          <div className="bg-card rounded-xl border p-6 mb-8">
-            <h2 className="font-semibold text-foreground mb-4">New Dual-Control Request</h2>
+          <div className="az-glass mb-8 p-6">
+            <h2 className="az-subtitle mb-4 text-az-ink">New Dual-Control Request</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Action type *
-                </label>
+                <label className="az-label">Action type *</label>
                 <select
                   value={form.actionType}
                   onChange={(e) => setForm((prev) => ({ ...prev, actionType: e.target.value }))}
-                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  className="az-input"
                 >
                   {ACTION_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -254,50 +261,40 @@ export default function DualControlPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Target user IDs (comma-separated, optional)
-                </label>
+                <label className="az-label">Target user IDs (comma-separated, optional)</label>
                 <input
                   type="text"
                   value={form.targetUserIds}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, targetUserIds: e.target.value }))
-                  }
-                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  onChange={(e) => setForm((prev) => ({ ...prev, targetUserIds: e.target.value }))}
+                  className="az-input"
                   placeholder="user-id-1, user-id-2"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Description *
-                </label>
+                <label className="az-label">Description *</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                   maxLength={2000}
-                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground h-24 resize-none"
+                  className="az-input h-24 resize-none"
                   placeholder="What high-risk operation needs approval, and why?"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {form.description.length}/2000
-                </p>
+                <p className="az-caption mt-1 text-az-ink-muted">{form.description.length}/2000</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Amount (optional)
-                </label>
+                <label className="az-label">Amount (optional)</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={form.amount}
                   onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
-                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  className="az-input"
                   placeholder="0.00"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="az-label">
                   Currency {form.amount.trim() ? '*' : '(optional)'}
                 </label>
                 <input
@@ -305,27 +302,24 @@ export default function DualControlPage() {
                   value={form.currency}
                   onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
                   maxLength={3}
-                  className="w-full px-4 py-2 bg-background border rounded-lg text-foreground"
+                  className="az-input"
                   placeholder="NGN"
                 />
               </div>
             </div>
 
-            {formError && (
-              <p className="text-sm text-destructive mt-4">{formError}</p>
-            )}
+            {formError && <p className="az-body mt-4 text-az-error-500">{formError}</p>}
 
-            <div className="flex items-center gap-4 mt-6">
+            <div className="mt-6 flex flex-wrap items-center gap-4">
               <button
                 onClick={handleCreate}
                 disabled={submitting}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-muted disabled:text-muted-foreground text-white text-sm px-6 py-2 rounded-lg"
+                className="az-btn-primary az-btn-primary--inline az-btn-primary--sm"
               >
                 {submitting ? 'Submitting...' : 'Submit Request'}
               </button>
-              <p className="text-xs text-muted-foreground">
-                The requesting admin cannot approve their own request — a second admin must
-                approve.
+              <p className="az-caption text-az-ink-muted">
+                The requesting admin cannot approve their own request — a second admin must approve.
               </p>
             </div>
           </div>
@@ -333,32 +327,32 @@ export default function DualControlPage() {
 
         {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Pending Actions</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.totalPending}</p>
+          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="az-glass p-4">
+              <p className="az-body text-az-ink-muted">Pending Actions</p>
+              <p className="az-title text-az-warning-500">{stats.totalPending}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Awaiting First Approval</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.awaitingFirstApproval}</p>
+            <div className="az-glass p-4">
+              <p className="az-body text-az-ink-muted">Awaiting First Approval</p>
+              <p className="az-title text-az-secondary-500">{stats.awaitingFirstApproval}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Awaiting Second Approval</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.awaitingSecondApproval}</p>
+            <div className="az-glass p-4">
+              <p className="az-body text-az-ink-muted">Awaiting Second Approval</p>
+              <p className="az-title text-az-flame">{stats.awaitingSecondApproval}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Executed This Month</p>
-              <p className="text-2xl font-bold text-green-600">{stats.executedThisMonth}</p>
+            <div className="az-glass p-4">
+              <p className="az-body text-az-ink-muted">Executed This Month</p>
+              <p className="az-title text-az-success-500">{stats.executedThisMonth}</p>
             </div>
           </div>
         )}
 
         {/* Filter */}
-        <div className="flex gap-4 mb-6">
+        <div className="mb-6 flex gap-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-card border rounded-lg text-foreground"
+            className="az-input max-w-xs"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
@@ -370,9 +364,9 @@ export default function DualControlPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading actions...</div>
+          <div className="az-lead py-12 text-center text-az-ink-muted">Loading actions...</div>
         ) : error ? (
-          <div className="text-center py-12 text-destructive">{error}</div>
+          <div className="az-lead py-12 text-center text-az-error-500">{error}</div>
         ) : actions.length === 0 ? (
           <EmptyState
             icon="Lock"
@@ -382,26 +376,28 @@ export default function DualControlPage() {
         ) : (
           <div className="grid gap-4">
             {actions.map((action) => (
-              <div key={action.id} className="bg-card rounded-xl border p-6">
-                <div className="flex items-start justify-between mb-4">
+              <div key={action.id} className="az-glass p-6">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span>{actionTypeLabels[action.actionType]}</span>
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="az-body-strong text-az-ink">
+                        {actionTypeLabels[action.actionType]}
+                      </span>
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${statusColors[action.status]}`}
+                        className={`rounded-az-pill px-2.5 py-1 az-micro-label ${statusColors[action.status]}`}
                       >
                         {action.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <h3 className="font-semibold text-foreground">{action.description}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="az-body-strong text-az-ink">{action.description}</h3>
+                    <p className="az-caption text-az-ink-muted">
                       Requested by {action.requestedByName} •{' '}
                       {new Date(action.requestedAt).toLocaleString()}
                     </p>
                   </div>
                   {action.amount && (
                     <div className="text-right">
-                      <p className="text-xl font-bold text-foreground">
+                      <p className="az-title text-az-ink">
                         {action.amount.toLocaleString()} {action.currency || 'NGN'}
                       </p>
                     </div>
@@ -409,37 +405,37 @@ export default function DualControlPage() {
                 </div>
 
                 {/* Approval progress */}
-                <div className="bg-muted/50 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-4 text-sm">
+                <div className="mb-4 rounded-az-control bg-az-glass-fill p-4">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          action.firstApprover ? 'bg-green-600 text-white' : 'bg-gray-300'
-                        }`}
+                        className={stepCircle(action.firstApprover ? 'done' : 'idle')}
+                        aria-hidden="true"
                       >
                         {action.firstApprover ? 'Check' : '1'}
                       </div>
-                      <span className="text-muted-foreground">First Approval</span>
+                      <span className="az-body text-az-ink-muted">First Approval</span>
                       {action.firstApproverName && (
-                        <span className="text-foreground">{action.firstApproverName}</span>
+                        <span className="az-body text-az-ink">{action.firstApproverName}</span>
                       )}
                     </div>
-                    <div className="flex-1 h-px bg-border" />
+                    <div className="h-px flex-1 bg-az-glass-border" />
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        className={stepCircle(
                           action.secondApprover
-                            ? 'bg-green-600 text-white'
+                            ? 'done'
                             : action.status === 'first_approved'
-                              ? 'bg-yellow-500 text-white'
-                              : 'bg-gray-300'
-                        }`}
+                              ? 'waiting'
+                              : 'idle'
+                        )}
+                        aria-hidden="true"
                       >
                         {action.secondApprover ? 'Check' : '2'}
                       </div>
-                      <span className="text-muted-foreground">Second Approval</span>
+                      <span className="az-body text-az-ink-muted">Second Approval</span>
                       {action.secondApproverName && (
-                        <span className="text-foreground">{action.secondApproverName}</span>
+                        <span className="az-body text-az-ink">{action.secondApproverName}</span>
                       )}
                     </div>
                   </div>
@@ -450,13 +446,13 @@ export default function DualControlPage() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleApprove(action.id)}
-                      className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg"
+                      className="rounded-az-control bg-az-success-500/20 px-4 py-2 az-body-strong text-az-success-500 transition-colors hover:bg-az-success-500/30"
                     >
                       {action.status === 'pending' ? 'First Approval' : 'Second Approval'}
                     </button>
                     <button
                       onClick={() => handleReject(action.id, 'Rejected by admin')}
-                      className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg"
+                      className="rounded-az-control bg-az-error-500/15 px-4 py-2 az-body-strong text-az-error-500 transition-colors hover:bg-az-error-500/25"
                     >
                       Reject
                     </button>
@@ -464,7 +460,7 @@ export default function DualControlPage() {
                 )}
 
                 {action.rejectionReason && (
-                  <p className="text-sm text-destructive mt-3">
+                  <p className="az-body mt-3 text-az-error-500">
                     Rejection reason: {action.rejectionReason}
                   </p>
                 )}

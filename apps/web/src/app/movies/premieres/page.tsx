@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -44,10 +43,8 @@ function PremieresPageContent(): React.JSX.Element {
   const featured = premieres[0] ?? null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Movies" />
-
-      {/* Featured Premiere */}
+    <PageShell maxWidth="full" activeNav="Movies">
+      {/* Featured Premiere — the film's own artwork is this page's hero */}
       {isLoading ? (
         <section className="relative">
           <Skeleton height="500px" borderRadius="0" />
@@ -62,49 +59,38 @@ function PremieresPageContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
+            <div className="absolute inset-0 az-scrim--hero" />
+            <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-7xl p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      backgroundColor: 'var(--color-warning-500)',
-                      color: 'var(--brand-near-black)',
-                    }}
-                  >
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="az-caption rounded-az-pill bg-az-warning-500 px-3 py-1 font-semibold text-az-surface-root">
                     Coming Soon
                   </span>
                   {featured.isExclusive && (
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: 'var(--brand-orange)',
-                        color: 'var(--brand-white)',
-                      }}
-                    >
+                    <span className="az-caption rounded-az-pill bg-az-flame px-3 py-1 font-semibold text-az-surface-root">
                       Azeebo+ Exclusive
                     </span>
                   )}
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{featured.title}</h1>
-                <p className="text-white/60 text-lg mb-4 max-w-2xl">{featured.description}</p>
-                {featured.genre && <p className="text-sm text-white/40 mb-4">{featured.genre}</p>}
+                <h1 className="az-headline mb-3 text-4xl text-az-ink sm:text-5xl">
+                  {featured.title}
+                </h1>
+                <p className="az-lead mb-4 max-w-2xl text-az-ink/60">{featured.description}</p>
+                {featured.genre && <p className="az-body mb-4 text-az-ink/40">{featured.genre}</p>}
                 <div className="flex items-center gap-4">
                   <motion.button
                     type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    className="az-btn-primary az-btn-primary--inline"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     Set Reminder
                   </motion.button>
-                  <span className="text-white/60 text-sm">
+                  <span className="az-body text-az-ink/60">
                     Premieres{' '}
                     {new Date(featured.premiereDate).toLocaleDateString('en-NG', {
                       month: 'long',
@@ -120,19 +106,17 @@ function PremieresPageContent(): React.JSX.Element {
       ) : null}
 
       {/* Upcoming Premieres */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Upcoming Premieres
-          </h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Upcoming Premieres</h2>
         </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <Skeleton height="240px" borderRadius="0" />
-                <div className="p-4 space-y-3">
+                <Skeleton height="240px" borderRadius="0" className="sm:h-[240px]" />
+                <div className="space-y-3 p-4">
                   <Skeleton height="20px" width="70%" />
                   <Skeleton height="16px" width="50%" />
                   <Skeleton height="36px" borderRadius="0" />
@@ -147,7 +131,7 @@ function PremieresPageContent(): React.JSX.Element {
             onButtonPress={() => premieresQuery.refetch()}
           />
         ) : premieres.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {premieres.map((premiere, index) => {
               const daysUntil = Math.ceil(
                 (new Date(premiere.premiereDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -168,42 +152,30 @@ function PremieresPageContent(): React.JSX.Element {
                         alt={premiere.title}
                         width={400}
                         height={192}
-                        className="w-full h-48 object-cover"
+                        className="h-48 w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
+                      <div className="absolute inset-0 az-scrim" />
                       {daysUntil > 0 && (
-                        <div className="absolute top-2 right-2">
-                          <span
-                            className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                            style={{
-                              backgroundColor: 'rgba(245,158,11,0.9)',
-                              color: 'var(--brand-near-black)',
-                            }}
-                          >
+                        <div className="absolute right-2 top-2">
+                          <span className="az-caption rounded-az-pill bg-az-warning-500/90 px-2.5 py-1 font-semibold text-az-surface-root">
                             {daysUntil} days
                           </span>
                         </div>
                       )}
                       <div className="absolute bottom-4 left-4 right-4">
                         {premiere.genre && (
-                          <span
-                            className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                            style={{
-                              backgroundColor: 'rgba(232,66,10,0.2)',
-                              color: 'var(--brand-orange)',
-                            }}
-                          >
+                          <span className="az-caption mb-2 inline-block rounded-az-pill bg-az-scarlet/20 px-2.5 py-0.5 text-az-flame">
                             {premiere.genre}
                           </span>
                         )}
-                        <h3 className="text-lg font-bold text-white">{premiere.title}</h3>
+                        <h3 className="az-title text-az-ink">{premiere.title}</h3>
                       </div>
                     </div>
                     <div className="p-4">
-                      <p className="text-sm text-white/50 mb-3 line-clamp-2">
+                      <p className="az-body mb-3 line-clamp-2 text-az-ink-muted">
                         {premiere.description}
                       </p>
-                      <div className="flex items-center justify-between text-xs text-white/40 mb-3">
+                      <div className="az-caption mb-3 flex items-center justify-between text-az-ink/40">
                         <span>
                           {new Date(premiere.premiereDate).toLocaleDateString('en-NG', {
                             month: 'short',
@@ -211,13 +183,11 @@ function PremieresPageContent(): React.JSX.Element {
                             year: 'numeric',
                           })}
                         </span>
-                        {premiere.isExclusive && (
-                          <span style={{ color: 'var(--brand-orange)' }}>Exclusive</span>
-                        )}
+                        {premiere.isExclusive && <span className="text-az-flame">Exclusive</span>}
                       </div>
                       <motion.button
                         type="button"
-                        className="az-btn-primary w-full"
+                        className="az-btn-primary"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -230,14 +200,12 @@ function PremieresPageContent(): React.JSX.Element {
             })}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No upcoming premieres</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink/50">No upcoming premieres</p>
           </div>
         )}
       </section>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -247,8 +215,8 @@ export default function PremieresPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

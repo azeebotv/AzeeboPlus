@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
+import { Check } from 'lucide-react';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -171,36 +172,13 @@ export default function ProfileSetupPage(): React.JSX.Element {
 
   if (success) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-6"
-        style={{ backgroundColor: 'var(--brand-near-black)' }}
-      >
-        <div className="text-center max-w-md">
-          <div
-            className="mx-auto mb-6 rounded-full flex items-center justify-center"
-            style={{
-              width: 72,
-              height: 72,
-              background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-              boxShadow: '0 0 30px rgba(204,28,28,0.5)',
-            }}
-          >
-            <svg
-              className="h-9 w-9 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+      <div className="flex min-h-screen items-center justify-center bg-az-surface-root p-6">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-6 flex size-[72px] items-center justify-center rounded-full bg-gradient-to-br from-az-flame to-az-scarlet shadow-az-glow">
+            <Check size={36} strokeWidth={2.5} className="text-az-ink" aria-hidden />
           </div>
-          <h2 className="az-headline text-white text-2xl mb-2">Profile Setup Complete!</h2>
-          <p className="text-white/55">Redirecting you to the home page...</p>
+          <h2 className="az-section-title mb-2 text-az-ink">Profile Setup Complete!</h2>
+          <p className="az-body text-az-ink-muted">Redirecting you to the home page...</p>
         </div>
       </div>
     );
@@ -209,18 +187,15 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const profileInitial = (fullName || 'Y').charAt(0).toUpperCase();
 
   return (
-    <div
-      className="min-h-screen w-full p-6 sm:p-10"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
-    >
+    <div className="min-h-screen w-full bg-az-surface-root p-6 text-az-ink sm:p-10">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <BrandLogo variant="light" />
         </div>
 
         <header className="mb-10">
-          <h1 className="az-headline text-white text-4xl mb-2">Profile Setup</h1>
-          <p className="text-white/55 text-sm max-w-xl">
+          <h1 className="az-heading mb-2 text-az-ink">Profile Setup</h1>
+          <p className="az-body max-w-xl text-az-ink-muted">
             Your curated home for Nigerian contents, community and creation.
           </p>
         </header>
@@ -236,16 +211,9 @@ export default function ProfileSetupPage(): React.JSX.Element {
           <div className="az-glass p-6 flex flex-col items-center text-center h-fit">
             <div className="relative mb-4">
               <div
-                className="rounded-full flex items-center justify-center font-bold text-white overflow-hidden"
-                style={{
-                  width: 120,
-                  height: 120,
-                  fontSize: 48,
-                  background: avatarUrl
-                    ? 'transparent'
-                    : 'linear-gradient(135deg, #E8420A, #CC1C1C)',
-                  border: '2px solid rgba(255,255,255,0.2)',
-                }}
+                className={`flex size-[120px] items-center justify-center overflow-hidden rounded-full border-2 border-az-ink/20 az-display text-az-ink ${
+                  avatarUrl ? '' : 'bg-gradient-to-br from-az-flame to-az-scarlet'
+                }`}
               >
                 {isUploadingAvatar ? (
                   <Spinner />
@@ -263,16 +231,16 @@ export default function ProfileSetupPage(): React.JSX.Element {
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <span
+              <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1 cursor-pointer"
-                style={{ background: 'var(--brand-red)', borderRadius: 999 }}
+                className="az-micro-label absolute bottom-1 left-1/2 -translate-x-1/2 cursor-pointer whitespace-nowrap rounded-az-pill bg-az-scarlet px-3 py-1 font-bold text-az-ink"
               >
                 Change profile picture
-              </span>
+              </button>
             </div>
-            <p className="az-headline text-white text-lg">{fullName.trim() || 'Your Name'}</p>
-            <p className="text-white/50 text-sm">@{username.trim() || 'username'}</p>
+            <p className="az-subtitle text-az-ink">{fullName.trim() || 'Your Name'}</p>
+            <p className="az-caption text-az-ink-muted">@{username.trim() || 'username'}</p>
           </div>
 
           {/* Right: form grid */}
@@ -359,10 +327,9 @@ export default function ProfileSetupPage(): React.JSX.Element {
                 <input
                   id="dob"
                   type="date"
-                  className="az-input"
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
-                  style={{ colorScheme: 'dark' }}
+                  className="az-input [color-scheme:dark]"
                 />
               </div>
               <div>
@@ -374,11 +341,15 @@ export default function ProfileSetupPage(): React.JSX.Element {
                   className="az-input"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  style={{ color: gender ? 'white' : 'rgba(255,255,255,0.4)' }}
+                  style={{
+                    color: gender
+                      ? 'var(--color-az-ink)'
+                      : 'color-mix(in srgb, var(--color-az-ink) 40%, transparent)',
+                  }}
                 >
                   <option value="">Select gender</option>
                   {genders.map((g) => (
-                    <option key={g} value={g} style={{ color: 'var(--brand-near-black)' }}>
+                    <option key={g} value={g} style={{ color: 'var(--color-az-surface-root)' }}>
                       {g}
                     </option>
                   ))}
@@ -393,14 +364,13 @@ export default function ProfileSetupPage(): React.JSX.Element {
               <textarea
                 id="bio"
                 rows={3}
-                className="az-input"
-                style={{ resize: 'vertical' }}
+                className="az-input resize-y"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Tell us about yourself..."
                 maxLength={200}
               />
-              <p className="text-right text-white/40 text-xs mt-1">{bio.length}/200</p>
+              <p className="az-caption mt-1 text-right text-az-ink/40">{bio.length}/200</p>
             </div>
 
             <div>
@@ -413,12 +383,12 @@ export default function ProfileSetupPage(): React.JSX.Element {
                       key={interest}
                       type="button"
                       onClick={() => toggleInterest(interest)}
-                      className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                      style={{
-                        background: selected ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.06)',
-                        border: selected ? '1px solid #CC1C1C' : '1px solid rgba(255,255,255,0.12)',
-                        color: selected ? 'white' : 'rgba(255,255,255,0.75)',
-                      }}
+                      aria-pressed={selected}
+                      className={`az-body-strong rounded-az-pill border px-4 py-2 transition-all ${
+                        selected
+                          ? 'border-az-flame bg-az-scarlet/25 text-az-ink'
+                          : 'border-az-ink/12 bg-az-ink/6 text-az-ink/75 hover:border-az-glass-border-hover'
+                      }`}
                     >
                       {interest}
                     </button>
@@ -440,8 +410,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => router.push('/home')}
-                className="px-6 rounded-full text-sm font-medium text-white/55 hover:text-white transition-colors"
-                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+                className="az-body rounded-az-pill border border-az-ink/15 px-6 text-az-ink/55 transition-colors hover:text-az-ink"
               >
                 Skip for now
               </button>

@@ -1,22 +1,33 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
-import { unwrapList, asArray } from '@/lib/payload';
+import { requireData, unwrapList, asArray } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 interface ContentItem {
   id: string;
   title: string;
   description: string;
+  thumbnail?: string;
+  mediaUrl?: string;
   status: string;
   views?: number;
+  viewCount?: number;
+  windowType?: string;
+  isExclusive?: boolean;
+  isPremiere?: boolean;
+  releaseDate?: string;
   createdAt: string;
-  creator?: { id: string; name: string };
-  universe?: { id: string; name: string };
+  creator?: { id: string; name?: string; displayName?: string; email?: string };
+  universe?: { id: string; name: string; displayName?: string };
+  categories?: Array<{ id: string; name: string }>;
+  tags?: Array<{ id: string; name: string }>;
 }
 
 export default function ContentPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { isEnabled: isFlagEnabled } = useAdminFlags();
   const bulkEnabled = isFlagEnabled(ADMIN_FLAG_KEYS.bulkActions);
@@ -24,11 +35,8 @@ export default function ContentPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tab, setTab] = useState<'content' | 'categories' | 'tags'>('content');
-  const [editItem, setEditItem] = useState<ContentItem | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Category/tag inline editors (backend has full CRUD — previously the UI
-  // was read-only and every mutation helper went unused).
+  // Category/tag inline editors
   const [newCategory, setNewCategory] = useState('');
   const [editingCategory, setEditingCategory] = useState<{ id: string; name: string } | null>(null);
   const [newTag, setNewTag] = useState('');
@@ -36,56 +44,78 @@ export default function ContentPage() {
   const [createForm, setCreateForm] = useState({
     title: '',
     description: '',
+    thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
     mediaUrl: '',
     universeId: '',
     creatorId: '',
+    status: 'draft',
+    windowType: 'standard',
+    isExclusive: false,
+    isPremiere: false,
+    releaseDate: '',
+    categoryIds: [] as string[],
+    tagIds: [] as string[],
+  });
+
+  const [editItem, setEditItem] = useState<ContentItem | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    thumbnail: '',
+    mediaUrl: '',
+    universeId: '',
+    status: 'draft',
+    windowType: 'standard',
+    isExclusive: false,
+    isPremiere: false,
+    releaseDate: '',
+    categoryIds: [] as string[],
+    tagIds: [] as string[],
   });
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin', 'content', page, statusFilter, search],
     queryFn: async () => {
-      const res = await adminApi.getContentList({
-        page,
-        limit: 20,
-        status: statusFilter || undefined,
-        search: search || undefined,
-      });
-      return res.success ? unwrapList<ContentItem>(res.data) : { items: [], total: 0 };
+      const data = requireData(
+        await adminApi.getContentList({
+          page,
+          limit: 20,
+          status: statusFilter || undefined,
+          search: search || undefined,
+        }),
+        []
+      );
+      return unwrapList<ContentItem>(data);
     },
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: async () => {
-      const res = await adminApi.getContentCategories();
+      const data = requireData(await adminApi.getContentCategories(), []);
       // Backend includes _count.contentItems — surface it on the rows.
-      return res.success
-        ? unwrapList<{ id: string; name: string; _count?: { contentItems?: number } }>(res.data)
-            .items
-        : [];
+      return unwrapList<{ id: string; name: string; _count?: { contentItems?: number } }>(data)
+        .items;
     },
   });
 
   const { data: tags = [] } = useQuery({
     queryKey: ['admin', 'tags'],
     queryFn: async () => {
-      const res = await adminApi.getContentTags();
-      return res.success ? unwrapList<{ id: string; name: string }>(res.data).items : [];
+      const data = requireData(await adminApi.getContentTags(), []);
+      return unwrapList<{ id: string; name: string }>(data).items;
     },
   });
 
   const { data: stats } = useQuery({
     queryKey: ['admin', 'content-stats'],
     queryFn: async () => {
-      const res = await adminApi.getContentStats();
-      if (!res.success) return null;
-      const d = res.data as {
+      return requireData(await adminApi.getContentStats(), null) as {
         total?: number;
         byStatus?: Record<string, number>;
         createdLast7Days?: number;
         createdLast30Days?: number;
-      };
-      return d ?? null;
+      } | null;
     },
   });
 
@@ -182,11 +212,8 @@ export default function ContentPage() {
   const { data: creators = [] } = useQuery({
     queryKey: ['admin', 'creators-for-content'],
     queryFn: async () => {
-      const res = await adminApi.getCreators(1, 100);
-      return asArray<{ id: string; displayName?: string; email: string }>(
-        res.success ? res.data : null,
-        'users'
-      );
+      const data = requireData(await adminApi.getCreators(1, 100), null);
+      return asArray<{ id: string; displayName?: string; email: string }>(data, 'users');
     },
   });
 
@@ -194,7 +221,21 @@ export default function ContentPage() {
     mutationFn: (data: Record<string, unknown>) => adminApi.createContent(data),
     onSuccess: () => {
       setShowCreate(false);
-      setCreateForm({ title: '', description: '', mediaUrl: '', universeId: '', creatorId: '' });
+      setCreateForm({
+        title: '',
+        description: '',
+        thumbnail: '/images/placeholders/thumbnails/16x9_01.png',
+        mediaUrl: '',
+        universeId: '',
+        creatorId: '',
+        status: 'draft',
+        windowType: 'standard',
+        isExclusive: false,
+        isPremiere: false,
+        releaseDate: '',
+        categoryIds: [],
+        tagIds: [],
+      });
       queryClient.invalidateQueries({ queryKey: ['admin', 'content'] });
     },
   });
@@ -556,7 +597,20 @@ export default function ContentPage() {
                             <button
                               onClick={() => {
                                 setEditItem(item);
-                                setEditForm({ title: item.title, description: item.description });
+                                setEditForm({
+                                  title: item.title,
+                                  description: item.description || '',
+                                  thumbnail: item.thumbnail || '',
+                                  mediaUrl: item.mediaUrl || '',
+                                  universeId: item.universe?.id || '',
+                                  status: item.status || 'draft',
+                                  windowType: item.windowType || 'standard',
+                                  isExclusive: Boolean(item.isExclusive),
+                                  isPremiere: Boolean(item.isPremiere),
+                                  releaseDate: item.releaseDate ? item.releaseDate.slice(0, 10) : '',
+                                  categoryIds: (item.categories || []).map((c) => c.id),
+                                  tagIds: (item.tags || []).map((t) => t.id),
+                                });
                               }}
                               style={{
                                 padding: '4px 10px',
@@ -602,8 +656,9 @@ export default function ContentPage() {
                               </button>
                             )}
                             <button
-                              onClick={() => {
-                                if (confirm('Delete this content?')) deleteMutation.mutate(item.id);
+                              onClick={async () => {
+                                const ok = await confirm({ title: "Delete Content", message: "Are you sure you want to delete this content item? This action cannot be undone.", variant: "danger" });
+                                if (ok) deleteMutation.mutate(item.id);
                               }}
                               style={{
                                 padding: '4px 10px',
@@ -688,9 +743,9 @@ export default function ContentPage() {
                       Archive
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Delete ${selected.size} items?`))
-                          bulkDeleteMutation.mutate(Array.from(selected));
+                      onClick={async () => {
+                        const ok = await confirm({ title: "Bulk Delete Content", message: `Are you sure you want to permanently delete ${selected.size} selected items?`, variant: "danger", isDualControl: selected.size > 10, dualControlNote: "Bulk deleting more than 10 items requires dual approval." });
+                        if (ok) bulkDeleteMutation.mutate(Array.from(selected));
                       }}
                       disabled={bulkDeleteMutation.isPending}
                       style={{
@@ -871,9 +926,9 @@ export default function ContentPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm(`Delete category "${c.name}"?`))
-                        deleteCategoryMutation.mutate(c.id);
+                    onClick={async () => {
+                      const ok = await confirm({ title: "Delete Category", message: `Delete category "${c.name}"?`, variant: "danger" });
+                      if (ok) deleteCategoryMutation.mutate(c.id);
                     }}
                     style={{
                       padding: '4px 10px',
@@ -954,8 +1009,9 @@ export default function ContentPage() {
               >
                 {t.name}
                 <button
-                  onClick={() => {
-                    if (confirm(`Delete tag "${t.name}"?`)) deleteTagMutation.mutate(t.id);
+                  onClick={async () => {
+                    const ok = await confirm({ title: "Delete Tag", message: `Delete tag "${t.name}"?`, variant: "danger" });
+                    if (ok) deleteTagMutation.mutate(t.id);
                   }}
                   aria-label={`Delete tag ${t.name}`}
                   style={{
@@ -987,165 +1043,366 @@ export default function ContentPage() {
         </div>
       )}
 
-      {showCreate && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-          }}
-          onClick={() => setShowCreate(false)}
-        >
+      {showCreate && (() => {
+        const selectedUniverse = universes.find((u) => u.id === createForm.universeId);
+        const isCreatorUniverseSelected = selectedUniverse?.name?.toLowerCase() === 'creator';
+
+        return (
           <div
             style={{
-              width: 520,
-              maxWidth: '90%',
-              backgroundColor: 'var(--admin-bg)',
-              border: '1px solid var(--admin-surface)',
-              borderRadius: 16,
-              padding: 24,
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 100,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setShowCreate(false)}
           >
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>New Content</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input
-                value={createForm.title}
-                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-                placeholder="Title *"
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                }}
-              />
-              <textarea
-                value={createForm.description}
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                placeholder="Description"
-                rows={3}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                  resize: 'vertical',
-                }}
-              />
-              <input
-                value={createForm.mediaUrl}
-                onChange={(e) => setCreateForm({ ...createForm, mediaUrl: e.target.value })}
-                placeholder="Media URL"
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                }}
-              />
-              <select
-                value={createForm.universeId}
-                onChange={(e) => setCreateForm({ ...createForm, universeId: e.target.value })}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                }}
-              >
-                <option value="">No universe</option>
-                {universes.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.displayName || u.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={createForm.creatorId}
-                onChange={(e) => setCreateForm({ ...createForm, creatorId: e.target.value })}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                }}
-              >
-                <option value="">Select creator *</option>
-                {creators.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.displayName || c.email}
-                  </option>
-                ))}
-              </select>
-              {createContentMutation.isError && (
-                <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>
-                  {(createContentMutation.error as Error)?.message || 'Create failed'}
-                </p>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() =>
-                    createContentMutation.mutate({
-                      title: createForm.title.trim(),
-                      description: createForm.description || undefined,
-                      mediaUrl: createForm.mediaUrl || undefined,
-                      universeId: createForm.universeId || undefined,
-                      creatorId: createForm.creatorId || undefined,
-                    })
-                  }
-                  disabled={
-                    !createForm.title.trim() ||
-                    !createForm.creatorId ||
-                    createContentMutation.isPending
-                  }
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-                    color: 'white',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {createContentMutation.isPending ? 'Creating...' : 'Create'}
-                </button>
-                <button
-                  onClick={() => setShowCreate(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: '1px solid var(--admin-surface)',
-                    background: 'transparent',
-                    color: 'var(--admin-text-muted)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
+            <div
+              style={{
+                width: 580,
+                maxWidth: '92%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                backgroundColor: 'var(--admin-bg)',
+                border: '1px solid var(--admin-surface)',
+                borderRadius: 16,
+                padding: 24,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>New Content</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Title *
+                  </label>
+                  <input
+                    value={createForm.title}
+                    onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                    placeholder="Content Title"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Description
+                  </label>
+                  <textarea
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                    placeholder="Brief description or synopsis..."
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 14,
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Universe *
+                  </label>
+                  <select
+                    value={createForm.universeId}
+                    onChange={(e) => setCreateForm({ ...createForm, universeId: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="">Select Universe *</option>
+                    {universes.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.displayName || u.name} {u.name.toLowerCase() === 'creator' ? '(Creator Uploads Only)' : '(Admin Managed)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Universe Policy Feedback */}
+                {isCreatorUniverseSelected && (
+                  <div
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid var(--admin-red)',
+                      color: 'var(--admin-red)',
+                      fontSize: 13,
+                      lineHeight: '1.4',
+                    }}
+                  >
+                    <strong>Upload Restricted:</strong> Creator Content is creator-exclusive. Creators upload videos directly via Creator Studio. Admins manage and moderate creator content through the Creator Accounts and Review Queue pages.
+                  </div>
+                )}
+
+                {selectedUniverse && !isCreatorUniverseSelected && (
+                  <div
+                    style={{
+                      padding: 10,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      color: '#93c5fd',
+                      fontSize: 12,
+                    }}
+                  >
+                    <strong>Admin-Managed Universe:</strong> Admin publishes and manages {selectedUniverse.displayName || selectedUniverse.name} content directly (e.g. Vertical Series, Movies, Reality, Comedy, Lifestyle, Sports). Creator attribution is optional.
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                      Thumbnail URL *
+                    </label>
+                    <input
+                      value={createForm.thumbnail}
+                      onChange={(e) => setCreateForm({ ...createForm, thumbnail: e.target.value })}
+                      placeholder="/images/thumbnails/... or https://"
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                      Media / Video URL
+                    </label>
+                    <input
+                      value={createForm.mediaUrl}
+                      onChange={(e) => setCreateForm({ ...createForm, mediaUrl: e.target.value })}
+                      placeholder="https://... or /media/..."
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                      Creator Attribution (Optional)
+                    </label>
+                    <select
+                      value={createForm.creatorId}
+                      onChange={(e) => setCreateForm({ ...createForm, creatorId: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="">Default: Admin / System Publisher</option>
+                      {creators.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.displayName || c.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                      Status
+                    </label>
+                    <select
+                      value={createForm.status}
+                      onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                      Window Type
+                    </label>
+                    <select
+                      value={createForm.windowType}
+                      onChange={(e) => setCreateForm({ ...createForm, windowType: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="standard">Standard</option>
+                      <option value="premium">Premium</option>
+                      <option value="premiere">Premiere</option>
+                      <option value="free">Free</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                      Release Date
+                    </label>
+                    <input
+                      type="date"
+                      value={createForm.releaseDate}
+                      onChange={(e) => setCreateForm({ ...createForm, releaseDate: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--admin-surface)',
+                        backgroundColor: 'var(--admin-dark)',
+                        color: 'var(--admin-text)',
+                        fontSize: 13,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 20 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={createForm.isExclusive}
+                      onChange={(e) => setCreateForm({ ...createForm, isExclusive: e.target.checked })}
+                    />
+                    <span>Exclusive Content</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={createForm.isPremiere}
+                      onChange={(e) => setCreateForm({ ...createForm, isPremiere: e.target.checked })}
+                    />
+                    <span>Premiere Title</span>
+                  </label>
+                </div>
+
+                {createContentMutation.isError && (
+                  <p style={{ color: 'var(--admin-red)', fontSize: 13, margin: 0 }}>
+                    {(createContentMutation.error as Error)?.message || 'Create failed'}
+                  </p>
+                )}
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button
+                    onClick={() =>
+                      createContentMutation.mutate({
+                        title: createForm.title.trim(),
+                        description: createForm.description || undefined,
+                        thumbnail: createForm.thumbnail || undefined,
+                        mediaUrl: createForm.mediaUrl || undefined,
+                        universeId: createForm.universeId || undefined,
+                        creatorId: createForm.creatorId || undefined,
+                        status: createForm.status,
+                        windowType: createForm.windowType,
+                        isExclusive: createForm.isExclusive,
+                        isPremiere: createForm.isPremiere,
+                        releaseDate: createForm.releaseDate ? new Date(createForm.releaseDate).toISOString() : undefined,
+                      })
+                    }
+                    disabled={
+                      !createForm.title.trim() ||
+                      !createForm.universeId ||
+                      isCreatorUniverseSelected ||
+                      createContentMutation.isPending
+                    }
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: isCreatorUniverseSelected || !createForm.title.trim() || !createForm.universeId ? 'not-allowed' : 'pointer',
+                      opacity: isCreatorUniverseSelected || !createForm.title.trim() || !createForm.universeId ? 0.6 : 1,
+                    }}
+                  >
+                    {createContentMutation.isPending ? 'Creating...' : 'Create Content'}
+                  </button>
+                  <button
+                    onClick={() => setShowCreate(false)}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      background: 'transparent',
+                      color: 'var(--admin-text-muted)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {editItem && (
         <div
@@ -1165,8 +1422,10 @@ export default function ContentPage() {
         >
           <div
             style={{
-              width: 500,
-              maxWidth: '90%',
+              width: 580,
+              maxWidth: '92%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               backgroundColor: 'var(--admin-bg)',
               border: '1px solid var(--admin-surface)',
               borderRadius: 16,
@@ -1175,39 +1434,232 @@ export default function ContentPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Edit Content</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input
-                value={editForm.title}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                placeholder="Title"
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                }}
-              />
-              <textarea
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                placeholder="Description"
-                rows={4}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--admin-surface)',
-                  backgroundColor: 'var(--admin-dark)',
-                  color: 'var(--admin-text)',
-                  fontSize: 14,
-                  resize: 'vertical',
-                }}
-              />
-              <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Title *
+                </label>
+                <input
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder="Title"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  placeholder="Description"
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-dark)',
+                    color: 'var(--admin-text)',
+                    fontSize: 14,
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Thumbnail URL
+                  </label>
+                  <input
+                    value={editForm.thumbnail}
+                    onChange={(e) => setEditForm({ ...editForm, thumbnail: e.target.value })}
+                    placeholder="/images/thumbnails/..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Media URL
+                  </label>
+                  <input
+                    value={editForm.mediaUrl}
+                    onChange={(e) => setEditForm({ ...editForm, mediaUrl: e.target.value })}
+                    placeholder="https://..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Window Type
+                  </label>
+                  <select
+                    value={editForm.windowType}
+                    onChange={(e) => setEditForm({ ...editForm, windowType: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="premium">Premium</option>
+                    <option value="premiere">Premiere</option>
+                    <option value="free">Free</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Universe
+                  </label>
+                  <select
+                    value={editForm.universeId}
+                    onChange={(e) => setEditForm({ ...editForm, universeId: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="">No universe</option>
+                    {universes.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.displayName || u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Release Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editForm.releaseDate}
+                    onChange={(e) => setEditForm({ ...editForm, releaseDate: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-dark)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editForm.isExclusive}
+                    onChange={(e) => setEditForm({ ...editForm, isExclusive: e.target.checked })}
+                  />
+                  <span>Exclusive Content</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editForm.isPremiere}
+                    onChange={(e) => setEditForm({ ...editForm, isPremiere: e.target.checked })}
+                  />
+                  <span>Premiere Title</span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button
-                  onClick={() => updateMutation.mutate({ id: editItem.id, data: editForm })}
-                  disabled={updateMutation.isPending}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      id: editItem.id,
+                      data: {
+                        title: editForm.title.trim(),
+                        description: editForm.description || undefined,
+                        thumbnail: editForm.thumbnail || undefined,
+                        mediaUrl: editForm.mediaUrl || undefined,
+                        universeId: editForm.universeId || undefined,
+                        status: editForm.status,
+                        windowType: editForm.windowType,
+                        isExclusive: editForm.isExclusive,
+                        isPremiere: editForm.isPremiere,
+                        releaseDate: editForm.releaseDate ? new Date(editForm.releaseDate).toISOString() : undefined,
+                      },
+                    })
+                  }
+                  disabled={updateMutation.isPending || !editForm.title.trim()}
                   style={{
                     padding: '10px 20px',
                     borderRadius: 8,
@@ -1218,7 +1670,7 @@ export default function ContentPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  {updateMutation.isPending ? 'Saving...' : 'Save'}
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => setEditItem(null)}

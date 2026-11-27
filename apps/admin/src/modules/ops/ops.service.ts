@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { PrismaService } from '../../database/prisma.service';
@@ -218,6 +218,25 @@ export interface ForeignPersistenceRow {
    * never sustained/tracked regardless of span. Budget impact is still
    * real, so the row stays visible. */
   approved: boolean;
+  /** Owning project the workspace was attributed to via
+   * POOL_FOREIGN_PROJECT_ROOTS prefix match (longest root wins), or the
+   * workspace itself when nothing matched. Every row HAS a project — the
+   * card groups on it without null-checks. */
+  project: string;
+  /** Flagged passes bucketed over the ledger window, oldest → newest —
+   * the card's frequency sparkline. Fixed 24 buckets regardless of activity. */
+  history: number[];
+  /** Peak connection count per history bucket, oldest → newest (null when
+   * that bucket had no pass recording a count) — the card's intensity
+   * sparkline: dial hardness alongside dial frequency. */
+  connHistory: Array<number | null>;
+  /** Peak connection count across ALL flagged passes in the window (0 when
+   * none recorded) — drives the foreign-burst WARN: a short-lived dialer
+   * that grabs many connections is dangerous even under the 24h span
+   * threshold. */
+  peakConns: number;
+  /** Seconds per history bucket (windowMs / buckets). */
+  bucketSeconds: number;
 }
 
 /** Per-workspace persistence over the ledger window (card data). */
@@ -226,7 +245,173 @@ export interface ForeignPersistence {
   /** Sustained threshold applied (mirrors POOL_FOREIGN_MIN_SPAN_H default). */
   sustainedMinSpanHours: number;
   rows: ForeignPersistenceRow[];
+  /**
+   * URL of the nightly pool-health tracking issue (found by marker via the
+   * GitHub search API, cached 10 min), when one could be resolved — the
+   * card links SUSTAINED rows to it. Null when unresolvable (no token,
+   * repo unknown, search failed): the card degrades to plain badges.
+   */
+  trackingIssueUrl?: string | null;
   detail?: string;
+}
+
+/**
+ * Contract gate for the pgbouncer endpoint's foreignPersistence payload:
+ * returns a list of shape violations (empty = valid). Exported so the CI
+ * smoke spec can drive the REAL producer through a stubbed Prisma and fail
+ * the build when a regression drops the sparkline history, the per-row
+ * tracking flag, or the tracking-issue link the card renders. Producer-side
+ * strictness: trackingIssueUrl must be explicitly present (string or null —
+ * `undefined` breaks the client's degrade branch), and connHistory, when
+ * present, must stay parallel to history.
+ */
+export function assertForeignPersistenceShape(data: unknown): string[] {
+  const bad: string[] = [];
+  const p = (ok: unknown, msg: string) => {
+    if (!ok) bad.push(msg);
+  };
+  if (typeof data !== 'object' || data === null) return ['foreignPersistence: expected an object'];
+  const d = data as Record<string, unknown>;
+  p(
+    typeof d.windowHours === 'number' && Number.isFinite(d.windowHours) && d.windowHours > 0,
+    'windowHours: expected a positive finite number'
+  );
+  p(
+    typeof d.sustainedMinSpanHours === 'number' &&
+      Number.isFinite(d.sustainedMinSpanHours) &&
+      d.sustainedMinSpanHours > 0,
+    'sustainedMinSpanHours: expected a positive finite number'
+  );
+  p(Array.isArray(d.rows), 'rows: expected an array');
+  p(
+    d.trackingIssueUrl === null || typeof d.trackingIssueUrl === 'string',
+    "trackingIssueUrl: expected a string or null — the card's tracking-issue link contract (undefined breaks the degrade branch)"
+  );
+  if (typeof d.detail !== 'undefined') {
+    p(typeof d.detail === 'string', 'detail: expected a string when present');
+  }
+  if (Array.isArray(d.rows)) {
+    (d.rows as Array<Record<string, unknown>>).forEach((r, i) => {
+      const at = `rows[${i}]`;
+      p(
+        typeof r.workspace === 'string' && r.workspace.length > 0,
+        `${at}.workspace: expected a non-empty string`
+      );
+      p(
+        typeof r.passes === 'number' && Number.isInteger(r.passes) && r.passes >= 0,
+        `${at}.passes: expected a non-negative integer`
+      );
+      p(
+        typeof r.spanHours === 'number' && Number.isFinite(r.spanHours) && r.spanHours >= 0,
+        `${at}.spanHours: expected a finite non-negative number`
+      );
+      p(
+        typeof r.lastSeen === 'string' && !Number.isNaN(Date.parse(r.lastSeen as string)),
+        `${at}.lastSeen: expected a parseable ISO timestamp`
+      );
+      p(r.conns === null || typeof r.conns === 'number', `${at}.conns: expected a number or null`);
+      p(
+        typeof r.sustained === 'boolean',
+        `${at}.sustained: expected a boolean — the per-row tracking flag`
+      );
+      p(typeof r.approved === 'boolean', `${at}.approved: expected a boolean`);
+      if (r.project !== undefined) {
+        p(
+          typeof r.project === 'string' && r.project.length > 0,
+          `${at}.project: expected a non-empty string when present`
+        );
+      }
+      p(
+        Array.isArray(r.history) &&
+          (r.history as unknown[]).length > 0 &&
+          (r.history as unknown[]).every((v) => typeof v === 'number' && Number.isFinite(v)),
+        `${at}.history: expected a non-empty array of finite numbers (the frequency sparkline)`
+      );
+      if (r.connHistory !== undefined) {
+        const ch = r.connHistory as unknown[];
+        p(
+          Array.isArray(ch) &&
+            Array.isArray(r.history) &&
+            ch.length === (r.history as unknown[]).length,
+          `${at}.connHistory: expected an array parallel to history (the intensity sparkline)`
+        );
+        if (Array.isArray(ch)) {
+          p(
+            ch.every((v) => v === null || typeof v === 'number'),
+            `${at}.connHistory: expected numbers or nulls only`
+          );
+        }
+      }
+      p(
+        typeof r.bucketSeconds === 'number' &&
+          Number.isInteger(r.bucketSeconds) &&
+          r.bucketSeconds >= 1,
+        `${at}.bucketSeconds: expected an integer ≥ 1`
+      );
+    });
+  }
+  return bad;
+}
+
+/** Bucket count for a workspace's flagged-pass trend over the ledger window. */
+export const FOREIGN_PASS_TREND_BUCKETS = 24;
+
+/** Per-bucket flagged-pass counts over the window — the persistence card's
+ * sparkline data. Fixed-width so buckets are directly comparable across
+ * rows; stale workspaces show their trailing zeros.
+ */
+export interface ForeignPassTrend {
+  /** Seconds per bucket (windowMs / buckets, ≥1). */
+  bucketSeconds: number;
+  /** Flagged passes per bucket, oldest → newest. */
+  buckets: number[];
+  /** Peak concurrent-connection count among the passes in each bucket,
+   * oldest → newest — dial INTENSITY alongside pass frequency. Null where
+   * the bucket had no passes, or none of its passes recorded a count (the
+   * ledger only started recording conns recently). */
+  connBuckets: Array<number | null>;
+}
+
+/**
+ * Bucket a workspace's flagged passes into fixed windows over the ledger
+ * window — pure. Buckets are [now-windowMs, now), newest last; a flagged
+ * pass exactly at `now` belongs to the newest bucket. Passes outside the
+ * window cannot occur (the ledger query bounds ranAt), but are counted
+ * into the nearest edge bucket rather than dropped.
+ *
+ * `values` (optional, parallel to `atMs`) carries each pass's recorded
+ * connection count; per bucket the PEAK non-null value wins — a dialer's
+ * worst burst in the bucket, not its average. Absent/short values arrays
+ * degrade to all-null connBuckets (pre-conns ledgers, legacy callers).
+ */
+export function computeForeignPassTrend(
+  atMs: number[],
+  windowMs: number,
+  nowMs = Date.now(),
+  buckets = FOREIGN_PASS_TREND_BUCKETS,
+  values?: Array<number | null>
+): ForeignPassTrend {
+  const n = Math.max(1, Math.floor(buckets));
+  const w = Math.max(1, Math.floor(windowMs));
+  const bucketMs = Math.max(1, Math.floor(w / n));
+  const start = nowMs - w;
+  const counts = new Array<number>(n).fill(0);
+  const connPeak = new Array<number | null>(n).fill(null);
+  for (let i = 0; i < atMs.length; i++) {
+    const at = atMs[i];
+    let idx = Math.floor((at - start) / bucketMs);
+    if (idx < 0) idx = 0;
+    if (idx >= n) idx = n - 1;
+    counts[idx] += 1;
+    const v = values?.[i];
+    const curPeak = connPeak[idx];
+    if (typeof v === 'number' && (curPeak === null || v > curPeak)) {
+      connPeak[idx] = v;
+    }
+  }
+  // Ceil (not round): a degenerate 1ms bucket still reports a whole second,
+  // keeping the documented ≥1 invariant honest.
+  return { bucketSeconds: Math.ceil(bucketMs / 1000), buckets: counts, connBuckets: connPeak };
 }
 
 /** Legacy name for the same payload (PgbouncerHealth.foreignPersistence). */
@@ -246,6 +431,51 @@ export function parseForeignAllowlist(raw: string | undefined | null): Set<strin
       .map((s) => s.trim())
       .filter(Boolean)
   );
+}
+
+/**
+ * Parse POOL_FOREIGN_PROJECT_ROOTS — comma-separated `root=Project` pairs
+ * mapping absolute path prefixes to a display project name (root may contain
+ * '=' once, at the first position; `=`-less and nameless entries are
+ * skipped). Longest root wins on overlap, so sibling deployments like
+ * `/Users/x/YCN` vs `/Users/x/YCN-fork` attribute independently. Local
+ * mirror of scripts/pool-issue-tracker.mjs, like parseForeignAllowlist —
+ * apps/admin builds are hermetic (rootDir: src) and must not import
+ * scripts/. Exported for tests.
+ */
+export function parseForeignProjectRoots(
+  raw: string | undefined | null
+): Array<{ root: string; project: string }> {
+  if (!raw || typeof raw !== 'string') return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const eq = entry.indexOf('=');
+      return eq > 0
+        ? { root: entry.slice(0, eq).trim(), project: entry.slice(eq + 1).trim() }
+        : null;
+    })
+    .filter((p): p is { root: string; project: string } => !!p && !!p.root && !!p.project)
+    .sort((a, b) => b.root.length - a.root.length);
+}
+
+/**
+ * Attribute a foreign workspace path to its owning project: the first
+ * (longest, per the parser's ordering) root that prefixes the workspace.
+ * Unmatched workspaces ARE their own project — the card can always group
+ * without null-checks, and a lone unknown dialer still reads as one group
+ * instead of vanishing into an "unknown" bucket.
+ */
+export function attributeForeignProject(
+  workspace: string,
+  roots: Array<{ root: string; project: string }>
+): string {
+  for (const { root, project } of roots) {
+    if (workspace.startsWith(root)) return project;
+  }
+  return workspace;
 }
 
 /**
@@ -288,11 +518,29 @@ export function computeForeignPersistence(
     maxGapHours?: number;
     /** Approved foreign workspaces (POOL_FOREIGN_ALLOWLIST) — never sustained. */
     allowlist?: Set<string> | string[];
+    /** Raw POOL_FOREIGN_PROJECT_ROOTS value — comma-separated
+     * `root=Project` pairs for workspace → project attribution. */
+    projectRootsRaw?: string | null;
+    /** Sparkline window (ms). Defaults to the data's own span (oldest
+     * flagged row → now); the ledger caller passes its query window. */
+    windowMs?: number;
+    /** Reference "now" (ms) — pins bucket edges in tests. Defaults to now. */
+    nowMs?: number;
   } = {}
 ): ForeignPersistenceRow[] {
   const minSpanHours = opts.minSpanHours ?? 24;
   const maxGapHours = opts.maxGapHours ?? 3;
   const allowSet = opts.allowlist instanceof Set ? opts.allowlist : new Set(opts.allowlist ?? []);
+  const nowMs = opts.nowMs ?? Date.now();
+  // Sparkline window: the ledger caller passes its query window explicitly;
+  // absent that, fall back to the data's own span (oldest flagged row →
+  // now, floored at a minute) so buckets stay comparable across workspaces.
+  const oldestMs = rows.reduce<number>((acc, r) => {
+    const t = r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(String(r.ranAt));
+    return Number.isFinite(t) && t < acc ? t : acc;
+  }, Number.POSITIVE_INFINITY);
+  const windowMs =
+    opts.windowMs ?? Math.max(60_000, nowMs - (Number.isFinite(oldestMs) ? oldestMs : nowMs));
   const byWorkspace = new Map<string, Array<{ atMs: number; conns: number | null }>>();
   for (const r of rows) {
     const atMs = r.ranAt instanceof Date ? r.ranAt.getTime() : Date.parse(r.ranAt);
@@ -304,6 +552,7 @@ export function computeForeignPersistence(
     }
   }
   const out: ForeignPersistenceRow[] = [];
+  const projectRoots = parseForeignProjectRoots(opts.projectRootsRaw);
   interface BestRun {
     length: number;
     spanH: number;
@@ -344,6 +593,16 @@ export function computeForeignPersistence(
     }
     best = consider(best);
     if (!best) continue;
+    // Sparkline history covers EVERY flagged pass in the window — not just
+    // the best run — so a broken-off earlier burst stays visible.
+    const trend = computeForeignPassTrend(
+      passes.map((p) => p.atMs),
+      windowMs,
+      nowMs,
+      FOREIGN_PASS_TREND_BUCKETS,
+      passes.map((p) => p.conns)
+    );
+    const peakConns = passes.reduce((m, p) => (p.conns !== null && p.conns > m ? p.conns : m), 0);
     const approved = allowSet.has(workspace);
     out.push({
       workspace,
@@ -355,9 +614,26 @@ export function computeForeignPersistence(
       // nightly core's allowlist rule, so card and tracker never disagree.
       sustained: !approved && best.spanH >= minSpanHours - 1e-9,
       approved,
+      project: attributeForeignProject(workspace, projectRoots),
+      history: trend.buckets,
+      connHistory: trend.connBuckets,
+      peakConns,
+      bucketSeconds: trend.bucketSeconds,
     });
   }
-  return out.sort((a, b) => b.spanHours - a.spanHours || a.workspace.localeCompare(b.workspace));
+  // Span first (the card's headline), then project so a workspace's
+  // group-mates sit adjacent even in the flat payload. Named projects rank
+  // before path-self groups (unmatched workspaces) — absolute paths sort
+  // lexicographically before letters, which would otherwise float a lone
+  // unknown dialer above every known project. Workspace name last.
+  const groupRank = (project: string) => (project.startsWith('/') ? 1 : 0);
+  return out.sort(
+    (a, b) =>
+      b.spanHours - a.spanHours ||
+      groupRank(a.project) - groupRank(b.project) ||
+      a.project.localeCompare(b.project) ||
+      a.workspace.localeCompare(b.workspace)
+  );
 }
 // The flip hold window (10 min) now lives server-side as the flips-hash TTL
 // in transport-store.ts (FLIP_TTL_S) — both admin pages poll the same
@@ -693,6 +969,88 @@ export interface GatewayRateLimitSnapshot {
 }
 
 /** Freshness/retention job logs and the shared alert-state file (dev paths). */
+/**
+ * Pool-health tracking-issue link resolution. The nightly tracker
+ * (scripts/pool-issue-tracker.mjs) owns ONE marker-scoped GitHub issue;
+ * the card links sustained dialers to it. Resolution order:
+ *   1. POOL_TRACKING_ISSUE_URL env override (ops can pin it explicitly);
+ *   2. live GitHub search for the marker (POOL_TRACKING_GITHUB_TOKEN,
+ *      else the standard GITHUB_TOKEN) — the same search the tracker's
+ *      lifecycle uses;
+ *   3. cached URL from a previous successful search (alert-state file
+ *      convention, refreshed on every successful search) so the link
+ *      survives token outages.
+ * Resolution is best-effort and never fails (or slows) the health payload:
+ * any error → cached value or null, and the card renders plain badges.
+ */
+const POOL_TRACKING_MARKER = '<!-- azeebo:pool-saturation-tracking -->';
+const POOL_TRACKING_CACHE_FILE =
+  process.env.POOL_TRACKING_CACHE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-pool-tracking-issue.json`;
+
+export async function resolvePoolTrackingIssueUrl(
+  env: {
+    POOL_TRACKING_ISSUE_URL?: string;
+    POOL_TRACKING_GITHUB_TOKEN?: string;
+    GITHUB_TOKEN?: string;
+    GITHUB_REPOSITORY?: string;
+    GITHUB_API_BASE_URL?: string;
+    [key: string]: string | undefined;
+  } = process.env,
+  now = Date.now(),
+  cacheFile = POOL_TRACKING_CACHE_FILE
+): Promise<string | null> {
+  const override = env.POOL_TRACKING_ISSUE_URL?.trim();
+  if (override) return override;
+
+  const readCache = (): string | null => {
+    try {
+      const cached = JSON.parse(readFileSync(cacheFile, 'utf8')) as {
+        url?: string;
+        at?: number;
+      };
+      return typeof cached.url === 'string' && cached.url.startsWith('https://')
+        ? cached.url
+        : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const repo = env.GITHUB_REPOSITORY?.trim();
+  const token = env.POOL_TRACKING_GITHUB_TOKEN?.trim() || env.GITHUB_TOKEN?.trim() || null;
+  if (!repo || !token) return readCache();
+
+  try {
+    const apiBase = env.GITHUB_API_BASE_URL?.trim() || 'https://api.github.com';
+    const q = `"${POOL_TRACKING_MARKER}" in:body type:issue repo:${repo}`;
+    const res = await fetch(`${apiBase}/search/issues?q=${encodeURIComponent(q)}&per_page=1`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) throw new Error(`search HTTP ${res.status}`);
+    const payload = (await res.json()) as { items?: Array<{ number: number; html_url?: string }> };
+    const hit = payload.items?.[0];
+    const url =
+      hit?.html_url ?? (hit ? `${apiBase.replace(/\/+$/, '')}/${repo}/issues/${hit.number}` : null);
+    if (url) {
+      try {
+        writeFileSync(cacheFile, JSON.stringify({ url, at: now }), 'utf8');
+      } catch {
+        /* cache write is best-effort */
+      }
+      return url;
+    }
+    return readCache();
+  } catch {
+    return readCache();
+  }
+}
+
 const FRESHNESS_LOG = process.env.FRESHNESS_LOG || '/tmp/azeebo-admin-freshness.log';
 const RETENTION_LOG = process.env.RETENTION_LOG || '/tmp/azeebo-audit-retention.log';
 const ALERT_STATE_FILE =
@@ -719,6 +1077,38 @@ const PGBOUNCER_STATE_FILE =
 const LEDGER_CADENCE_STATE_FILE =
   process.env.LEDGER_CADENCE_STATE_FILE ||
   `${process.env.TMPDIR || '/tmp'}/azeebo-admin-ledger-cadence.alert-state`;
+
+/**
+ * Transport-store degradation suppression state: JSON epoch ms of the last
+ * alert. Keeps the degradation alert to one entry per hour in the feed even
+ * under aggressive polling — the chip on the services card always shows the
+ * live state, so the feed would just drown otherwise. Env-overridable for
+ * tests. Shares LEDGER_CADENCE_SUPPRESS_MS's one-hour budget (same meaning:
+ * de-jitter a repeated condition).
+ */
+const TRANSPORT_STORE_STATE_FILE =
+  process.env.TRANSPORT_STORE_STATE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-transport-store.alert-state`;
+
+/**
+ * Burst-alert state file: last-alert epoch per offending workspace (JSON
+ * map), for the foreign-dialer burst WARN's hourly de-jitter (shares the
+ * ledger-cadence one-hour budget — same meaning: a repeated condition
+ * re-alerts at most hourly). Per-workspace so offender A alerting does not
+ * suppress offender B. Env-overridable for tests.
+ */
+const FOREIGN_BURST_STATE_FILE =
+  process.env.FOREIGN_BURST_STATE_FILE ||
+  `${process.env.TMPDIR || '/tmp'}/azeebo-admin-foreign-burst.alert-state`;
+
+/**
+ * Danger threshold for a foreign dialer's peak concurrent-connection count.
+ * A short-lived dialer grabbing many connections stresses the pooler's
+ * budget like a sustained one — arguably worse, since it defeats the 24h
+ * persistence heuristic entirely. Overridable for environments with
+ * different headroom.
+ */
+export const FOREIGN_BURST_PEAK_CONNS_DEFAULT = 20;
 
 /**
  * pool-audit job log (scripts/database/pool-audit.sh): hourly headless
@@ -783,6 +1173,93 @@ const KNOWN_JOBS = [
 ] as const;
 export { KNOWN_JOBS };
 const MAX_RUNS_PER_JOB = 40;
+/** Newest flip events returned per trend read (older stay queryable in the ledger). */
+const EVENT_TREND_LIMIT = 25;
+
+/** Which backing the transport store is currently using. */
+export type TransportStoreMode = 'redis' | 'memory';
+
+/**
+ * Transport-store status for the Ops Health chip: REDIS means baselines and
+ * hold-window flips are fleet-wide (cross-restart, cross-replica); MEMORY
+ * means the store degraded (Redis unreachable) and flip memory is
+ * per-process — flips still detect within one replica but a restart or a
+ * second replica loses the history. Pure + exported so the client contract
+ * and the chip render tests pin the mapping.
+ */
+export function transportStoreStatus(
+  degraded: boolean | undefined,
+  dbIndex?: number | null
+): {
+  mode: TransportStoreMode;
+  detail: string;
+  redisDb: number | null;
+} {
+  const validDb =
+    typeof dbIndex === 'number' && Number.isInteger(dbIndex) && dbIndex >= 0 ? dbIndex : null;
+  const where = validDb !== null ? `on Redis DB ${validDb}` : 'on an unconfirmed Redis DB';
+  return degraded
+    ? {
+        mode: 'memory',
+        detail: `Redis unreachable — flip memory is per-process; baselines reset on restart and other replicas cannot see flips. Last known backing: ${where}.`,
+        redisDb: validDb,
+      }
+    : {
+        mode: 'redis',
+        detail: `Fleet-wide Redis baseline + hold-window flips (cross-restart, cross-replica) ${where}.`,
+        redisDb: validDb,
+      };
+}
+
+/**
+ * Pure degradation-alert decision for the transport store (unit-tested):
+ * degraded AND not currently suppressed → a WARN whose message spells out
+ * the fleet-wide blast radius the chip's detail describes; healthy or
+ * already-alerted-within-the-hour → null. Mirrors ledgerSilenceAlert's role
+ * in the ledger-cadence pattern; the hourly suppression state lives in
+ * TRANSPORT_STORE_STATE_FILE (checked in checkTransportStoreAlert).
+ */
+export function transportStoreDegradedAlert(
+  degraded: boolean | undefined,
+  wasAlertingWithinHour: boolean
+): { level: 'WARN'; message: string } | null {
+  if (!degraded || wasAlertingWithinHour) return null;
+  return {
+    level: 'WARN',
+    message:
+      'transport store degraded — Redis unreachable; flip baselines + hold window are per-process (restart or a second replica loses flips)',
+  };
+}
+
+/**
+ * Pure burst-alert decision for a foreign dialer row (unit-tested): peak
+ * conns at/over the threshold AND span under the sustained threshold AND
+ * not approved → a WARN; suppressed-within-the-hour → null (the checker
+ * keeps the suppression clock running instead). A long SUSTAINED dialer is
+ * already tracked nightly, so the burst lane only catches what the nightly
+ * tracker will not — short but heavy bursts. Mirrors
+ * transportStoreDegradedAlert's role; the per-workspace suppression state
+ * lives in FOREIGN_BURST_STATE_FILE (checked in checkForeignBurstAlert).
+ */
+export function foreignBurstAlert(
+  row: {
+    workspace: string;
+    approved: boolean;
+    sustained: boolean;
+    spanHours: number;
+    peakConns: number;
+  },
+  opts: { threshold: number; now: number; lastAlertAt: number; suppressMs: number }
+): { level: 'WARN'; message: string } | null {
+  if (row.approved || row.sustained) return null;
+  if (row.peakConns < opts.threshold) return null;
+  if (opts.now - opts.lastAlertAt < opts.suppressMs) return null;
+  const span = Math.round(row.spanHours * 10) / 10;
+  return {
+    level: 'WARN',
+    message: `foreign dialer burst — ${row.workspace} peaked at ${row.peakConns} conns (threshold ${opts.threshold}) while its ${span}h span is under the sustained threshold; tracked here because the nightly sustained-dialer tracker will not`,
+  };
+}
 
 /**
  * Transport-flip ledger shape (one row per (service, UTC day) — a service
@@ -814,6 +1291,13 @@ export interface TransportFlipLedgerRow {
 export interface TransportFlipTrend {
   windowDays: number;
   rows: TransportFlipLedgerRow[];
+  /**
+   * Individual detected transitions (job `transport-flip-event` rows),
+   * newest first — the exact timestamps the per-day rows merge away. Capped
+   * at EVENT_TREND_LIMIT per read; older events live in the ledger forever
+   * (until retention) and remain queryable there.
+   */
+  events: TransportFlipEvent[];
   /** Distinct services that flipped at least once in the window. */
   servicesWithFlips: number;
   totalFlips: number;
@@ -821,9 +1305,37 @@ export interface TransportFlipTrend {
   detail?: string;
 }
 
+/**
+ * One detected transport transition, persisted as its OWN job_runs row
+ * (job `transport-flip-event`) — unlike the per-(service, day)
+ * `transport-flip` rows, nothing is merged away: every flip keeps its
+ * timestamp, pair, and family flag, so "how many times did auth-service
+ * flip on the 24th, and exactly when" is one indexed query.
+ */
+export interface TransportFlipEvent {
+  service: string;
+  port: number;
+  from: LoopbackTransport;
+  to: LoopbackTransport;
+  familyChanged: boolean;
+  /** ISO of the probe sweep that observed the new transport. */
+  detectedAt: string;
+}
+
 /** One UTC day, YYYY-MM-DD. */
 function utcDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Deterministic event-row id: one job_runs row per (service, flip
+ * observation). `atMs` is the detecting sweep's probe time, so a retried or
+ * concurrently-replayed sweep collides on the same id and the
+ * ON CONFLICT DO NOTHING write degrades to a no-op — exact-once without
+ * any read-before-write.
+ */
+function transportFlipEventId(service: string, atMs: number): string {
+  return `transport-flip-event:${service}:${new Date(atMs).toISOString()}`;
 }
 
 /**
@@ -854,6 +1366,60 @@ export function renderTransportFlipDetail(row: {
     parts.push(`last=${row.lastFrom}->${row.lastTo}@${row.lastFlipAt}`);
   }
   return parts.join('; ');
+}
+
+/**
+ * Detail-line codec for transport-flip-EVENT ledger rows. The event's
+ * identity (service, pair, family flag) rides the detail exactly like the
+ * day rows; the timestamp is the row's own `ranAt` (events are written with
+ * ranAt = detectedAt, so nothing else needs encoding). Exported for tests.
+ */
+export function renderTransportFlipEventDetail(flip: {
+  service: string;
+  port: number;
+  from: LoopbackTransport;
+  to: LoopbackTransport;
+  familyChanged: boolean;
+}): string {
+  return [
+    `service=${flip.service}`,
+    `port=${flip.port}`,
+    `from=${flip.from}`,
+    `to=${flip.to}`,
+    `familyChanged=${flip.familyChanged}`,
+  ].join('; ');
+}
+
+/**
+ * Parse a transport-flip-event detail line back into its event. `ranAt`
+ * supplies `detectedAt` (the row is written with ranAt = detectedAt).
+ * Returns null for rows that don't parse — the trend skips them, never
+ * throws (same contract as parseTransportFlipDetail).
+ */
+export function parseTransportFlipEventDetail(
+  detail: string | null,
+  ranAt: Date | string
+): TransportFlipEvent | null {
+  if (!detail) return null;
+  const kv = new Map<string, string>();
+  for (const part of detail.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq > 0) kv.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim());
+  }
+  const service = kv.get('service');
+  const from = kv.get('from') as LoopbackTransport | undefined;
+  const to = kv.get('to') as LoopbackTransport | undefined;
+  if (!service || !from || !to) return null;
+  const port = Number(kv.get('port'));
+  const at = ranAt instanceof Date ? ranAt : new Date(ranAt);
+  return {
+    service,
+    port: Number.isFinite(port) ? port : 0,
+    from,
+    to,
+    familyChanged: kv.get('familyChanged') === 'true',
+    detectedAt: at.toISOString(),
+  };
 }
 
 /**
@@ -1290,22 +1856,37 @@ export class OpsService {
           AND "ranAt" >= now() - ${`${hours} hours`}::interval
         ORDER BY "ranAt" DESC`;
       const sustainedMinSpanHours = Number(process.env.POOL_FOREIGN_MIN_SPAN_H ?? 24);
+      const rows = computeForeignPersistence(raw ?? [], {
+        minSpanHours: sustainedMinSpanHours,
+        // Same allowlist the nightly tracker applies — approved workspaces
+        // show on the card (budget impact is real) but never read as
+        // sustained, so card and tracker never disagree.
+        allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
+        // Workspace → project attribution for the card's grouping (no-op
+        // when unset: each workspace is then its own project).
+        projectRootsRaw: process.env.POOL_FOREIGN_PROJECT_ROOTS,
+        // Sparkline buckets span the exact query window so every row's
+        // history is directly comparable (and stays stable across polls).
+        windowMs: hours * 3_600_000,
+      });
+      // Tracking-issue link for the card's sustained rows: only resolved
+      // when a sustained dialer actually exists — a quiet window never pays
+      // for a GitHub round-trip. Best-effort; null degrades to plain badges.
+      const trackingIssueUrl = rows.some((r) => r.sustained)
+        ? await resolvePoolTrackingIssueUrl()
+        : null;
       return {
         windowHours: hours,
         sustainedMinSpanHours,
-        rows: computeForeignPersistence(raw ?? [], {
-          minSpanHours: sustainedMinSpanHours,
-          // Same allowlist the nightly tracker applies — approved workspaces
-          // show on the card (budget impact is real) but never read as
-          // sustained, so card and tracker never disagree.
-          allowlist: parseForeignAllowlist(process.env.POOL_FOREIGN_ALLOWLIST),
-        }),
+        rows,
+        trackingIssueUrl,
       };
     } catch (e) {
       return {
         windowHours: hours,
         sustainedMinSpanHours: Number(process.env.POOL_FOREIGN_MIN_SPAN_H ?? 24),
         rows: [],
+        trackingIssueUrl: null,
         detail: `ledger read failed: ${(e as Error).message.split('\n')[0]}`,
       };
     }
@@ -1343,6 +1924,28 @@ export class OpsService {
         if (!transport) continue; // down/unknown sweeps record nothing — the
         // baseline is dropped for down services; there is no transport to trend.
         const flip = flipByService.get(s.name) ?? null;
+        // Event ledger: THIS sweep's detected transition gets its own
+        // immutable job_runs row (job `transport-flip-event`), timestamped
+        // at the probe that observed it. The per-(service, day) row below
+        // merges sweeps into counters; this one keeps every flip distinct,
+        // so exact timestamps stay queryable after the 10-minute hold and
+        // beyond the day-row's last= pair. Most sweeps pass flip = null and
+        // write nothing. ON CONFLICT DO NOTHING: two replicas (or a retry)
+        // observing the same transition race to the same deterministic id
+        // and exactly one row wins.
+        if (flip) {
+          await this.prisma.$executeRaw`
+            INSERT INTO job_runs (id, job, status, detail, "ranAt")
+            VALUES (
+              ${transportFlipEventId(flip.service, flip.detectedAt)},
+              'transport-flip-event',
+              'warn',
+              ${renderTransportFlipEventDetail(flip)},
+              ${new Date(flip.detectedAt).toISOString()}::timestamptz
+            )
+            ON CONFLICT (id) DO NOTHING
+          `;
+        }
         // Deterministic id: one row per (service, UTC day). Whatever
         // transport the day ENDED on owns the row (the ON CONFLICT update
         // rewrites the id when the transport changed — the old steady row is
@@ -1423,18 +2026,33 @@ export class OpsService {
   async getTransportFlipTrend(windowDays = 14): Promise<TransportFlipTrend> {
     const days = Math.min(Math.max(windowDays, 1), 90);
     try {
-      const raw = await this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
-        SELECT detail, "ranAt"
-        FROM job_runs
-        WHERE job = 'transport-flip'
-          AND "ranAt" >= now() - ${`${days} days`}::interval
-        ORDER BY "ranAt" DESC`;
+      const [raw, rawEvents] = await Promise.all([
+        this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
+          SELECT detail, "ranAt"
+          FROM job_runs
+          WHERE job = 'transport-flip'
+            AND "ranAt" >= now() - ${`${days} days`}::interval
+        ORDER BY "ranAt" DESC`,
+        this.prisma.$queryRaw<Array<{ detail: string | null; ranAt: Date }>>`
+          SELECT detail, "ranAt"
+          FROM job_runs
+          WHERE job = 'transport-flip-event'
+            AND "ranAt" >= now() - ${`${days} days`}::interval
+        ORDER BY "ranAt" DESC
+        LIMIT ${EVENT_TREND_LIMIT}`,
+      ]);
       const rows = (raw ?? [])
         .map((r) => parseTransportFlipDetail(r.detail, r.ranAt))
         .filter((r): r is TransportFlipLedgerRow => r !== null);
+      const events = (rawEvents ?? [])
+        .map((r) => parseTransportFlipEventDetail(r.detail, r.ranAt))
+        .filter((r): r is TransportFlipEvent => r !== null)
+        .sort((a, b) => Date.parse(b.detectedAt) - Date.parse(a.detectedAt))
+        .slice(0, EVENT_TREND_LIMIT);
       return {
         windowDays: days,
         rows,
+        events,
         servicesWithFlips: new Set(rows.filter((r) => r.flips > 0).map((r) => r.service)).size,
         totalFlips: rows.reduce((n, r) => n + r.flips, 0),
         totalFamilyFlips: rows.reduce((n, r) => n + r.familyFlips, 0),
@@ -1443,6 +2061,7 @@ export class OpsService {
       return {
         windowDays: days,
         rows: [],
+        events: [],
         servicesWithFlips: 0,
         totalFlips: 0,
         totalFamilyFlips: 0,
@@ -1534,10 +2153,11 @@ export class OpsService {
         });
         child.on('error', () => done(null));
         child.on('close', (code) => done(code === 0 ? out : null));
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           done(null);
           child.kill('SIGKILL');
-        }, timeoutMs).unref();
+        }, timeoutMs);
+        (timer as unknown as { unref?: () => void })?.unref?.();
       } catch {
         done(null);
       }
@@ -1553,12 +2173,19 @@ export class OpsService {
    * (transport-store.ts), which compares against the fleet-wide persisted
    * baseline atomically — flips survive restarts and are detected across
    * replicas. Redis unreachable → per-process fallback (fail-open).
-   */
-  async getServiceHealth(): Promise<{
+   */ async getServiceHealth(): Promise<{
     services: ServiceHealthResult[];
     /** Services whose answering transport changed since the previous sweep —
      * a family flip usually means someone re-bound the service. */
     transportFlips: TransportFlip[];
+    /** Backing of the transport store right now — drives the Ops Health
+     * header chip (Redis-backed vs degraded to per-process memory). */
+    transportStore: {
+      mode: TransportStoreMode;
+      detail: string;
+      /** Redis DB index the store writes to, when it could be resolved. */
+      redisDb: number | null;
+    };
     checkedAt: string;
   }> {
     const probes = PROBED_SERVICES.map(async (svc): Promise<ServiceHealthResult> => {
@@ -1636,7 +2263,15 @@ export class OpsService {
         'transport store degraded: Redis unreachable, flip memory is per-process only'
       );
     }
-    return { services, transportFlips, checkedAt: new Date().toISOString() };
+    return {
+      services,
+      transportFlips,
+      transportStore: transportStoreStatus(
+        this.transportStore.degraded,
+        this.transportStore.dbIndex
+      ),
+      checkedAt: new Date().toISOString(),
+    };
   }
 
   /**
@@ -1700,7 +2335,9 @@ export class OpsService {
       poolAudit,
       plistWatchdog,
       ledgerAlerts,
-      logAlerts,
+      storeAlerts,
+      burstAlerts,
+      recentAlertEntries,
     ] = await Promise.all([
       this.checkDb(),
       this.checkFederation(),
@@ -1732,12 +2369,15 @@ export class OpsService {
         PLIST_WATCHDOG_STALE_MINUTES
       ),
       this.checkLedgerCadence(),
+      this.checkTransportStoreAlert(),
+      this.checkForeignBurstAlert(),
       this.recentAlerts(),
     ]);
-    // Ledger-silence alerts render in the same Recent alerts table as the
-    // log-derived entries (the table is source-agnostic); log-sourced alerts
-    // stay primary so a genuine incident line outranks a cadence warning.
-    const alerts = [...logAlerts, ...ledgerAlerts]
+    // Ledger-silence, transport-store degradation, and foreign-burst alerts
+    // render in the same Recent alerts table as the log-derived entries (the
+    // table is source-agnostic); log-sourced alerts lead the concat so a
+    // genuine incident line outranks a derived warning on timestamp ties.
+    const alerts = [...recentAlertEntries, ...ledgerAlerts, ...storeAlerts, ...burstAlerts]
       .sort((a, b) => b.at.localeCompare(a.at))
       .slice(0, 10);
 
@@ -2064,6 +2704,109 @@ export class OpsService {
     } catch (e) {
       // A broken watchdog must never break the health page.
       this.logger.warn(`ledger-cadence check failed (status unaffected): ${(e as Error).message}`);
+    }
+    return produced;
+  }
+
+  /**
+   * Transport-store degradation alert, ledger-cadence pattern: read the last
+   * alert epoch from TRANSPORT_STORE_STATE_FILE, decide via the pure
+   * transportStoreDegradedAlert, persist the new timestamp. Suppression is
+   * per-process (like checkLedgerCadence's state file) — an aggressive poll
+   * cadence yields one feed entry per hour, and the services card's chip
+   * always shows the live state regardless. Best-effort: never breaks
+   * getStatus; a state-file failure degrades to re-alerting (safe direction).
+   */
+  private async checkTransportStoreAlert(): Promise<OpsAlert[]> {
+    const produced: OpsAlert[] = [];
+    try {
+      let lastAlertAt = 0;
+      try {
+        const raw = JSON.parse(await readFile(TRANSPORT_STORE_STATE_FILE, 'utf8')) as number;
+        if (typeof raw === 'number' && Number.isFinite(raw)) lastAlertAt = raw;
+        // Garbage/corrupt file → 0 → the alert (re)fires — the safe direction.
+      } catch {
+        /* first run or corrupt file — start clean */
+      }
+      const now = Date.now();
+      const alert = transportStoreDegradedAlert(
+        this.transportStore.degraded,
+        now - lastAlertAt < LEDGER_CADENCE_SUPPRESS_MS
+      );
+      if (!alert) return produced;
+      await writeFile(TRANSPORT_STORE_STATE_FILE, JSON.stringify(now), 'utf8');
+      produced.push({
+        at: new Date(now).toISOString(),
+        level: alert.level,
+        source: 'transport-store',
+        message: `${alert.level}: ${alert.message}`,
+      });
+    } catch (e) {
+      // A broken watchdog must never break the health page.
+      this.logger.warn(
+        `transport-store alert check failed (status unaffected): ${(e as Error).message}`
+      );
+    }
+    return produced;
+  }
+
+  /**
+   * Foreign-dialer burst alert, ledger-cadence pattern: when a dialer's
+   * peak connection count crosses the burst threshold while its span
+   * stays UNDER the sustained threshold (a long sustained dialer is already
+   * tracked nightly), raise a WARN so short-but-heavy bursts get tracked
+   * too. Per-workspace hourly suppression (state file) so the feed gets one
+   * entry per offender per hour; recovery clears the clock so the NEXT
+   * burst re-alerts immediately. Approved (allowlisted) workspaces never
+   * alert. Best-effort: never breaks getStatus.
+   */
+  private async checkForeignBurstAlert(): Promise<OpsAlert[]> {
+    const produced: OpsAlert[] = [];
+    try {
+      // Resolved per call (not module load) so specs can point the state
+      // file at a scratch path and set their own threshold via env.
+      const stateFile = process.env.FOREIGN_BURST_STATE_FILE || FOREIGN_BURST_STATE_FILE;
+      const threshold = Number(
+        process.env.POOL_FOREIGN_PEAK_CONNS ?? FOREIGN_BURST_PEAK_CONNS_DEFAULT
+      );
+      const fp = await this.getForeignPersistence(48);
+      const rows = fp?.rows ?? [];
+      const offenders = rows.filter((r) => !r.approved && r.peakConns >= threshold && !r.sustained);
+      let suppressed: Record<string, number> = {};
+      try {
+        suppressed = JSON.parse(await readFile(stateFile, 'utf8'));
+      } catch {
+        /* first run or corrupt file — start clean */
+      }
+      const now = Date.now();
+      const nextSuppressed: Record<string, number> = {};
+      for (const row of offenders) {
+        const lastAlertAt = suppressed[row.workspace] ?? 0;
+        const alert = foreignBurstAlert(row, {
+          threshold,
+          now,
+          lastAlertAt,
+          suppressMs: LEDGER_CADENCE_SUPPRESS_MS,
+        });
+        if (!alert) {
+          if (lastAlertAt) nextSuppressed[row.workspace] = lastAlertAt; // keep the clock running
+          continue;
+        }
+        nextSuppressed[row.workspace] = now;
+        produced.push({
+          at: new Date(now).toISOString(),
+          level: alert.level,
+          source: 'foreign-burst',
+          message: `${alert.level}: ${alert.message}`,
+        });
+      }
+      // Persist the clocks: recovered offenders (were suppressed, now
+      // quiet) drop from the state file so their NEXT burst re-alerts
+      // immediately.
+      await writeFile(stateFile, JSON.stringify(nextSuppressed), 'utf8');
+    } catch (e) {
+      // A broken watchdog must never break the health page.
+      this.logger.warn(`foreign-burst check failed (status unaffected): ${(e as Error).message}`);
     }
     return produced;
   }

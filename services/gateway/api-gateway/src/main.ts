@@ -6,9 +6,9 @@ import { AppModule } from './app.module';
 import { createHelmetConfig, configureCors } from '@azeebo/security';
 
 import cookieParser from 'cookie-parser';
-import { LoggingInterceptor } from '@azeebo/logger';
+import { LoggingInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
-import { validateEnvironment } from '@azeebo/shared-types';
+import { ORIGINS, validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
@@ -16,6 +16,12 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
+
+  // Trust the configured number of proxy hops so req.ip resolves to the real
+  // client address; without this, per-IP auth throttling collapses every user
+  // behind the load balancer into a single shared bucket.
+  const proxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? '1', 10);
+  app.set('trust proxy', Number.isFinite(proxyHops) && proxyHops >= 0 ? proxyHops : 1);
 
   // NOTE: Global versioning prefix is intentionally REMOVED.
   // The ProxyController handles versioning via URL path segments (:version/:service/*path).
@@ -43,14 +49,10 @@ async function bootstrap(): Promise<void> {
     })
   );
 
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(new LoggingInterceptor(), new ResponseSanitizationInterceptor());
 
   // Allow-listed origins — prefer env var, fall back to production defaults
-  const defaultOrigins = [
-    'https://app.azeeboplus.com',
-    'https://creator.azeeboplus.com',
-    'https://admin.azeeboplus.com',
-  ];
+  const defaultOrigins = [ORIGINS.app, ORIGINS.creator, ORIGINS.admin];
 
   const originsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
   let allowedOrigins: string[];
@@ -101,7 +103,8 @@ async function bootstrap(): Promise<void> {
   const httpMetrics = app.get(HttpMetricsService);
   app.use(httpMetrics.expressMiddleware());
 
-  if (process.env.NODE_ENV !== 'production' && process.env.SWAGGER_ENABLED === 'true') {
+  const isLocalDev = process.env.NODE_ENV === 'development' || process.env.DEPLOY_ENV === 'local';
+  if (isLocalDev && process.env.SWAGGER_ENABLED === 'true') {
     const config = new DocumentBuilder()
       .setTitle('API Gateway')
       .setDescription('Azeebo+ API Gateway')

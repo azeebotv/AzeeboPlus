@@ -3,6 +3,7 @@ import { appleGooglePayService, PaymentResult } from '../utils/appleGooglePay';
 
 interface UseAppleGooglePayState {
   isAvailable: boolean;
+  unavailableReason: string;
   paymentMethodType: 'apple_pay' | 'google_pay';
   paymentMethodLabel: string;
   isLoading: boolean;
@@ -12,6 +13,7 @@ interface UseAppleGooglePayState {
 export function useAppleGooglePay() {
   const [state, setState] = useState<UseAppleGooglePayState>({
     isAvailable: appleGooglePayService.isAvailable(),
+    unavailableReason: appleGooglePayService.getUnavailableReason(),
     paymentMethodType: appleGooglePayService.getPaymentMethodType(),
     paymentMethodLabel: appleGooglePayService.getPaymentMethodLabel(),
     isLoading: false,

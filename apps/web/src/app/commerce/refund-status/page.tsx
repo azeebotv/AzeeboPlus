@@ -1,10 +1,11 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { messageOf, requireArray } from '@/lib/payload';
 import { Clock, CheckCircle, XCircle, DollarSign, LucideIcon } from 'lucide-react';
 
 interface RefundRequest {
@@ -18,33 +19,26 @@ interface RefundRequest {
   resolvedAt?: string;
 }
 
-const STATUS_CONFIG: Record<
-  string,
-  { color: string; label: string; icon: LucideIcon; badgeBg: string }
-> = {
+const STATUS_CONFIG: Record<string, { label: string; icon: LucideIcon; badge: string }> = {
   pending: {
-    color: 'text-amber-400',
     label: 'Pending Review',
     icon: Clock,
-    badgeBg: 'rgba(245,158,11,0.12)',
+    badge: 'bg-az-warning-500/12 text-az-warning-400',
   },
   approved: {
-    color: 'text-emerald-400',
     label: 'Approved',
     icon: CheckCircle,
-    badgeBg: 'rgba(16,185,129,0.12)',
+    badge: 'bg-az-success-500/12 text-az-success-400',
   },
   rejected: {
-    color: 'text-rose-400',
     label: 'Rejected',
     icon: XCircle,
-    badgeBg: 'rgba(244,63,94,0.12)',
+    badge: 'bg-az-error-500/12 text-az-error-400',
   },
   completed: {
-    color: 'text-emerald-400',
     label: 'Refunded',
     icon: DollarSign,
-    badgeBg: 'rgba(16,185,129,0.12)',
+    badge: 'bg-az-success-500/12 text-az-success-400',
   },
 };
 
@@ -52,95 +46,86 @@ export default function RefundStatusPage(): React.JSX.Element {
   const {
     data: refunds,
     isLoading,
+    isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['refunds'],
     queryFn: async () => {
       const res = await apiFetch<RefundRequest[]>('/v1/payments/refunds');
-      return res.success ? res.data : null;
+      return requireArray(res);
     },
   });
 
-  if (error) {
+  if (isError) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <AppHeader logoVariant="light" />
-        <main className="flex-1 max-w-3xl mx-auto px-4 py-16 text-white w-full">
-          <ErrorState description="Failed to load refund status. Please try again." />
-        </main>
-        <AppFooter logoVariant="light" />
-      </div>
+      <PageShell maxWidth="md">
+        <ErrorState
+          title="Refund status unavailable"
+          description={messageOf(error)}
+          onButtonPress={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader logoVariant="light" />
-      <main className="flex-1 text-white">
-        <div className="max-w-3xl mx-auto px-4 py-12">
-          <h1 className="text-3xl font-bold mb-2">Refund Status</h1>
-          <p className="text-white/60 mb-8">Track the status of your refund requests.</p>
+    <PageShell maxWidth="md">
+      <PageHero title="Refund Status" description="Track the status of your refund requests." />
 
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-2xl" />
-              ))}
-            </div>
-          ) : refunds && refunds.length > 0 ? (
-            <div className="space-y-4">
-              {refunds.map((refund) => {
-                const config = STATUS_CONFIG[refund.status] ?? STATUS_CONFIG.pending;
-                const StatusIcon = config.icon;
-                return (
-                  <div
-                    key={refund.id}
-                    className="az-glass rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-bold text-white text-base">Refund for Transaction</p>
-                        <p className="text-sm text-white/60 mt-1">{refund.reason}</p>
-                        <p className="text-xs text-white/40 mt-2">
-                          Requested: {new Date(refund.createdAt).toLocaleDateString()}
+      <div className="pb-16">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-az-card" />
+            ))}
+          </div>
+        ) : refunds && refunds.length > 0 ? (
+          <div className="space-y-4">
+            {refunds.map((refund) => {
+              const config = STATUS_CONFIG[refund.status] ?? STATUS_CONFIG.pending;
+              const StatusIcon = config.icon;
+              return (
+                <div key={refund.id} className="az-glass p-6 transition-all">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="az-body-strong text-az-ink">Refund for Transaction</p>
+                      <p className="az-caption mt-1 text-az-ink-muted">{refund.reason}</p>
+                      <p className="az-micro-label mt-2 text-az-ink/40">
+                        Requested: {new Date(refund.createdAt).toLocaleDateString()}
+                      </p>
+                      {refund.resolvedAt && (
+                        <p className="az-micro-label text-az-ink/40">
+                          Resolved: {new Date(refund.resolvedAt).toLocaleDateString()}
                         </p>
-                        {refund.resolvedAt && (
-                          <p className="text-xs text-white/40">
-                            Resolved: {new Date(refund.resolvedAt).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-lg text-white">
-                          ₦{refund.amount.toLocaleString()}
-                        </p>
-                        <div
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 ${config.color}`}
-                          style={{ backgroundColor: config.badgeBg }}
-                        >
-                          <StatusIcon size={14} />
-                          <span>{config.label}</span>
-                        </div>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="az-title text-az-ink">₦{refund.amount.toLocaleString()}</p>
+                      <div
+                        className={`az-micro-label mt-2 inline-flex items-center gap-1.5 rounded-az-pill px-3 py-1 ${config.badge}`}
+                      >
+                        <StatusIcon size={14} />
+                        <span>{config.label}</span>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <EmptyState
-              icon="DollarSign"
-              title="No refund requests found"
-              description="You haven't requested any refunds yet"
-              action={{
-                label: 'View transaction history',
-                onClick: () => (window.location.href = '/wallet/transactions'),
-              }}
-            />
-          )}
-        </div>
-      </main>
-      <AppFooter logoVariant="light" />
-    </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon="DollarSign"
+            title="No refund requests found"
+            description="You haven't requested any refunds yet"
+            action={{
+              label: 'View transaction history',
+              onClick: () => (window.location.href = '/wallet/transactions'),
+            }}
+          />
+        )}
+      </div>
+    </PageShell>
   );
 }

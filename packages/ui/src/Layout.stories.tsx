@@ -32,7 +32,7 @@ export const ContainerComponent: StoryObj<typeof Container> = {
     size: 'lg',
   },
   render: (args) => (
-    <div className="bg-bg-primary p-4">
+    <div className="bg-az-surface-root p-4">
       <Container {...args}>
         <Card>
           <p>This is a container with max-width: {args.size}</p>
@@ -112,7 +112,7 @@ export const StackComponent: StoryObj<typeof Stack> = {
     wrap: false,
   },
   render: (args) => (
-    <div className="p-4 bg-bg-secondary rounded-xl">
+    <div className="p-4 bg-az-surface-raised rounded-xl">
       <Stack {...args}>
         <Button>Button 1</Button>
         <Button variant="secondary">Button 2</Button>
@@ -153,7 +153,7 @@ export const AspectRatioComponent: StoryObj<typeof AspectRatio> = {
   render: (args) => (
     <div className="p-4">
       <AspectRatio {...args}>
-        <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+        <div className="w-full h-full bg-gradient-to-br from-az-primary-500 to-az-secondary-500 flex items-center justify-center">
           <span className="text-white font-semibold">{args.ratio}</span>
         </div>
       </AspectRatio>
@@ -183,15 +183,13 @@ export const SplitComponent: StoryObj<typeof Split> = {
         left={
           <Card padding="lg">
             <h3 className="font-semibold mb-2">Left Content</h3>
-            <p className="text-sm text-text-secondary">
-              This is the left section of the split layout.
-            </p>
+            <p className="text-sm text-az-ink-dim">This is the left section of the split layout.</p>
           </Card>
         }
         right={
           <Card padding="lg">
             <h3 className="font-semibold mb-2">Right Content</h3>
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-az-ink-dim">
               This is the right section of the split layout.
             </p>
           </Card>
@@ -223,7 +221,7 @@ export const DashboardLayoutComponent: StoryObj<typeof DashboardLayout> = {
         </div>
       }
       header={<div className="p-4">Header Content</div>}
-      footer={<div className="text-center text-sm text-text-tertiary">Footer Content</div>}
+      footer={<div className="text-center text-sm text-az-ink-muted">Footer Content</div>}
       onSidebarToggle={() => {}}
     >
       <div className="space-y-4">
@@ -240,7 +238,7 @@ export const DashboardLayoutComponent: StoryObj<typeof DashboardLayout> = {
 export const AuthLayoutComponent: StoryObj<typeof AuthLayout> = {
   render: () => (
     <AuthLayout
-      logo={<span className="text-2xl font-bold text-primary-400">Azeebo+</span>}
+      logo={<span className="text-2xl font-bold text-az-primary-400">Azeebo+</span>}
       footer="© 2026 Azeebo+. All rights reserved."
     >
       <div className="space-y-4">
@@ -249,12 +247,12 @@ export const AuthLayoutComponent: StoryObj<typeof AuthLayout> = {
           <input
             type="email"
             placeholder="Email"
-            className="w-full px-4 py-2 rounded-lg border border-border-default bg-bg-primary"
+            className="w-full px-4 py-2 rounded-lg border border-az-glass-border bg-az-surface-root"
           />
           <input
             type="password"
             placeholder="Password"
-            className="w-full px-4 py-2 rounded-lg border border-border-default bg-bg-primary"
+            className="w-full px-4 py-2 rounded-lg border border-az-glass-border bg-az-surface-root"
           />
         </div>
         <Button className="w-full">Sign In</Button>

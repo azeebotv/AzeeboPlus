@@ -263,6 +263,9 @@ SQL
 # PRIMARY KEY alone, but the partial index keeps the trend query fast as the
 # ledger grows.
 psql_admin -v ON_ERROR_STOP=1 -c "CREATE INDEX IF NOT EXISTS job_runs_transport_flip_idx ON job_runs (\"ranAt\" DESC) WHERE job = 'transport-flip'" || true
+# Individual flip events (ops.service recordTransportSweep — one immutable
+# row per DETECTED transition; the day rows above merge them into counters).
+psql_admin -v ON_ERROR_STOP=1 -c "CREATE INDEX IF NOT EXISTS job_runs_transport_flip_event_idx ON job_runs (\"ranAt\" DESC) WHERE job = 'transport-flip-event'" || true
 
 echo
 echo "Federation complete. azeebo_admin now serves LIVE data for the swapped tables."

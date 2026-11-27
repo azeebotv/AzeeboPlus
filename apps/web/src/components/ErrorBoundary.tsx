@@ -40,12 +40,12 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-card rounded-lg shadow-lg p-8 text-center">
+        <div className="min-h-screen bg-az-surface-root flex items-center justify-center px-4">
+          <div className="az-glass text-az-ink max-w-md w-full p-8 text-center">
             <div className="mb-6">
-              <div className="h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="h-20 w-20 bg-az-error-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="h-10 w-10 text-destructive"
+                  className="h-10 w-10 text-az-error-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -58,28 +58,30 @@ export class ErrorBoundary extends Component<Props, State> {
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="az-section-title mb-2">Something went wrong</h2>
+              <p className="az-lead text-az-ink-muted mb-6">
                 We encountered an unexpected error. Please try again or contact support if the
                 problem persists.
               </p>
               {this.state.error && process.env.NODE_ENV === 'development' && (
-                <div className="bg-muted rounded-md p-3 text-left mb-6">
-                  <p className="text-xs font-mono text-destructive mb-1">{this.state.error.name}</p>
-                  <p className="text-xs text-muted-foreground">{this.state.error.message}</p>
+                <div className="bg-az-glass-fill rounded-az-card p-3 text-left mb-6">
+                  <p className="text-xs font-mono text-az-error-500 mb-1">
+                    {this.state.error.name}
+                  </p>
+                  <p className="text-xs text-az-ink-muted">{this.state.error.message}</p>
                 </div>
               )}
             </div>
             <div className="flex space-x-4">
               <button
                 onClick={this.handleRetry}
-                className="flex-1 bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                className="flex-1 az-btn-primary transition-colors"
               >
                 Try Again
               </button>
               <button
                 onClick={() => (window.location.href = '/')}
-                className="flex-1 bg-muted text-foreground px-6 py-3 rounded-lg font-medium hover:bg-muted/80 transition-colors"
+                className="flex-1 bg-az-glass-fill-hover text-az-ink rounded-az-control px-6 py-3 font-medium hover:bg-az-glass-fill-active transition-colors"
               >
                 Go Home
               </button>

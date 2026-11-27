@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../jest.shared.config.js');
+
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
@@ -8,4 +10,7 @@ module.exports = {
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
+  moduleNameMapper: {
+    ...sharedModuleNameMapper,
+  },
 };

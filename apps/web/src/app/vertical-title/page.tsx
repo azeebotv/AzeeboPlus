@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { apiFetch } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -85,37 +85,61 @@ export default function VerticalTitlePage(): React.JSX.Element {
   }, [titleId]);
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Vertical" />
+    <PageShell activeNav="Vertical" maxWidth="xl">
+      <Link
+        href="/vertical"
+        className="az-body mb-6 inline-flex items-center gap-1.5 text-az-ink/50 transition-colors hover:text-az-ink"
+      >
+        ← Back to Vertical Drama
+      </Link>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
-        <Link
-          href="/vertical"
-          className="text-sm text-white/50 hover:text-white mb-6 inline-flex items-center gap-1.5 transition-colors"
-        >
-          ← Back to Vertical Drama
-        </Link>
-
-        {isLoading ? (
-          <div className="space-y-6">
-            <Skeleton height="380px" borderRadius="24px" />
-            <Skeleton height="40px" width="50%" />
-            <Skeleton height="100px" />
-          </div>
-        ) : error || !titleData ? (
-          <ErrorState
-            title="Title Unavailable"
-            description={error || 'Vertical title could not be loaded.'}
-            onButtonPress={() => router.push('/vertical')}
-          />
-        ) : (
-          <div className="space-y-8">
-            {/* Header Hero */}
-            <div className="az-glass rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row gap-8 items-center sm:items-start border border-white/10 shadow-2xl">
-              <div className="relative w-48 aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl flex-shrink-0 border border-white/10">
+      {isLoading ? (
+        <div className="space-y-6">
+          <Skeleton height="380px" borderRadius="24px" />
+          <Skeleton height="40px" width="50%" />
+          <Skeleton height="100px" />
+        </div>
+      ) : error || !titleData ? (
+        <ErrorState
+          title="Title Unavailable"
+          description={error || 'Vertical title could not be loaded.'}
+          onButtonPress={() => router.push('/vertical')}
+        />
+      ) : (
+        <div className="space-y-8">
+          {/* Header Hero */}
+          <PageHero
+            eyebrow={titleData.universe || 'Vertical Drama'}
+            title={titleData.title}
+            subtitle={
+              titleData.synopsis ||
+              'Immerse in mobile-first 9:16 vertical storytelling crafted for quick drama hooks and rich worldbuilding.'
+            }
+            actions={
+              <>
+                <Link
+                  href={`/watch/${titleData.id}`}
+                  className="az-btn-primary az-btn-primary--inline inline-flex items-center gap-2"
+                >
+                  <span aria-hidden="true"></span> Play Episode 1
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsFollowing((f) => !f)}
+                  aria-pressed={isFollowing}
+                  className={`az-body-strong rounded-az-pill px-6 py-3 transition-colors ${
+                    isFollowing
+                      ? 'border border-az-ink/30 bg-az-ink/20 text-az-ink'
+                      : 'bg-az-glass-card text-az-ink/90 hover:bg-az-ink/15'
+                  }`}
+                >
+                  {isFollowing ? 'Check In Watchlist' : '+ Add to Watchlist'}
+                </button>
+              </>
+            }
+          >
+            <div className="az-glass flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-start">
+              <div className="relative aspect-[9/16] w-48 flex-shrink-0 overflow-hidden rounded-az-panel">
                 {titleData.thumbnail && (
                   <OptimizedImage
                     src={titleData.thumbnail}
@@ -127,166 +151,128 @@ export default function VerticalTitlePage(): React.JSX.Element {
                 )}
               </div>
 
-              <div className="flex-1 text-center sm:text-left">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-3">
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-[var(--brand-orange)] text-white uppercase tracking-wider">
-                    {titleData.universe || 'Vertical Drama'}
-                  </span>
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   {titleData.genre && (
-                    <span className="px-3 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/80">
+                    <span className="az-caption rounded-az-pill bg-az-glass-card px-3 py-0.5 font-medium text-az-ink/80">
                       {titleData.genre}
                     </span>
                   )}
                   {titleData.episodes && (
-                    <span className="text-xs text-white/60 font-semibold">
+                    <span className="az-overline text-az-ink/60">
                       {titleData.episodes} Episodes
                     </span>
                   )}
                 </div>
-
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-                  {titleData.title}
-                </h1>
-                <p className="text-white/70 text-sm sm:text-base leading-relaxed mb-6">
-                  {titleData.synopsis ||
-                    'Immerse in mobile-first 9:16 vertical storytelling crafted for quick drama hooks and rich worldbuilding.'}
-                </p>
-
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                  <Link
-                    href={`/watch/${titleData.id}`}
-                    className="px-7 py-3 rounded-full font-bold text-white transition-transform hover:scale-105 shadow-lg inline-flex items-center gap-2"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                    }}
-                  >
-                    <span></span> Play Episode 1
-                  </Link>
-                  <button
-                    onClick={() => setIsFollowing((f) => !f)}
-                    className={`px-6 py-3 rounded-full font-semibold transition-colors ${
-                      isFollowing
-                        ? 'bg-white/20 text-white border border-white/30'
-                        : 'bg-white/10 text-white/90 hover:bg-white/15'
-                    }`}
-                  >
-                    {isFollowing ? 'Check In Watchlist' : '+ Add to Watchlist'}
-                  </button>
-                </div>
               </div>
             </div>
+          </PageHero>
 
-            {/* Tabs */}
-            <div className="flex border-b border-white/10 gap-8">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`pb-3 font-semibold text-sm transition-colors relative ${
-                  activeTab === 'overview' ? 'text-white' : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                Overview
-                {activeTab === 'overview' && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--brand-orange)]" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('characters')}
-                className={`pb-3 font-semibold text-sm transition-colors relative ${
-                  activeTab === 'characters' ? 'text-white' : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                Characters ({characters.length})
-                {activeTab === 'characters' && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--brand-orange)]" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('lore')}
-                className={`pb-3 font-semibold text-sm transition-colors relative ${
-                  activeTab === 'lore' ? 'text-white' : 'text-white/40 hover:text-white/70'
-                }`}
-              >
-                Universe Lore
-                {activeTab === 'lore' && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--brand-orange)]" />
-                )}
-              </button>
-            </div>
-
-            {/* Tab Contents */}
-            {activeTab === 'overview' && (
-              <div className="az-glass p-6 rounded-3xl space-y-4">
-                <h3 className="text-lg font-bold text-white">Story Synopsis</h3>
-                <p className="text-white/70 leading-relaxed">
-                  {titleData.synopsis ||
-                    'Explore an expansive vertical narrative written for fast-paced visual storytelling and episodic cliffhangers.'}
-                </p>
-              </div>
-            )}
-
-            {activeTab === 'characters' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {characters.length === 0 ? (
-                  <p className="text-white/40 py-8 col-span-3 text-center">
-                    No character details listed.
-                  </p>
-                ) : (
-                  characters.map((c) => (
-                    <div
-                      key={c.id}
-                      className="az-glass p-4 rounded-2xl flex items-center gap-4 border border-white/5"
-                    >
-                      <div className="w-14 h-14 rounded-full overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center font-bold text-white">
-                        {c.avatar ? (
-                          <OptimizedImage
-                            src={c.avatar}
-                            alt={c.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          c.name.charAt(0)
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-bold text-white truncate">{c.name}</h4>
-                        <p className="text-xs text-[var(--brand-orange)] truncate">
-                          {c.role || 'Main Character'}
-                        </p>
-                        {c.description && (
-                          <p className="text-xs text-white/50 line-clamp-1 mt-1">{c.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeTab === 'lore' && (
-              <div className="space-y-4">
-                {lore.length === 0 ? (
-                  <div className="az-glass p-8 rounded-3xl text-center text-white/40">
-                    Discover deep world lore and timeline history as episodes are unlocked.
-                  </div>
-                ) : (
-                  lore.map((item, i) => (
-                    <div
-                      key={i}
-                      className="az-glass p-6 rounded-2xl border border-white/5 space-y-2"
-                    >
-                      <h4 className="text-base font-bold text-white">{item.title}</h4>
-                      <p className="text-sm text-white/70 leading-relaxed">{item.content}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+          {/* Tabs */}
+          <div className="flex gap-8 border-b border-az-glass-border">
+            <button
+              type="button"
+              onClick={() => setActiveTab('overview')}
+              aria-pressed={activeTab === 'overview'}
+              className={`az-body-strong relative pb-3 transition-colors ${
+                activeTab === 'overview' ? 'text-az-ink' : 'text-az-ink/40 hover:text-az-ink/70'
+              }`}
+            >
+              Overview
+              {activeTab === 'overview' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-az-flame" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('characters')}
+              aria-pressed={activeTab === 'characters'}
+              className={`az-body-strong relative pb-3 transition-colors ${
+                activeTab === 'characters' ? 'text-az-ink' : 'text-az-ink/40 hover:text-az-ink/70'
+              }`}
+            >
+              Characters ({characters.length})
+              {activeTab === 'characters' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-az-flame" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('lore')}
+              aria-pressed={activeTab === 'lore'}
+              className={`az-body-strong relative pb-3 transition-colors ${
+                activeTab === 'lore' ? 'text-az-ink' : 'text-az-ink/40 hover:text-az-ink/70'
+              }`}
+            >
+              Universe Lore
+              {activeTab === 'lore' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-az-flame" />
+              )}
+            </button>
           </div>
-        )}
-      </main>
 
-      <AppFooter />
-    </div>
+          {/* Tab Contents */}
+          {activeTab === 'overview' && (
+            <div className="az-glass space-y-4 p-6">
+              <h3 className="az-subtitle text-az-ink">Story Synopsis</h3>
+              <p className="az-lead leading-relaxed text-az-ink/70">
+                {titleData.synopsis ||
+                  'Explore an expansive vertical narrative written for fast-paced visual storytelling and episodic cliffhangers.'}
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'characters' && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {characters.length === 0 ? (
+                <p className="az-body col-span-3 py-8 text-center text-az-ink/40">
+                  No character details listed.
+                </p>
+              ) : (
+                characters.map((c) => (
+                  <div key={c.id} className="az-glass flex items-center gap-4 p-4">
+                    <div className="az-subtitle relative flex size-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-az-glass-card text-az-ink">
+                      {c.avatar ? (
+                        <OptimizedImage src={c.avatar} alt={c.name} fill className="object-cover" />
+                      ) : (
+                        c.name.charAt(0)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="az-body-strong truncate text-az-ink">{c.name}</h4>
+                      <p className="az-caption truncate text-az-flame">
+                        {c.role || 'Main Character'}
+                      </p>
+                      {c.description && (
+                        <p className="az-caption mt-1 line-clamp-1 text-az-ink/50">
+                          {c.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {activeTab === 'lore' && (
+            <div className="space-y-4">
+              {lore.length === 0 ? (
+                <div className="az-glass p-8 text-center az-body text-az-ink/40">
+                  Discover deep world lore and timeline history as episodes are unlocked.
+                </div>
+              ) : (
+                lore.map((item, i) => (
+                  <div key={i} className="az-glass space-y-2 p-6">
+                    <h4 className="az-body-strong text-az-ink">{item.title}</h4>
+                    <p className="az-lead leading-relaxed text-az-ink/70">{item.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </PageShell>
   );
 }

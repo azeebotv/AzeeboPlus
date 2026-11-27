@@ -15,6 +15,7 @@ import { apiClient } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { radius, colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ProfileData {
   avatar?: string;
@@ -55,7 +56,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Profile Screen" style={styles.container}>
         <LoadingState text="Loading profile..." />
       </SafeAreaView>
     );
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   editAvatarButton: {
     position: 'absolute',
     bottom: -10,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.sm,

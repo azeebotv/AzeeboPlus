@@ -1,4 +1,11 @@
-export type { User, AuthResponse, ApiResponse, Device } from './auth';
+export type {
+  User,
+  AuthResponse,
+  ApiResponse,
+  Device,
+  SelectRoleResponse,
+  SelectableRole,
+} from './auth';
 export type {
   DeviceLinkInitResponse,
   DeviceLinkStatus,
@@ -45,7 +52,7 @@ export { referralApi } from './referral';
 export { creatorApi } from './creator';
 export { supportApi } from './support';
 export { moderationApi } from './moderation';
-export { apiClient } from './client';
+export { apiClient, generateIdempotencyKey } from './client';
 export type {
   ReportReason,
   ReportData,

@@ -81,7 +81,7 @@ describe('MoviesService Integration - Cross-Service Communication', () => {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
                 MOVIE_RENTAL_FEE: 500,
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
               };
               return config[key] ?? defaultValue;
             }),

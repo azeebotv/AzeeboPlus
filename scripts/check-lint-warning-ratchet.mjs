@@ -7,7 +7,7 @@
 // grow: each gets a PER-RULE baseline and this gate. A plain
 // `--max-warnings` flag cannot enforce a ratchet here: it counts ALL
 // warnings (no-console, no-unused-vars, …), so an unrelated `console.log`
-// could mask ratchet growth — and vice versa. This gate counts warnings PER
+// could mask ratchet growth — and vice versa. This gate counts findings PER
 // RULE and PER WORKSPACE instead, and fails when any count exceeds that
 // rule's committed baseline.
 //
@@ -15,10 +15,12 @@
 //   • Migrating rule (warn repo-wide) — the baseline is a floor that only
 //     moves down; conversions lower it via --update until it reaches 0.
 //   • Fully-gated rule (error in the base config) — the baseline sits at
-//     total 0 as a canary. The rule is error-severity, so live warnings
-//     should be impossible; if any appear, the severity regressed somewhere
-//     and this gate (plus check-rule-promotion.mjs) fails CI. This is the
-//     posture of require-map-and-throw since its migration completed.
+//     total 0 as a canary, and it is a real one only because the counter below
+//     reads BOTH severities. Counting warnings alone would report 0 for every
+//     migrated workspace: an `error`-severity rule never emits a warning, so the
+//     canary could never fire on exactly the regression it exists to catch.
+//     This is the posture of require-map-and-throw since its migration
+//     completed.
 //
 // Ratchet mechanics (per rule, unchanged in spirit):
 //   • Baseline may only move DOWN. Any workspace exceeding its baseline
@@ -139,11 +141,26 @@ export function discoverWorkspaces(root) {
 // ---------------------------------------------------------------------------
 
 /**
- * Count `ruleId` warnings (severity 1) per workspace from ESLint JSON output.
- * Results without a matching workspace land in the `other` bucket.
+ * Count `ruleId` findings per workspace from ESLint JSON output, at EITHER
+ * severity. Results without a matching workspace land in the `other` bucket.
+ *
+ * Severity-agnostic on purpose: the migrating postures emit warnings, the
+ * fully-gated ones emit errors, and a counter that watched only warnings would
+ * report a clean 0 for every workspace whose rule was promoted — silently
+ * disabling the total-0 canary at the exact moment the migration made it the
+ * only thing standing between a new violation and a merge.
+ *
+ * `warnCounts` is the same pass restricted to severity 1. The ratchet wants the
+ * union (a violation is a violation whichever severity emitted it); the
+ * promotion gate wants the warnings specifically, because its whole question is
+ * "is this service still mid-migration", and an `error`-severity finding is not
+ * a migration in progress — it is a lint failure. Sharing one number between
+ * those two questions would make a gated service look like it was still
+ * converting.
  */
-export function countWarnings(results, workspaces, ruleId = RULE) {
+export function countFindings(results, workspaces, ruleId = RULE) {
   const counts = new Map(workspaces.map((w) => [w.name, 0]));
+  const warnCounts = new Map(workspaces.map((w) => [w.name, 0]));
   const other = [];
   for (const fileResult of results) {
     const filePath = fileResult?.filePath;
@@ -165,13 +182,19 @@ export function countWarnings(results, workspaces, ruleId = RULE) {
       }
     }
     for (const msg of messages) {
-      if (msg.ruleId === ruleId && msg.severity === 1) {
-        if (best) counts.set(best.name, (counts.get(best.name) ?? 0) + 1);
-        else other.push(`${filePath}:${msg.line ?? '?'} — ${msg.message}`);
+      if (msg.ruleId === ruleId) {
+        if (best) {
+          counts.set(best.name, (counts.get(best.name) ?? 0) + 1);
+          if (msg.severity === 1) {
+            warnCounts.set(best.name, (warnCounts.get(best.name) ?? 0) + 1);
+          }
+        } else {
+          other.push(`${filePath}:${msg.line ?? '?'} — ${msg.message}`);
+        }
       }
     }
   }
-  return { counts, other };
+  return { counts, warnCounts, other };
 }
 
 // ---------------------------------------------------------------------------
@@ -284,8 +307,9 @@ export function runEslintJson(lintDirs, cwd) {
     });
   } catch (err) {
     // ESLint exits non-zero on lint errors too, but still prints JSON to
-    // stdout — the ratchet only counts warnings, and the lint job itself
-    // already fails on errors, so reuse whatever JSON we got.
+    // stdout. The exit code is not the signal here — this gate does its own
+    // per-rule, per-workspace counting so it can compare against a baseline,
+    // so reuse whatever JSON we got.
     stdout = err.stdout ?? '';
     if (!stdout.trim().startsWith('[')) {
       throw new Error(`eslint failed without JSON output: ${err.stderr ?? err.message}`);
@@ -304,10 +328,10 @@ function printCounts(ruleId, workspaces, counts) {
     .filter((r) => r.count > 0)
     .sort((a, b) => b.count - a.count);
   if (rows.length === 0) {
-    console.log(`No ${ruleId} warnings found.`);
+    console.log(`No ${ruleId} findings reported.`);
     return;
   }
-  console.log(`${ruleId} warnings by workspace:`);
+  console.log(`${ruleId} findings by workspace:`);
   for (const r of rows) console.log(`  ${String(r.count).padStart(3)}  ${r.name}`);
 }
 
@@ -361,14 +385,14 @@ function main() {
 
   for (const rule of selected) {
     const baselinePath = path.resolve(root, rule.ratchet);
-    const { counts, other } = countWarnings(results, workspaces, rule.id);
+    const { counts, other } = countFindings(results, workspaces, rule.id);
     if (other.length > 0) otherNotices.set(rule.id, other);
 
     if (update) {
       const record = buildBaselineRecord(rule.id, counts);
       fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
       fs.writeFileSync(baselinePath, JSON.stringify(record, null, 2) + '\n');
-      console.log(`\nBaseline written: ${path.relative(root, baselinePath)} (${record.total} warning(s))`);
+      console.log(`\nBaseline written: ${path.relative(root, baselinePath)} (${record.total} finding(s))`);
       printCounts(rule.id, workspaces, counts);
       continue;
     }
@@ -400,14 +424,15 @@ function main() {
     if (violations.length > 0) {
       for (const v of violations) {
         // GitHub renders ::error lines as annotations in Actions logs; harmless text elsewhere.
+        // The rule's own ESLint message carries the prescribed fix, so no
+        // per-rule advice belongs in a gate that covers every rule.
         failures.push(
-          `${rule.id} ratchet violated — warnings may only decrease: ${v.name}: ${v.current} warning(s) > baseline ${v.allowed} (+${v.delta})`,
+          `${rule.id} ratchet violated — findings may only decrease: ${v.name}: ${v.current} finding(s) > baseline ${v.allowed} (+${v.delta})`,
         );
-        console.error(`::error file=${path.relative(root, baselinePath)}::[${rule.id}] ${v.name}: ${v.current} warning(s) > baseline ${v.allowed} (+${v.delta})`);
-        console.error(`   Convert these catch blocks to mapAndThrow(error, '<context>') from @azeebo/security (or the rule's prescribed form).`);
+        console.error(`::error file=${path.relative(root, baselinePath)}::[${rule.id}] ${v.name}: ${v.current} finding(s) > baseline ${v.allowed} (+${v.delta})`);
       }
     } else {
-      console.log(`✅ Ratchet holds: ${currentTotal} warning(s) ≤ baseline ${baselineTotal}.`);
+      console.log(`✅ Ratchet holds: ${currentTotal} finding(s) ≤ baseline ${baselineTotal}.`);
     }
   }
 
@@ -417,7 +442,7 @@ function main() {
   }
   for (const [ruleId, other] of otherNotices) {
     if (other.length > 0) {
-      console.warn(`\n${other.length} ${ruleId} warning(s) outside any workspace dir (not ratcheted):`);
+      console.warn(`\n${other.length} ${ruleId} finding(s) outside any workspace dir (not ratcheted):`);
       for (const line of other.slice(0, 10)) console.warn(`  ${line}`);
     }
   }

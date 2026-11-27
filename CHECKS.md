@@ -50,8 +50,26 @@ Two conventions hold across all of them:
   impact is real) but can never read as `sustained`, so the tracker never
   opens, updates, or keeps an issue for it and the gate passes with an
   "approved (allowlist), not tracked" reason when the only ≥threshold
-  dialer is approved. Matching is exact-path (no globbing) so an entry can
-  never approve a sibling path. The admin Ops Health card mirrors the
+  dialer is approved. Matching is exact-path (no globbing) so an entry
+  can never approve a sibling path. The admin Ops Health card links
+  SUSTAINED rows to the tracking issue when its URL resolves
+  (foreignPersistence.trackingIssueUrl: POOL_TRACKING_ISSUE_URL env
+  override → GitHub marker search cached 10 min at
+  /tmp/azeebo-admin-pool-tracking-issue.json → cached value on failure;
+  resolvePoolTrackingIssueUrl in ops.service.ts — best-effort, never
+  throws into the health payload, only paid for when a sustained row
+  exists). Unresolvable URL → plain "sustained — tracked nightly"
+  badges. Each persistence row also carries a 24-bucket pass-history
+  sparkline (foreignPersistence.rows[].history, oldest → newest, one bar
+  per ~2h bucket over the card's window — computeForeignPassTrend in
+  ops.service.ts; bars scale to the row's own peak, silent periods read
+  as flat gaps, and history counts EVERY flagged pass in the window, not
+  just the best persistence run). A Playwright browser sweep (apps/admin/
+  client/e2e/ops-pgbouncer.spec.ts, CI job test-admin-e2e) mounts the real
+  client against mocked /api/v1 endpoints and toMatchAriaSnapshot-locks the
+  card's five tables (pools, budgets, bypasses, foreign direct clients,
+  persistence) so JSX/typing regressions fail CI instead of shipping. The
+  admin Ops Health card mirrors the
   same list: approved rows show an "approved — not tracked" tag instead
   of "sustained — tracked nightly" (see apps/admin/src/modules/ops/
   ops.service.ts parseForeignAllowlist — a local copy; the admin build is
@@ -290,6 +308,44 @@ PATCH vs backend PUT) fails both directions. Rule core is unit-tested in
 `scripts/__tests__/route-contracts-gateway-backend.test.mjs`; known debt is
 ratcheted in the baseline (`gatewayGhostEndpoints`,
 `gatewayUndeclaredBackendRoutes` — dir-scoped keys, may only shrink).
+
+**2026-09 ghost triage (192 → 0):** the ratcheted ghosts decomposed into four
+root causes, all fixed in the extractor or the declarations rather than
+baseline-padded: (1) `ENV_TO_DIR` pointed `ANALYTICS_SERVICE_URL` at a
+nonexistent `services/operations/analytics-service` (real dir:
+`services/intelligence/analytics-service`), which had ghosted 36 decls and
+hidden 66 real backend routes from the undeclared check; (2) the `/interactions`
+block used `pathStrategy: 'no-prefix'` although user-service serves
+`/v1/interactions/*` (URI versioning) — a real runtime 404; (3) the block
+parser's regex did not tolerate comment lines, so the commented `/movies`
+block was swallowed into `/reality`'s config (regex is now comment-tolerant);
+(4) `@All('*')` catch-all proxy controllers had their wildcards stripped —
+they now emit base + `path/**` routes. Ghosts that survived the extractor
+fixes were cleared by dropping decls with no backend and no caller,
+re-pointing clients to the routes that actually exist (e.g. passes
+`purchase`→`subscribe`, rental `purchase`→`/:id/rent`, AOU characters/timeline
+→ `/vertical/*`, live chat → `/messaging/watch-parties/:id/chat` with a
+`pathRewrite`, mobile hub pages to per-family endpoints), or implementing the
+missing backend route where a live screen depended on it (sports highlights,
+vertical title episodes/characters/related, knowledge
+`locked`/`what-you-know`/`summary`, movie `dbo/overview`, comedy
+categories/top-rated). Verb drift fixed client-side: creator monetization
+settings PUT→PATCH. The undeclared ratchet absorbed 66 analytics routes that
+the dir fix surfaced for the first time.
+
+**2026-09 undeclared ratchet pass (578 → 160):** every undeclared backend
+route was triaged service by service. Reachable surface is now declared on
+its true controller prefix (new blocks: `/reviews`, `/sharing`, `/privacy`,
+`/push`, `/watch-parties`, `/creators`; big extensions: analytics, content,
+lifestyle, vertical, reality, support, queue). The 160 still ratcheted are
+structurally unreachable through the gateway, not untriaged: `@Controller('admin')`
+families inside services (the `/admin` client prefix proxies to apps/admin,
+which re-implements or re-proxies them — ~130 routes), wallet `/v1/internal/*`
+service-to-service endpoints, payment provider webhooks that must bypass the
+gateway, per-app BFF catch-alls in apps/admin + apps/creator, and a few
+lifecycle/job-internal endpoints. Declaring those would make the contract
+lie; each should move out of shadowed controllers or behind explicit service
+auth instead.
 
 **Invariant (passes 1–2, gating + advisory):** every API call extracted from client code —
 including template literals and raw query strings — matches a route declared
@@ -533,7 +589,16 @@ annotation; exit 2 only on environment errors (missing tsc). Locally:
 **Invariant:** a transport flip outlives its 10-minute hold window. The
 Redis flips hash (`ops:transport:flips`) answers "what changed just now"
 for the banner; the job_runs ledger (job `transport-flip`) answers "what
-changed all month". `OpsService.recordTransportSweep` (apps/admin/src/
+changed all month". The Ops Health header carries a **store chip**
+(GET /admin/ops/services → `transportStore`): `redis` (emerald) when
+baselines + hold-window flips are fleet-wide, `memory` (amber) when the
+store degraded and flip memory is per-process — a restart or a second
+replica loses the history, which is exactly why degraded is visible at
+a glance (mapping: `transportStoreStatus` in ops.service.ts). The store
+reads a DEDICATED Redis DB index: `opsRedisUrl` (transport-store.ts)
+rewrites bare URLs to `…/1` so ops keys never share DB 0 with the
+feature-flag cache — an explicit index in OPS_REDIS_URL wins,
+OPS_REDIS_DB overrides the default number. `OpsService.recordTransportSweep` (apps/admin/src/
 modules/ops/ops.service.ts) fires on EVERY successful probe sweep —
 steady states included, so a gap in the ledger means "sweeps stopped",
 never "nothing happened" — and UPSERT-merges ONE row per (service, UTC
@@ -555,6 +620,25 @@ in the window) by the UPSERT — no retention entry needed. The ledger
 write is fire-and-forget: a failed write warns and never fails (or slows)
 the health sweep. Tests: `cd apps/admin && npx jest transport-flip`
 (codec) and the ops.test.tsx trend-card render tests.
+
+**Flip EVENTS** (job `transport-flip-event`): the per-day row keeps
+counters and only the day's LAST from→to pair; a service that flapped
+several times a day loses the intermediate timestamps. So every DETECTED
+transition is also written as its own immutable job_runs row, one per
+(service, detecting sweep) with a deterministic id
+(`transport-flip-event:<service>:<detectedAt ISO>`) and
+`ON CONFLICT DO NOTHING` — retried/concurrent sweeps of the same
+observation collapse to exactly one row without read-before-write.
+`ranAt` = the flip's `detectedAt` (the event IS its timestamp), detail
+carries `service=/port=/from=/to=/familyChanged=` via
+renderTransportFlipEventDetail. `getTransportFlipTrend` returns the
+newest 25 as `events` (rendered in the trend card's "Recent flip
+events" table), and the events stay queryable in the ledger far beyond
+the trend window. Deliberately NOT in KNOWN_JOBS (same reason as
+`transport-flip`: event-driven, silence is healthy). Index:
+`job_runs_transport_flip_event_idx` (federate-admin-db.sh, partial on
+the job). Same fire-and-forget contract: a failed event write warns and
+never fails the sweep.
 
 ### `prober-coverage-gate` — Ops Health fleet ⊆ launchd manifest (PR gate)
 
@@ -580,6 +664,36 @@ Tests: `node --test scripts/__tests__/prober-coverage-gate.test.mjs`
 (14 cases: parse fail-loud rules, port join semantics, duplicate detection,
 and subprocess runs — the real fleet must pass at HEAD; fake-tree drills
 for every failure mode).
+
+### `dev-port-drift-gate` — app dev-server ports == launchd manifest (PR gate)
+
+**Invariant:** every launchd manifest dev entry (kinds `vite`/`next`/
+`expo` in `scripts/launchd/service-manifest.mjs`) equals the matching
+app dev config's pinned port, and every app dev config is
+manifest-covered — checked in BOTH directions so neither side can
+silently drop the other. Config shapes per kind: `vite` →
+`<dir>/client/vite.config.ts` `server.port`; `next` → `<dir>/package.json`
+`scripts.dev` (`-p`/`--port`); `expo` → `<dir>/package.json`
+`scripts.start` (`--port`). The drift is real history: the admin SPA
+served 4100 (admin-backend's port, a latent bind conflict) while the
+manifest said 5173 (fixed in 9ca2b491); unpinned `next dev` defaults
+to 3000 — auth-service's port; and two unpinned `expo start` dev
+servers (mobile + tv) collide on Metro 8081. The gate turns all of
+that into a PR failure. Same static-parse, fail-loud conventions as
+the prober-coverage gate: line-based manifest parsing, an unpinned dev
+script FAILS rather than skips (the manifest contract needs a fixed
+number), and apps are classified by their scripts (`next`/`expo`
+keywords), never cross-checked against the wrong kind's contract.
+Runs in `pr-checks.yml` right after the prober-coverage gate. The
+manifest's dev entries carry the port in the generated plist argv too,
+so the plist is independently correct even if package.json drifts.
+
+Locally: `node scripts/launchd/dev-port-drift-gate.mjs`.
+Tests: `node --test scripts/__tests__/dev-port-drift-gate.test.mjs`
+(22 cases: per-kind parsing incl. the unpinned failure modes, both-way
+coverage, (dir, kind) join semantics, and subprocess runs — the real
+repo must pass at HEAD; fake-tree drills for vite drift, the unpinned-
+next 3000 trap, colliding unpinned Expo apps, and unparseable manifest).
 
 ---
 

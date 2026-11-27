@@ -5,7 +5,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '../src/theme';
 import { apiClient } from '@azeebo/react-data/api/client';
-import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
 import { defaultImages } from '../src/theme';
 
 const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
@@ -79,7 +79,7 @@ export default function CityGuideScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="City Guide Screen" style={styles.container}>
       <ScrollView
         style={[
           styles.scrollView,
@@ -87,11 +87,11 @@ export default function CityGuideScreen() {
         ]}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>City Guide</Text>
-          <TouchableOpacity style={styles.searchButton}>
+          <TouchableOpacity accessibilityRole="button" style={styles.searchButton}>
             <Text style={styles.searchIcon}>🔍</Text>
           </TouchableOpacity>
         </View>
@@ -165,7 +165,7 @@ export default function CityGuideScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                   Featured Events
                 </Text>
-                <TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button">
                   <Text style={styles.seeAllText}>See All</Text>
                 </TouchableOpacity>
               </View>
@@ -175,7 +175,7 @@ export default function CityGuideScreen() {
                 contentContainerStyle={styles.featuredScroll}
               >
                 {events.map((event) => (
-                  <TouchableOpacity key={event.id} style={styles.featuredCard}>
+                  <TouchableOpacity accessibilityRole="button" key={event.id} style={styles.featuredCard}>
                     <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.featuredImage} />
                     <View style={styles.featuredOverlay}>
                       <View style={styles.categoryBadge}>
@@ -215,8 +215,15 @@ export default function CityGuideScreen() {
                 Upcoming Events
               </Text>
               <View style={styles.eventsList}>
-                {events.map((event) => (
-                  <TouchableOpacity key={event.id} style={styles.eventCard}>
+                {events.length === 0 ? (
+                  <EmptyState
+                    icon="📍"
+                    title="No Events Found"
+                    description="Check back later for upcoming events in this city."
+                  />
+                ) : (
+                  events.map((event) => (
+                  <TouchableOpacity accessibilityRole="button" key={event.id} style={styles.eventCard}>
                     <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.eventImage} />
                     <View style={styles.eventInfo}>
                       <View style={styles.eventHeader}>
@@ -242,13 +249,13 @@ export default function CityGuideScreen() {
                       </View>
                       <View style={styles.eventFooter}>
                         <Text style={styles.eventPrice}>{event.price}</Text>
-                        <TouchableOpacity style={styles.interestButton}>
+                        <TouchableOpacity accessibilityRole="button" style={styles.interestButton}>
                           <Text style={styles.interestButtonText}>I'm Interested</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                   </TouchableOpacity>
-                ))}
+                )))}
               </View>
             </View>
           </>

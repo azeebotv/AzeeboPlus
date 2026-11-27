@@ -283,7 +283,7 @@ describe('Auth Controller Contract Tests', () => {
         password: 'password123',
       });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('user');
       expect(response.body.data).toHaveProperty('access_token');

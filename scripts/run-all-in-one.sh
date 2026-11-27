@@ -21,6 +21,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Hostnames (APP_HOST, ADMIN_HOST, ...) for compose interpolation.
+source "$ROOT/scripts/lib/domain-env.sh"
+
 COMPOSE="docker-compose.all-in-one.yml"
 ENV_FILE=".env.staging"
 
@@ -56,6 +59,7 @@ if [ ! -f "$ENV_FILE" ]; then
   JWT_ACCESS_SECRET=$(openssl rand -base64 48 | tr -d '\n/+=')
   JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n/+=')
   INTERNAL_API_KEY=$(openssl rand -base64 32 | tr -d '\n/+=')
+  GATEWAY_SECRET=$(openssl rand -base64 32 | tr -d '\n/+=')
 
   cat > "$ENV_FILE" <<EOF
 POSTGRES_USER=azeebo
@@ -67,7 +71,7 @@ JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
 JWT_EXPIRES_IN=30m
 JWT_REFRESH_EXPIRES_IN=7d
 INTERNAL_API_KEY=$INTERNAL_API_KEY
-GATEWAY_SECRET=$INTERNAL_API_KEY
+GATEWAY_SECRET=$GATEWAY_SECRET
 NODE_ENV=production
 NEXT_PUBLIC_API_URL=http://localhost:3013
 EOF

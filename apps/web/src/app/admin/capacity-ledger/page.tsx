@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api';
+import { messageOf, requireArray } from '@/lib/payload';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-import { Skeleton } from '@azeebo/ui/web';
+import { ErrorState, Skeleton } from '@azeebo/ui/web';
 import { Clock, Users, TrendingUp, CheckCircle, DollarSign } from 'lucide-react';
 
 interface CapacityRelease {
@@ -32,24 +33,59 @@ interface HeadcountAvoidance {
   approvalDate?: string;
 }
 
+/** Status pill classes — token pairs from the generated design system. */
+const AUTOMATION_PILL: Record<CapacityRelease['automationLevel'], string> = {
+  full: 'bg-az-success-500/20 text-az-success-500',
+  semi: 'bg-az-warning-500/20 text-az-warning-500',
+  manual: 'bg-az-glass-fill text-az-ink-muted',
+};
+
+const RELEASE_STATUS_PILL: Record<CapacityRelease['status'], string> = {
+  completed: 'bg-az-success-500/20 text-az-success-500',
+  active: 'bg-az-secondary-500/20 text-az-secondary-500',
+  planned: 'bg-az-warning-500/20 text-az-warning-500',
+};
+
+const HEADCOUNT_STATUS_PILL: Record<HeadcountAvoidance['status'], string> = {
+  approved: 'bg-az-success-500/20 text-az-success-500',
+  active: 'bg-az-secondary-500/20 text-az-secondary-500',
+  deferred: 'bg-az-warning-500/20 text-az-warning-500',
+};
+
 export default function CapacityLedgerPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'capacity' | 'headcount'>('capacity');
 
-  const { data: capacityReleases, isLoading: loadingCapacity } = useQuery({
+  const {
+    data: capacityReleases,
+    isLoading: loadingCapacity,
+    isError: capacityFailed,
+    error: capacityError,
+    refetch: refetchCapacity,
+  } = useQuery({
     queryKey: ['capacity-releases'],
     queryFn: async () => {
       const res = await apiFetch<CapacityRelease[]>('/admin/capacity/releases');
-      return res.success ? res.data || [] : [];
+      return requireArray(res);
     },
   });
 
-  const { data: headcountAvoidances, isLoading: loadingHeadcount } = useQuery({
+  const {
+    data: headcountAvoidances,
+    isLoading: loadingHeadcount,
+    isError: headcountFailed,
+    error: headcountError,
+    refetch: refetchHeadcount,
+  } = useQuery({
     queryKey: ['headcount-avoidances'],
     queryFn: async () => {
       const res = await apiFetch<HeadcountAvoidance[]>('/admin/headcount/avoidances');
-      return res.success ? res.data || [] : [];
+      return requireArray(res);
     },
   });
+
+  // '—' while a read failed: zero here is a claim about the ledger, not the
+  // absence of one.
+  const dash = '—';
 
   const capacityStats = {
     totalHoursReleased: capacityReleases?.reduce((sum, r) => sum + r.hoursReleased, 0) || 0,
@@ -67,64 +103,36 @@ export default function CapacityLedgerPage(): React.JSX.Element {
     pendingApproval: headcountAvoidances?.filter((h) => h.status === 'active').length || 0,
   };
 
+  const tabClass = (selected: boolean) =>
+    `rounded-az-control px-5 py-2.5 transition-colors ${
+      selected
+        ? 'az-body-strong bg-az-scarlet text-az-ink'
+        : 'az-body bg-az-glass-fill text-az-ink-muted hover:bg-az-glass-fill-hover hover:text-az-ink'
+    }`;
+
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary, #1A0A0A)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
+    <div className="min-h-screen bg-az-surface-root text-az-ink">
       <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
+      <main className="mx-auto max-w-[1200px] px-6 pb-[60px] pt-[100px]">
         {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>
-            Human Capacity Release Ledger
-          </h1>
-          <p style={{ color: 'var(--text-muted, #9A8A7A)' }}>
+        <div className="mb-8">
+          <h1 className="az-heading text-az-ink">Human Capacity Release Ledger</h1>
+          <p className="az-lead mt-1 text-az-ink-muted">
             Track hours released and headcount avoidance from automation
           </p>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        <div className="mb-6 flex gap-2">
           <button
             onClick={() => setActiveTab('capacity')}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: 'none',
-              backgroundColor: activeTab === 'capacity' ? 'var(--brand-orange)' : 'var(--glass-bg)',
-              color: activeTab === 'capacity' ? 'white' : 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            className={tabClass(activeTab === 'capacity')}
           >
             Capacity Release
           </button>
           <button
             onClick={() => setActiveTab('headcount')}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: 'none',
-              backgroundColor:
-                activeTab === 'headcount' ? 'var(--brand-orange)' : 'var(--glass-bg)',
-              color: activeTab === 'headcount' ? 'white' : 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            className={tabClass(activeTab === 'headcount')}
           >
             Headcount Avoidance
           </button>
@@ -133,199 +141,98 @@ export default function CapacityLedgerPage(): React.JSX.Element {
         {/* Capacity Release Tab */}
         {activeTab === 'capacity' && (
           <>
+            {capacityFailed && (
+              <ErrorState
+                title="Capacity releases unavailable"
+                description={`${messageOf(capacityError)} Totals are withheld rather than shown as zero.`}
+                onButtonPress={() => refetchCapacity()}
+              />
+            )}
             {/* Stats */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 16,
-                marginBottom: 24,
-              }}
-            >
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 icon={<Clock size={20} />}
                 label="Hours Released"
-                value={capacityStats.totalHoursReleased.toLocaleString()}
-                color="#10B981"
+                value={capacityFailed ? dash : capacityStats.totalHoursReleased.toLocaleString()}
+                tone="bg-az-success-500/20 text-az-success-500"
               />
               <StatCard
                 icon={<Users size={20} />}
                 label="Active Workflows"
-                value={capacityStats.activeWorkflows}
-                color="#3B82F6"
+                value={capacityFailed ? dash : capacityStats.activeWorkflows}
+                tone="bg-az-secondary-500/20 text-az-secondary-500"
               />
               <StatCard
                 icon={<CheckCircle size={20} />}
                 label="Completed"
-                value={capacityStats.completedWorkflows}
-                color="#8B5CF6"
+                value={capacityFailed ? dash : capacityStats.completedWorkflows}
+                tone="bg-az-universe-games/20 text-az-universe-games"
               />
               <StatCard
                 icon={<TrendingUp size={20} />}
                 label="Fully Automated"
-                value={capacityStats.avgAutomation}
-                color="#F59E0B"
+                value={capacityFailed ? dash : capacityStats.avgAutomation}
+                tone="bg-az-warning-500/20 text-az-warning-500"
               />
             </div>
 
             {/* Workflows Table */}
-            <div
-              style={{
-                padding: 24,
-                borderRadius: 16,
-                border: '1px solid var(--glass-border)',
-                backgroundColor: 'var(--glass-bg)',
-              }}
-            >
-              <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
-                Automation Workflows
-              </h2>
+            <div className="az-glass p-6">
+              <h2 className="az-subtitle mb-4 text-az-ink">Automation Workflows</h2>
               {loadingCapacity ? (
                 <Skeleton height="300px" borderRadius="8px" />
-              ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              ) : capacityFailed ? null : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
                     <thead>
-                      <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'left',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                      <tr className="border-b border-az-glass-border">
+                        <th className="az-overline px-4 py-3 text-left font-normal text-az-ink-muted">
                           Workflow
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'left',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-left font-normal text-az-ink-muted">
                           Department
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'right',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-right font-normal text-az-ink-muted">
                           Before (hrs/week)
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'right',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-right font-normal text-az-ink-muted">
                           After (hrs/week)
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'right',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-right font-normal text-az-ink-muted">
                           Released
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'center',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-center font-normal text-az-ink-muted">
                           Automation
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'center',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-center font-normal text-az-ink-muted">
                           Status
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {capacityReleases?.map((cr) => (
-                        <tr key={cr.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                          <td style={{ padding: '12px 16px', fontWeight: 500 }}>{cr.workflow}</td>
-                          <td style={{ padding: '12px 16px' }}>{cr.department}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <tr key={cr.id} className="border-b border-az-glass-border">
+                          <td className="az-body-strong px-4 py-3 text-az-ink">{cr.workflow}</td>
+                          <td className="az-body px-4 py-3 text-az-ink-dim">{cr.department}</td>
+                          <td className="az-body px-4 py-3 text-right text-az-ink-dim">
                             {cr.hoursBefore}
                           </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <td className="az-body px-4 py-3 text-right text-az-ink-dim">
                             {cr.hoursAfter}
                           </td>
-                          <td
-                            style={{
-                              padding: '12px 16px',
-                              textAlign: 'right',
-                              color: 'var(--brand-emerald)',
-                              fontWeight: 600,
-                            }}
-                          >
+                          <td className="az-body-strong px-4 py-3 text-right text-az-success-500">
                             {cr.hoursReleased} hrs
                           </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <td className="az-body px-4 py-3 text-center">
                             <span
-                              style={{
-                                padding: '4px 8px',
-                                borderRadius: 4,
-                                fontSize: 11,
-                                fontWeight: 600,
-                                backgroundColor:
-                                  cr.automationLevel === 'full'
-                                    ? 'rgba(16,185,129,0.12)'
-                                    : cr.automationLevel === 'semi'
-                                      ? 'rgba(245,158,11,0.12)'
-                                      : 'rgba(107,114,128,0.12)',
-                                color:
-                                  cr.automationLevel === 'full'
-                                    ? 'var(--brand-emerald)'
-                                    : cr.automationLevel === 'semi'
-                                      ? 'var(--brand-amber)'
-                                      : 'var(--brand-grey)',
-                                textTransform: 'capitalize',
-                              }}
+                              className={`rounded-az-control px-2 py-1 az-micro-label font-semibold ${AUTOMATION_PILL[cr.automationLevel]}`}
                             >
                               {cr.automationLevel}
                             </span>
                           </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <td className="az-body px-4 py-3 text-center">
                             <span
-                              style={{
-                                padding: '4px 8px',
-                                borderRadius: 4,
-                                fontSize: 11,
-                                fontWeight: 600,
-                                backgroundColor:
-                                  cr.status === 'completed'
-                                    ? 'rgba(16,185,129,0.12)'
-                                    : cr.status === 'active'
-                                      ? 'rgba(59,130,246,0.12)'
-                                      : 'rgba(245,158,11,0.12)',
-                                color:
-                                  cr.status === 'completed'
-                                    ? 'var(--brand-emerald)'
-                                    : cr.status === 'active'
-                                      ? 'var(--brand-blue)'
-                                      : 'var(--brand-amber)',
-                                textTransform: 'capitalize',
-                              }}
+                              className={`rounded-az-control px-2 py-1 az-micro-label font-semibold ${RELEASE_STATUS_PILL[cr.status]}`}
                             >
                               {cr.status}
                             </span>
@@ -343,144 +250,76 @@ export default function CapacityLedgerPage(): React.JSX.Element {
         {/* Headcount Avoidance Tab */}
         {activeTab === 'headcount' && (
           <>
+            {headcountFailed && (
+              <ErrorState
+                title="Headcount avoidances unavailable"
+                description={`${messageOf(headcountError)} Totals are withheld rather than shown as zero.`}
+                onButtonPress={() => refetchHeadcount()}
+              />
+            )}
             {/* Stats */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 16,
-                marginBottom: 24,
-              }}
-            >
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StatCard
                 icon={<Users size={20} />}
                 label="Roles Avoided"
-                value={headcountStats.totalAvoided}
-                color="#10B981"
+                value={headcountFailed ? dash : headcountStats.totalAvoided}
+                tone="bg-az-success-500/20 text-az-success-500"
               />
               <StatCard
                 icon={<DollarSign size={20} />}
                 label="Cost Saved"
-                value={`₦${headcountStats.totalCostSaved.toLocaleString()}`}
-                color="#3B82F6"
+                value={
+                  headcountFailed ? dash : `₦${headcountStats.totalCostSaved.toLocaleString()}`
+                }
+                tone="bg-az-secondary-500/20 text-az-secondary-500"
               />
               <StatCard
                 icon={<Clock size={20} />}
                 label="Pending Approval"
-                value={headcountStats.pendingApproval}
-                color="#F59E0B"
+                value={headcountFailed ? dash : headcountStats.pendingApproval}
+                tone="bg-az-warning-500/20 text-az-warning-500"
               />
             </div>
 
             {/* Avoidances Table */}
-            <div
-              style={{
-                padding: 24,
-                borderRadius: 16,
-                border: '1px solid var(--glass-border)',
-                backgroundColor: 'var(--glass-bg)',
-              }}
-            >
-              <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
-                Headcount Avoidance Register
-              </h2>
+            <div className="az-glass p-6">
+              <h2 className="az-subtitle mb-4 text-az-ink">Headcount Avoidance Register</h2>
               {loadingHeadcount ? (
                 <Skeleton height="300px" borderRadius="8px" />
-              ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              ) : headcountFailed ? null : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
                     <thead>
-                      <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'left',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                      <tr className="border-b border-az-glass-border">
+                        <th className="az-overline px-4 py-3 text-left font-normal text-az-ink-muted">
                           Role
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'left',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-left font-normal text-az-ink-muted">
                           Department
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'left',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-left font-normal text-az-ink-muted">
                           Reason
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'right',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-right font-normal text-az-ink-muted">
                           Estimated Cost
                         </th>
-                        <th
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'center',
-                            color: 'var(--text-muted)',
-                            fontSize: 12,
-                          }}
-                        >
+                        <th className="az-overline px-4 py-3 text-center font-normal text-az-ink-muted">
                           Status
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {headcountAvoidances?.map((ha) => (
-                        <tr key={ha.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                          <td style={{ padding: '12px 16px', fontWeight: 500 }}>{ha.role}</td>
-                          <td style={{ padding: '12px 16px' }}>{ha.department}</td>
-                          <td
-                            style={{
-                              padding: '12px 16px',
-                              fontSize: 13,
-                              color: 'var(--text-muted)',
-                            }}
-                          >
-                            {ha.reason}
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>
+                        <tr key={ha.id} className="border-b border-az-glass-border">
+                          <td className="az-body-strong px-4 py-3 text-az-ink">{ha.role}</td>
+                          <td className="az-body px-4 py-3 text-az-ink-dim">{ha.department}</td>
+                          <td className="az-caption px-4 py-3 text-az-ink-muted">{ha.reason}</td>
+                          <td className="az-body-strong px-4 py-3 text-right text-az-ink">
                             ₦{ha.estimatedCost.toLocaleString()}
                           </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <td className="az-body px-4 py-3 text-center">
                             <span
-                              style={{
-                                padding: '4px 8px',
-                                borderRadius: 4,
-                                fontSize: 11,
-                                fontWeight: 600,
-                                backgroundColor:
-                                  ha.status === 'approved'
-                                    ? 'rgba(16,185,129,0.12)'
-                                    : ha.status === 'active'
-                                      ? 'rgba(59,130,246,0.12)'
-                                      : 'rgba(245,158,11,0.12)',
-                                color:
-                                  ha.status === 'approved'
-                                    ? 'var(--brand-emerald)'
-                                    : ha.status === 'active'
-                                      ? 'var(--brand-blue)'
-                                      : 'var(--brand-amber)',
-                                textTransform: 'capitalize',
-                              }}
+                              className={`rounded-az-control px-2 py-1 az-micro-label font-semibold ${HEADCOUNT_STATUS_PILL[ha.status]}`}
                             >
                               {ha.status}
                             </span>
@@ -504,40 +343,25 @@ function StatCard({
   icon,
   label,
   value,
-  color,
+  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
-  color: string;
+  tone: string;
 }) {
   return (
-    <div
-      style={{
-        padding: 20,
-        borderRadius: 16,
-        border: '1px solid var(--glass-border)',
-        backgroundColor: 'var(--glass-bg)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+    <div className="az-glass p-5">
+      <div className="mb-3 flex items-center gap-3">
         <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            backgroundColor: `${color}20`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color,
-          }}
+          className={`flex size-10 items-center justify-center rounded-az-card ${tone}`}
+          aria-hidden="true"
         >
           {icon}
         </div>
-        <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{label}</span>
+        <span className="az-body text-az-ink-muted">{label}</span>
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700 }}>{value}</div>
+      <div className="az-section-title text-az-ink">{value}</div>
     </div>
   );
 }

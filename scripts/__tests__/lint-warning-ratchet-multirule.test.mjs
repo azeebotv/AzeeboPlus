@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const {
   discoverWorkspaces,
-  countWarnings,
+  countFindings,
   validateBaseline,
   buildBaselineRecord,
   compare,
@@ -107,8 +107,8 @@ test('one shared ESLint pass feeds per-rule counts; baselines are per-rule', () 
       },
     ];
 
-    const countsA = countWarnings(results, workspaces, RULE_A).counts;
-    const countsB = countWarnings(results, workspaces, RULE_B).counts;
+    const countsA = countFindings(results, workspaces, RULE_A).counts;
+    const countsB = countFindings(results, workspaces, RULE_B).counts;
     assert.equal(countsA.get('fixture/services-core-svc-a'), 2, 'rule A counts only its own warnings');
     assert.equal(countsA.get('fixture/services-engagement-svc-b'), 0);
     assert.equal(countsB.get('fixture/services-engagement-svc-b'), 1, 'rule B counts only its own warnings');
@@ -140,8 +140,8 @@ test('a regression in one rule fails independently of the other rule', () => {
         messages: [msg(RULE_A), msg(RULE_A), msg(RULE_A)], // rule A grew in svc-b
       },
     ];
-    const violationsA = compare(baselineA, countWarnings(results, workspaces, RULE_A).counts).violations;
-    const violationsB = compare(baselineB, countWarnings(results, workspaces, RULE_B).counts).violations;
+    const violationsA = compare(baselineA, countFindings(results, workspaces, RULE_A).counts).violations;
+    const violationsB = compare(baselineB, countFindings(results, workspaces, RULE_B).counts).violations;
     assert.deepEqual(violationsA.map((v) => [v.name, v.delta]), [['fixture/services-engagement-svc-b', 3]]);
     assert.deepEqual(violationsB, [], 'the clean rule stays clean');
   } finally {
@@ -156,7 +156,7 @@ test('--update regeneration: dropped counts lower the per-rule floor', () => {
     const results = [
       { filePath: path.join(workspaces[0].lintDirs[0], 'a.ts'), messages: [msg(RULE_A)] },
     ];
-    const counts = countWarnings(results, workspaces, RULE_A).counts;
+    const counts = countFindings(results, workspaces, RULE_A).counts;
     const regenerated = buildBaselineRecord(RULE_A, counts);
     assert.equal(regenerated.total, 1);
     // The regenerated record is a valid, lower floor for the same rule.

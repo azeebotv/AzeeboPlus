@@ -12,10 +12,11 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
-import { walletApi } from '@azeebo/react-data';
+import { walletApi, generateIdempotencyKey } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const PRESET_AMOUNTS = walletPresetAmounts;
 
@@ -133,6 +134,9 @@ export default function WithdrawFundsScreen() {
                 amount: parseFloat(amount),
                 bankCode: bankName,
                 accountNumber,
+                // One key per confirmed submission: a retried request reuses it
+                // (server dedupes), a fresh submit gets a fresh key (AUD-03).
+                idempotencyKey: generateIdempotencyKey(),
               });
 
               Alert.alert('Success', 'Withdrawal request submitted!', [
@@ -178,7 +182,7 @@ export default function WithdrawFundsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Withdraw Funds</Text>
@@ -404,8 +408,8 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   presetButtonSelected: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: brand.flame,
+    borderColor: brand.flame,
   },
   presetText: {
     color: colors.light[100],
@@ -423,7 +427,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   verifyButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     paddingHorizontal: 20,
     justifyContent: 'center',
@@ -437,7 +441,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   withdrawButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -453,7 +457,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceCard: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,

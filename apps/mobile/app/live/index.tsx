@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface LiveEventItem {
   id: string;
@@ -77,7 +78,7 @@ export default function LiveEventsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#fff' }]}>
         <LoadingState text="Loading events..." />
       </SafeAreaView>
     );
@@ -142,7 +143,7 @@ export default function LiveEventsScreen() {
                         : item.status}
                   </Text>
                 </View>
-                <Text style={[styles.eventPrice, { color: '#E8420A' }]}>
+                <Text style={[styles.eventPrice, { color: brand.flame }]}>
                   {formatPrice(item.ticketPrice, item.currency)}
                 </Text>
               </View>
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1a1a1a',
   },
-  filterChipActive: { backgroundColor: '#E8420A' },
+  filterChipActive: { backgroundColor: brand.flame },
   filterText: { color: colors.text.secondary, fontSize: 13, fontWeight: '600' },
   filterTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
   thumbEmoji: { fontSize: 24 },
   cardInfo: { flex: 1 },
   eventTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
-  eventStatus: { fontSize: 11, color: '#E8420A', fontWeight: '600' },
+  eventStatus: { fontSize: 11, color: brand.flame, fontWeight: '600' },
   eventPrice: { fontSize: 15, fontWeight: '700' },
   eventDesc: { fontSize: 12, color: colors.text.secondary, marginBottom: 8, lineHeight: 18 },
   cardFooter: { flexDirection: 'row', gap: 16 },

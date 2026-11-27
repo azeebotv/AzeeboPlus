@@ -118,7 +118,7 @@ export default function CreatorSignup() {
 
   if (isLoadingOptions) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Signup Screen" style={styles.container}>
         <LoadingState text="Loading options..." />
       </SafeAreaView>
     );
@@ -136,7 +136,7 @@ export default function CreatorSignup() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
@@ -305,7 +305,7 @@ export default function CreatorSignup() {
 
           <View style={styles.buttonBar}>
             {step > 1 && (
-              <TouchableOpacity style={styles.backButtonMain} onPress={handleBack}>
+              <TouchableOpacity accessibilityRole="button" style={styles.backButtonMain} onPress={handleBack}>
                 <Text style={styles.backButtonMainText}>Back</Text>
               </TouchableOpacity>
             )}

@@ -8,7 +8,9 @@ metadata:
   namespace: azeebo
 spec:
   hosts:
-    - api.azeeboplus.com
+    # Rendered from deploy/domains.env (API_HOST) when applied; Istio does not
+    # interpolate, so substitute before `kubectl apply`.
+    - ${API_HOST}
   http:
     - match:
         - headers:

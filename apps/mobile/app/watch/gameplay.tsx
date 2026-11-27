@@ -7,6 +7,7 @@ import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { analytics } from '../../src/utils/analytics';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface GameQuestion {
   id: number;
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
   },
   nextText: {
@@ -332,7 +333,7 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 24,
   },
   resultsScore: {
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#E8420A',
+    color: brand.flame,
   },
   resultsStats: {
     flexDirection: 'row',
@@ -360,7 +361,7 @@ const styles = StyleSheet.create({
   resultStatValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 4,
   },
   resultStatLabel: {
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     paddingVertical: 16,
     borderRadius: 30,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   playAgainText: {
     color: '#fff',

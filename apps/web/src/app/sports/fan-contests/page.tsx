@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -47,46 +47,19 @@ function FanContestsPageContent(): React.JSX.Element {
   const upcomingContests = contests.filter((c) => c.status === 'upcoming');
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader active="Sports" logoVariant="light" />
-
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20 overflow-hidden"
-        style={{
-          background:
-            'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, var(--bg-secondary) 60%, var(--bg-primary) 100%)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Community Tournaments
-          </span>
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Fan Contests
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Compete with fellow fans and win exclusive prizes
-          </motion.p>
-        </div>
-      </section>
+    <PageShell activeNav="Sports" maxWidth="7xl">
+      <PageHero
+        eyebrow="Community Tournaments"
+        eyebrowColor="var(--color-az-success-400)"
+        title="Fan Contests"
+        subtitle="Compete with fellow fans and win exclusive prizes"
+        glowColor="color-mix(in srgb, var(--color-az-success-500) 16%, transparent)"
+      />
 
       {/* Active Contests */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Active Contests
-          </h2>
+          <h2 className="az-section-title text-az-ink mb-6 sm:mb-8">Active Contests</h2>
         </ScrollReveal>
 
         {isLoading ? (
@@ -127,46 +100,39 @@ function FanContestsPageContent(): React.JSX.Element {
                         fill
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
+                      <div className="absolute inset-0 az-scrim" aria-hidden="true" />
                     </div>
                   )}
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <span
-                        className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                        style={{
-                          backgroundColor: 'rgba(74,222,128,0.2)',
-                          color: 'var(--color-success-400)',
-                        }}
-                      >
+                      <span className="rounded-az-pill bg-az-success-500/15 px-2.5 py-0.5 text-xs font-semibold text-az-success-400">
                         Active
                       </span>
-                      <span className="text-xs text-white/40">
+                      <span className="text-xs text-az-ink/40">
                         {contest.entries.toLocaleString()} entries
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-white text-lg mb-2">{contest.title}</h3>
-                    <p className="text-sm text-white/50 mb-4 line-clamp-2">{contest.description}</p>
+                    <h3 className="az-subtitle text-az-ink mb-2">{contest.title}</h3>
+                    <p className="az-caption mb-4 line-clamp-2 text-az-ink/50">
+                      {contest.description}
+                    </p>
 
                     {/* Prize */}
-                    <div
-                      className="rounded-lg p-3 mb-4"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
-                    >
+                    <div className="rounded-az-control bg-az-ink/5 p-3 mb-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-white/40">Prize Pool</span>
-                        <span className="text-sm font-bold text-[#4ADE80]">{contest.prize}</span>
+                        <span className="text-xs text-az-ink/40">Prize Pool</span>
+                        <span className="az-body-strong text-az-success-400">{contest.prize}</span>
                       </div>
                       {contest.prizeAmount && (
-                        <p className="text-xs text-white/40 mt-1">
+                        <p className="text-xs text-az-ink/40 mt-1">
                           Worth {contest.prizeAmount.toLocaleString()} points
                         </p>
                       )}
                     </div>
 
                     {/* Deadline & Progress */}
-                    <div className="flex items-center justify-between text-xs text-white/40 mb-4">
+                    <div className="flex items-center justify-between text-xs text-az-ink/40 mb-4">
                       <span>
                         Ends:{' '}
                         {new Date(contest.deadline).toLocaleDateString('en-NG', {
@@ -183,7 +149,7 @@ function FanContestsPageContent(): React.JSX.Element {
 
                     <motion.button
                       type="button"
-                      className="az-btn-primary w-full"
+                      className="az-btn-primary"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -196,19 +162,17 @@ function FanContestsPageContent(): React.JSX.Element {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-white/50">No active contests</p>
+            <p className="az-lead text-az-ink/50">No active contests</p>
           </div>
         )}
       </section>
 
       {/* Upcoming Contests */}
       {upcomingContests.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-10 sm:py-12">
+          <div>
             <ScrollReveal>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-                Upcoming Contests
-              </h2>
+              <h2 className="az-section-title text-az-ink mb-6 sm:mb-8">Upcoming Contests</h2>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -223,19 +187,13 @@ function FanContestsPageContent(): React.JSX.Element {
                   <GlowCard universe="sports" className="overflow-hidden">
                     <div className="p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <span
-                          className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'rgba(255,255,255,0.5)',
-                          }}
-                        >
+                        <span className="rounded-az-pill bg-az-ink/10 px-2.5 py-0.5 text-xs font-semibold text-az-ink/50">
                           Upcoming
                         </span>
                       </div>
-                      <h3 className="font-bold text-white text-lg mb-2">{contest.title}</h3>
-                      <p className="text-sm text-white/50 mb-4">{contest.description}</p>
-                      <p className="text-xs text-white/40">
+                      <h3 className="az-subtitle text-az-ink mb-2">{contest.title}</h3>
+                      <p className="az-caption mb-4 text-az-ink/50">{contest.description}</p>
+                      <p className="text-xs text-az-ink/40">
                         Starts:{' '}
                         {new Date(contest.deadline).toLocaleDateString('en-NG', {
                           month: 'short',
@@ -250,9 +208,7 @@ function FanContestsPageContent(): React.JSX.Element {
           </div>
         </section>
       )}
-
-      <AppFooter logoVariant="light" />
-    </div>
+    </PageShell>
   );
 }
 
@@ -262,8 +218,8 @@ export default function FanContestsPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

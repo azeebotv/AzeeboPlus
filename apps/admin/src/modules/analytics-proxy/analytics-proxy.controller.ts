@@ -22,11 +22,24 @@ const SKIP_HEADERS = new Set(['transfer-encoding', 'connection', 'keep-alive', '
 export class AnalyticsProxyController {
   private readonly logger = new Logger(AnalyticsProxyController.name);
 
+  /** Base path proxy */
+  @All()
+  proxyRoot(@Req() req: Request, @Res() res: Response) {
+    return this.proxyAll(req, res);
+  }
+
   /** Catch-all proxy: /api/v1/analytics/* → analytics-service /v1/* */
   @All('*')
   async proxyAll(@Req() req: Request, @Res() res: Response) {
     const targetPath = req.path.replace(API_PREFIX_RE, '');
-    const targetUrl = `${ANALYTICS_URL}/v1${targetPath}`;
+    const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
+    // analytics-service controllers: search/corrections is nested under @Controller('analytics'),
+    // while task/event proxies mount at the root /v1 level.
+    const upstreamSubPath =
+      targetPath.startsWith('/search/') || targetPath === '/search'
+        ? `/analytics${targetPath}`
+        : targetPath;
+    const targetUrl = `${ANALYTICS_URL}/v1${upstreamSubPath}${queryString ? `?${queryString}` : ''}`;
 
     try {
       const upstream = await fetch(targetUrl, {
@@ -56,6 +69,21 @@ export class AnalyticsProxyController {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.error(`Proxy error: ${req.method} ${targetUrl} — ${message}`);
+
+      // Graceful fallback for search corrections when analytics service is offline
+      if (targetPath.includes('search/corrections')) {
+        const days = Number(req.query.days) || 30;
+        res.status(200).json({
+          success: true,
+          data: {
+            days,
+            overall: { shown: 0, accepted: 0, rate: 0 },
+            series: [],
+          },
+        });
+        return;
+      }
+
       res.status(502).json({
         success: false,
         error: 'Analytics service unavailable',

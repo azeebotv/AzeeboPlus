@@ -20,7 +20,7 @@
  */
 
 import { printCount } from './utils.js';
-import { seedImages } from './seed-image-hosts.js';
+import { seedImages, themedArt } from './seed-image-hosts.js';
 
 const SEED_USER = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -632,7 +632,13 @@ async function getClient(): Promise<GuideClient> {
     const mod = await import('@prisma/client');
     PrismaClient = mod.PrismaClient;
   }
-  return new (PrismaClient as new () => GuideClient)();
+  const dbUrl =
+    process.env.LIFESTYLE_DATABASE_URL ||
+    'postgresql://azeebo:azeebo@localhost:5432/azeebo_lifestyle?schema=public';
+  process.env.DATABASE_URL = dbUrl;
+  return new (PrismaClient as new (opts?: unknown) => GuideClient)({
+    datasources: { db: { url: dbUrl } },
+  });
 }
 
 // ─── Seeder ──────────────────────────────────────────────────────────────────
@@ -724,14 +730,14 @@ export async function seedLifestyleGuidesService(dryRun = false): Promise<number
           slug: h.slug,
           city: h.city,
           description: h.description,
-          image: seedImages.picsum(h.slug, 800, 600),
+          image: themedArt.wide('lifestyle', h.slug),
           status: h.status ?? 'published',
           createdById: SEED_USER.id,
         },
         update: {
           description: h.description,
           city: h.city,
-          image: seedImages.picsum(h.slug, 800, 600),
+          image: themedArt.wide('lifestyle', h.slug),
           status: h.status ?? 'published',
         },
       });
@@ -742,7 +748,7 @@ export async function seedLifestyleGuidesService(dryRun = false): Promise<number
         where: { slug: h.slug },
         create: {
           name: h.name, slug: h.slug, city: h.city, description: h.description,
-          image: seedImages.picsum(h.slug, 800, 600), status: h.status ?? 'published',
+          image: themedArt.wide('lifestyle', h.slug), status: h.status ?? 'published',
           createdById: SEED_USER.id,
         },
         update: {},

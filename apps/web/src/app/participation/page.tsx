@@ -70,20 +70,22 @@ function SectionCard({
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="az-glass p-5 rounded-2xl border border-white/10 hover:border-white/25 transition-all h-full flex flex-col gap-3"
+        className="az-glass p-5 border border-az-glass-border transition-all h-full flex flex-col gap-3"
       >
         <div className="flex items-start justify-between gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${accent}`}>
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${accent}`}
+          >
             {icon}
           </div>
           {meta}
         </div>
         <div>
-          <h3 className="text-base font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors leading-snug">
+          <h3 className="text-base font-bold text-az-ink group-hover:text-[var(--color-az-flame)] transition-colors leading-snug">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-xs text-white/50 mt-1 line-clamp-2 leading-relaxed">{subtitle}</p>
+            <p className="text-xs text-az-ink/50 mt-1 line-clamp-2 leading-relaxed">{subtitle}</p>
           )}
         </div>
       </motion.div>
@@ -127,11 +129,11 @@ export default function ParticipationHubPage(): React.JSX.Element {
   const errored = pollsQuery.error && quizzesQuery.error && challengesQuery.error;
 
   return (
-    <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
+    <PageShell activeNav="Reality" glowColor="rgba(227, 30, 36, 0.2)">
       <div className="mb-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </Link>
@@ -139,10 +141,10 @@ export default function ParticipationHubPage(): React.JSX.Element {
 
       <PageHero
         eyebrow="COMMUNITY PARTICIPATION"
-        eyebrowColor="var(--brand-orange)"
+        eyebrowColor="var(--color-az-flame)"
         title="Vote, Play & Compete"
         subtitle="Shape the platform with your votes, prove your knowledge in trivia, and win prizes in community challenges."
-        glowColor="rgba(232, 66, 10, 0.25)"
+        glowColor="color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)"
       />
 
       <div className="max-w-5xl mx-auto mt-10 space-y-12">
@@ -171,11 +173,11 @@ export default function ParticipationHubPage(): React.JSX.Element {
             {/* Active Challenges */}
             <section>
               <div className="flex items-center gap-3 mb-5">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-white">
+                <Trophy className="w-5 h-5 text-az-warning-400" />
+                <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-az-ink">
                   Community Challenges
                 </h2>
-                <span className="text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-full px-3 py-1">
+                <span className="text-xs font-bold text-az-warning-400 bg-az-warning-500/10 border border-az-warning-500/25 rounded-full px-3 py-1">
                   Win Prizes
                 </span>
               </div>
@@ -190,12 +192,12 @@ export default function ParticipationHubPage(): React.JSX.Element {
                       <SectionCard
                         key={c.id}
                         href={`/participation/challenge/${c.id}`}
-                        icon={<Trophy className="w-5 h-5 text-amber-400" />}
-                        accent="bg-amber-500/10 border border-amber-500/25"
+                        icon={<Trophy className="w-5 h-5 text-az-warning-400" />}
+                        accent="bg-az-warning-500/10 border border-az-warning-500/25"
                         title={c.title}
                         subtitle={c.description}
                         meta={
-                          <span className="text-[11px] font-bold text-amber-300 bg-amber-500/10 rounded-full px-2.5 py-1 whitespace-nowrap">
+                          <span className="text-[11px] font-bold text-az-warning-400 bg-az-warning-500/10 rounded-full px-2.5 py-1 whitespace-nowrap">
                             {c.prize || c.type.toUpperCase()} · {daysLeft}d left
                           </span>
                         }
@@ -204,18 +206,20 @@ export default function ParticipationHubPage(): React.JSX.Element {
                   })}
                 </div>
               ) : (
-                <p className="text-white/40 text-sm">No active challenges right now — check back soon.</p>
+                <p className="text-az-ink/40 text-sm">
+                  No active challenges right now — check back soon.
+                </p>
               )}
             </section>
 
             {/* Quizzes */}
             <section>
               <div className="flex items-center gap-3 mb-5">
-                <ListChecks className="w-5 h-5 text-purple-400" />
-                <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-white">
+                <ListChecks className="w-5 h-5 text-az-category-violet-light" />
+                <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-az-ink">
                   Trivia &amp; Quizzes
                 </h2>
-                <span className="text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/25 rounded-full px-3 py-1">
+                <span className="text-xs font-bold text-az-category-violet-light bg-az-category-violet/10 border border-az-category-violet/25 rounded-full px-3 py-1">
                   Earn Points
                 </span>
               </div>
@@ -225,12 +229,12 @@ export default function ParticipationHubPage(): React.JSX.Element {
                     <SectionCard
                       key={q.id}
                       href={`/participation/quiz/${q.id}`}
-                      icon={<ListChecks className="w-5 h-5 text-purple-400" />}
-                      accent="bg-purple-500/10 border border-purple-500/25"
+                      icon={<ListChecks className="w-5 h-5 text-az-category-violet-light" />}
+                      accent="bg-az-category-violet/10 border border-az-category-violet/25"
                       title={q.title}
                       subtitle={q.description}
                       meta={
-                        <span className="text-[11px] font-bold text-purple-300 bg-purple-500/10 rounded-full px-2.5 py-1 whitespace-nowrap capitalize">
+                        <span className="text-[11px] font-bold text-az-category-violet-light bg-az-category-violet/10 rounded-full px-2.5 py-1 whitespace-nowrap capitalize">
                           {q.difficulty} · {q.playCount} plays
                         </span>
                       }
@@ -238,18 +242,20 @@ export default function ParticipationHubPage(): React.JSX.Element {
                   ))}
                 </div>
               ) : (
-                <p className="text-white/40 text-sm">No quizzes published yet — check back soon.</p>
+                <p className="text-az-ink/40 text-sm">
+                  No quizzes published yet — check back soon.
+                </p>
               )}
             </section>
 
             {/* Polls */}
             <section>
               <div className="flex items-center gap-3 mb-5">
-                <Vote className="w-5 h-5 text-[var(--brand-orange)]" />
-                <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-white">
+                <Vote className="w-5 h-5 text-[var(--color-az-flame)]" />
+                <h2 className="az-headline text-xl sm:text-2xl font-extrabold text-az-ink">
                   Fan Polls
                 </h2>
-                <span className="text-xs font-bold text-orange-300 bg-orange-500/10 border border-orange-500/25 rounded-full px-3 py-1">
+                <span className="text-xs font-bold text-az-flame bg-az-flame/10 border border-az-flame/25 rounded-full px-3 py-1">
                   Make Your Voice Heard
                 </span>
               </div>
@@ -261,12 +267,12 @@ export default function ParticipationHubPage(): React.JSX.Element {
                       <SectionCard
                         key={p.id}
                         href={`/participation/poll/${p.id}`}
-                        icon={<Vote className="w-5 h-5 text-[var(--brand-orange)]" />}
-                        accent="bg-orange-500/10 border border-orange-500/25"
+                        icon={<Vote className="w-5 h-5 text-[var(--color-az-flame)]" />}
+                        accent="bg-az-flame/10 border border-az-flame/25"
                         title={p.title}
                         subtitle={p.description}
                         meta={
-                          <span className="text-[11px] font-bold text-orange-300 bg-orange-500/10 rounded-full px-2.5 py-1 whitespace-nowrap inline-flex items-center gap-1">
+                          <span className="text-[11px] font-bold text-az-flame bg-az-flame/10 rounded-full px-2.5 py-1 whitespace-nowrap inline-flex items-center gap-1">
                             <Users className="w-3 h-3" /> {p.totalVotes} votes
                             {!expired && p.expiresAt ? (
                               <>
@@ -281,7 +287,7 @@ export default function ParticipationHubPage(): React.JSX.Element {
                   })}
                 </div>
               ) : (
-                <p className="text-white/40 text-sm">No live polls right now — check back soon.</p>
+                <p className="text-az-ink/40 text-sm">No live polls right now — check back soon.</p>
               )}
             </section>
           </>

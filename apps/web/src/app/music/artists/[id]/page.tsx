@@ -1,133 +1,71 @@
-'use client';
-import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
-import MusicTrackList from '@/components/music/MusicTrackList';
-import { OptimizedImage } from '@/components/OptimizedImage';
-import { ScrollReveal } from '@/components/motion/ScrollReveal';
-import { extractTracks } from '@/lib/music';
-import analytics from '@/lib/analytics';
+import { Metadata } from 'next';
+import { resolvedApiUrl } from '@/lib/api';
+import ArtistDetailClient from './ArtistDetailClient';
 
-interface Artist {
-  id: string;
-  name: string;
-  avatar?: string;
-  bio?: string;
-  genre?: string;
-  trackCount?: number;
-  followerCount?: number;
-  socialLinks?: { platform: string; url: string }[];
+interface Props {
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default function ArtistDetailPage(): React.JSX.Element {
-  const params = useParams();
-  const id = params?.id as string;
+interface ArtistMetadata {
+  name: string;
+  bio?: string;
+  avatar?: string;
+  genre?: string;
+}
 
-  useEffect(() => {
-    analytics.pageView('music-artist');
-  }, [id]);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const canonical = `/music/artists/${id}`;
+  try {
+    const res = await fetch(`${resolvedApiUrl}/api/v1/lifestyle/music/artists/${id}`, {
+      next: { revalidate: 60 },
+    });
+    const body = (await res.json()) as { success?: boolean; data?: ArtistMetadata };
+    const artist = body.success && body.data ? body.data : undefined;
 
-  const artistQuery = useQuery({
-    queryKey: ['music', 'artist', id],
-    queryFn: async () => {
-      const res = await api.request<Artist>(`/api/v1/lifestyle/music/artists/${id}`);
-      if (res.success && res.data) return res.data;
-      return null;
-    },
-    staleTime: 60000,
-    enabled: !!id,
-  });
+    if (!artist) {
+      return {
+        title: 'Artist Not Found',
+        description: 'The requested artist could not be found.',
+        alternates: { canonical },
+      };
+    }
 
-  const tracksQuery = useQuery({
-    queryKey: ['music', 'artist', id, 'tracks'],
-    queryFn: async () => {
-      const res = await api.request<unknown>(`/api/v1/lifestyle/music?artistId=${id}`);
-      if (res.success && res.data) return extractTracks(res.data);
-      return [];
-    },
-    staleTime: 60000,
-    enabled: !!id,
-  });
+    const description =
+      artist.bio ||
+      (artist.genre
+        ? `${artist.name} — ${artist.genre} artist on Azeebo+`
+        : `Listen to ${artist.name} on Azeebo+`);
 
-  const artist = artistQuery.data;
-  const tracks = tracksQuery.data ?? [];
+    return {
+      title: artist.name,
+      description,
+      alternates: { canonical },
+      openGraph: {
+        title: artist.name,
+        description,
+        type: 'profile',
+        images: artist.avatar ? [{ url: artist.avatar }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: artist.name,
+        description,
+        images: artist.avatar ? [artist.avatar] : [],
+      },
+    };
+  } catch {
+    return {
+      title: 'Music Artists',
+      description: 'Discover artists on Azeebo+',
+      alternates: { canonical },
+    };
+  }
+}
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Music" />
-
-      {/* Artist Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{
-          background: 'linear-gradient(135deg, var(--music-purple) 0%, var(--bg-primary) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/music"
-            className="text-sm text-white/40 hover:text-white/60 transition-colors mb-6 inline-block"
-          >
-            ← Back to Music
-          </Link>
-
-          <motion.div
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            {artist?.avatar ? (
-              <OptimizedImage
-                src={artist.avatar}
-                alt={artist?.name || 'Artist'}
-                width={160}
-                height={160}
-                className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className="w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center text-5xl"
-                style={{ background: 'linear-gradient(135deg, var(--music-purple), #E8420A)' }}
-              >
-                Mic
-              </div>
-            )}
-
-            <div>
-              <h1 className="text-3xl sm:text-5xl font-bold text-white mb-2">
-                {artist?.name || 'Artist'}
-              </h1>
-              {artist?.genre && <p className="text-lg text-white/60 mb-2">{artist.genre}</p>}
-              {artist?.bio && <p className="text-sm text-white/50 max-w-xl mb-4">{artist.bio}</p>}
-              <div className="flex gap-6 text-sm text-white/50">
-                {artist?.trackCount != null && <span>{artist.trackCount} tracks</span>}
-                {artist?.followerCount != null && (
-                  <span>{artist.followerCount.toLocaleString()} followers</span>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <ScrollReveal>
-          <h2 className="text-2xl font-bold text-white mb-6">Tracks</h2>
-          <MusicTrackList
-            tracks={tracks}
-            isLoading={tracksQuery.isLoading}
-            error={tracksQuery.error?.message}
-            onRetry={() => tracksQuery.refetch()}
-          />
-        </ScrollReveal>
-      </div>
-
-      <AppFooter />
-    </div>
-  );
+export default async function ArtistDetailPage({ params }: Props): Promise<React.JSX.Element> {
+  const { id } = await params;
+  return <ArtistDetailClient id={id} />;
 }

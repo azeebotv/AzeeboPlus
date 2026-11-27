@@ -113,6 +113,7 @@ export class ServiceAuthGuard implements CanActivate {
         const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
           token,
           {
+            algorithms: ['HS256'],
             audience: 'azeebo-api',
             issuer: 'azeebo-auth',
           }
@@ -142,6 +143,7 @@ export class ServiceAuthGuard implements CanActivate {
         const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(
           request.cookies.access_token,
           {
+            algorithms: ['HS256'],
             audience: 'azeebo-api',
             issuer: 'azeebo-auth',
           }

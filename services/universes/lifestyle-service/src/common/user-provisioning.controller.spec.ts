@@ -55,9 +55,11 @@ describe('user mirror provisioning on write paths', () => {
 
     prisma = {
       user: {
-        upsert: jest.fn().mockImplementation(({ create }) =>
-          Promise.resolve({ id: create.id, email: create.email, role: create.role })
-        ),
+        upsert: jest
+          .fn()
+          .mockImplementation(({ create }) =>
+            Promise.resolve({ id: create.id, email: create.email, role: create.role })
+          ),
       },
     };
 
@@ -69,7 +71,13 @@ describe('user mirror provisioning on write paths', () => {
         { provide: ChallengeService, useValue: challengeService },
         { provide: PrismaService, useValue: prisma },
         { provide: Reflector, useValue: { getAllAndOverride: jest.fn().mockReturnValue(true) } },
-        { provide: FeatureFlagService, useValue: { isEnabled: jest.fn().mockResolvedValue(true), isDefined: jest.fn().mockReturnValue(true) } },
+        {
+          provide: FeatureFlagService,
+          useValue: {
+            isEnabled: jest.fn().mockResolvedValue(true),
+            isDefined: jest.fn().mockReturnValue(true),
+          },
+        },
       ],
     }).compile();
 
@@ -79,11 +87,7 @@ describe('user mirror provisioning on write paths', () => {
   });
 
   it('poll vote provisions the mirrored user before recording the vote', async () => {
-    await pollController.votePoll(
-      { user: GATEWAY_USER },
-      'poll-1',
-      { optionId: 'opt-1' }
-    );
+    await pollController.votePoll({ user: GATEWAY_USER }, 'poll-1', { optionId: 'opt-1' });
 
     expect(prisma.user.upsert).toHaveBeenCalledTimes(1);
     expect(prisma.user.upsert).toHaveBeenCalledWith({
@@ -109,11 +113,9 @@ describe('user mirror provisioning on write paths', () => {
   });
 
   it('challenge submission provisions the mirrored user before creating the row', async () => {
-    await challengeController.submitToChallenge(
-      { user: GATEWAY_USER },
-      'challenge-1',
-      { content: 'my entry' }
-    );
+    await challengeController.submitToChallenge({ user: GATEWAY_USER }, 'challenge-1', {
+      content: 'my entry',
+    });
 
     expect(prisma.user.upsert).toHaveBeenCalledTimes(1);
     expect(challengeService.submitToChallenge).toHaveBeenCalledWith(

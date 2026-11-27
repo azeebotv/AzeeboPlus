@@ -10,6 +10,7 @@ import {
 } from '../src/hooks/useNotificationQuery';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { radius, colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
@@ -173,7 +174,7 @@ export default function NotificationsScreen() {
             <Switch
               value={pushEnabled}
               onValueChange={setPushEnabled}
-              trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+              trackColor={{ false: 'rgba(255,255,255,0.2)', true: brand.flame }}
               thumbColor={pushEnabled ? '#ffffff' : '#f4f3f4'}
             />
           </View>
@@ -194,7 +195,7 @@ export default function NotificationsScreen() {
             <Switch
               value={emailEnabled}
               onValueChange={setEmailEnabled}
-              trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+              trackColor={{ false: 'rgba(255,255,255,0.2)', true: brand.flame }}
               thumbColor={emailEnabled ? '#ffffff' : '#f4f3f4'}
             />
           </View>
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
   markAllButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: radius.sm,
   },
   markAllText: {
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   },
   notificationAction: {
     fontSize: 12,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '600',
   },
   unreadDot: {

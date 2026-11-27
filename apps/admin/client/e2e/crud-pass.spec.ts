@@ -79,7 +79,7 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     let unpublishCalled = false;
     let publishCalled = false;
 
-    await page.route('**/api/v1/admin/content', async (route) => {
+    await page.route((url) => url.pathname === '/api/v1/admin/content', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
           status: 200,
@@ -171,13 +171,19 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     // Click Unpublish
     const unpublishBtn = page.getByRole('button', { name: 'Unpublish' }).first();
     await expect(unpublishBtn).toBeVisible();
-    await unpublishBtn.click();
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/unpublish') && r.request().method() === 'POST'),
+      unpublishBtn.click(),
+    ]);
     expect(unpublishCalled).toBe(true);
 
     // Click Publish on draft item
-    const publishBtn = page.getByRole('button', { name: 'Publish' }).first();
+    const publishBtn = page.getByRole('button', { name: 'Publish', exact: true }).first();
     await expect(publishBtn).toBeVisible();
-    await publishBtn.click();
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/publish') && r.request().method() === 'POST'),
+      publishBtn.click(),
+    ]);
     expect(publishCalled).toBe(true);
 
     await page.screenshot({ path: path.join(__dirname, 'screenshots/01-content-management.png') });
@@ -251,7 +257,7 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     await suspendBtn.click();
 
     // Modal appears
-    await expect(page.getByText('Suspend Users (1 selected)')).toBeVisible();
+    await expect(page.getByText('Bulk Suspend 1 Users')).toBeVisible();
     await page.selectOption('select', '7');
     await page.locator('textarea[placeholder="Reason for suspension..."]').fill('Terms violation');
 
@@ -260,7 +266,7 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     await confirmBtn.click();
 
     expect(bulkSuspendPayload).toEqual({
-      userIds: ['usr-001'],
+      ids: ['usr-001'],
       reason: 'Terms violation',
       durationDays: 7,
     });
@@ -320,7 +326,7 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     });
 
     await page.goto('/tipping');
-    await expect(page.locator('h1')).toContainText('Tipping & Creator Gifting');
+    await expect(page.locator('h1')).toContainText('Tipping Dashboard');
     await expect(page.getByText('Platform Tipping Settings')).toBeVisible();
 
     // Click Edit Settings
@@ -429,33 +435,36 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     });
 
     await page.goto('/subscriptions');
-    await expect(page.locator('h1')).toContainText('Subscription Management');
+    await expect(page.locator('h1')).toContainText('Subscriptions');
 
     // Switch to Promo Codes tab
-    const promoTab = page.getByRole('button', { name: 'Promo Codes' });
+    const promoTab = page.getByRole('tab', { name: /Promo Codes/ });
     await expect(promoTab).toBeVisible();
     await promoTab.click();
 
     await expect(page.getByText('WELCOME50')).toBeVisible();
 
-    // Click Create Promo Code
-    const createPromoBtn = page.getByRole('button', { name: 'Create Promo Code' });
+    // Click New Promo Code
+    const createPromoBtn = page.getByRole('button', { name: 'New Promo Code' });
     await expect(createPromoBtn).toBeVisible();
     await createPromoBtn.click();
 
     // Fill Create Promo Code form
     await page.locator('input[placeholder="e.g. SUMMER50"]').fill('FALL2026');
-    await page.locator('input[placeholder="e.g. 20 for 20% or $20"]').fill('25');
-    await page.locator('input[placeholder="Leave blank for unlimited"]').fill('200');
+    await page.locator('[role="dialog"] input[type="number"]').first().fill('25');
+    await page.locator('input[placeholder="Unlimited"]').fill('200');
 
     // Submit modal form
-    const submitBtn = page.locator('button', { hasText: 'Create Promo Code' }).last();
-    await submitBtn.click();
+    const submitBtn = page.locator('[role="dialog"] button', { hasText: 'Create Code' });
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/promo-codes') && r.request().method() === 'POST'),
+      submitBtn.click(),
+    ]);
 
     expect(createdPromo).toMatchObject({
       code: 'FALL2026',
       discountValue: 25,
-      maxRedemptions: 200,
+      maxUses: 200,
     });
 
     await page.screenshot({ path: path.join(__dirname, 'screenshots/04-subscriptions-promos.png') });
@@ -472,8 +481,9 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
           data: [
             {
               id: 'stripe',
+              provider: 'stripe',
               name: 'Stripe',
-              enabled: true,
+              isEnabled: true,
               mode: 'live',
               supportedCurrencies: ['USD', 'EUR', 'GBP'],
               transactionFeePct: 2.9,
@@ -481,8 +491,9 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
             },
             {
               id: 'paystack',
+              provider: 'paystack',
               name: 'Paystack',
-              enabled: true,
+              isEnabled: true,
               mode: 'live',
               supportedCurrencies: ['NGN', 'GHS', 'KES'],
               transactionFeePct: 1.5,
@@ -499,35 +510,37 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: [
-            {
-              id: 'evt_001',
-              provider: 'stripe',
-              eventType: 'charge.successful',
-              status: 'processed',
-              reference: 'ch_3Nabc123',
-              amount: 1999,
-              currency: 'USD',
-              createdAt: '2026-09-15T14:20:00Z',
-            },
-            {
-              id: 'evt_002',
-              provider: 'stripe',
-              eventType: 'payment_intent.created',
-              status: 'processed',
-              reference: 'pi_3Nxyz456',
-              amount: 2500,
-              currency: 'USD',
-              createdAt: '2026-09-15T14:18:00Z',
-            },
-          ],
+          data: {
+            items: [
+              {
+                id: 'evt_001',
+                provider: 'stripe',
+                eventType: 'charge.successful',
+                status: 'processed',
+                reference: 'ch_3Nabc123',
+                amount: 1999,
+                currency: 'USD',
+                createdAt: '2026-09-15T14:20:00Z',
+              },
+              {
+                id: 'evt_002',
+                provider: 'stripe',
+                eventType: 'payment_intent.created',
+                status: 'processed',
+                reference: 'pi_3Nxyz456',
+                amount: 2500,
+                currency: 'USD',
+                createdAt: '2026-09-15T14:18:00Z',
+              },
+            ],
+          },
         }),
       });
     });
 
     await page.goto('/payment-gateways');
     await expect(page.locator('h1')).toContainText('Payment Gateways');
-    await expect(page.getByText('Stripe')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Stripe' })).toBeVisible();
 
     // Click Webhooks toggle button
     const webhooksBtn = page.getByRole('button', { name: /Webhooks/ }).first();
@@ -544,6 +557,24 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
   // 6. Settings & Integration Test Connection (G5)
   test('Settings (G5): renders Integrations tab and triggers test connection', async ({ page }) => {
     let testCalled = false;
+
+    await page.route((url) => url.pathname === '/api/v1/admin/settings', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            {
+              key: 'integrations.stripe',
+              value: 'configured',
+              category: 'integrations',
+              description: 'Stripe payment gateway',
+            },
+          ],
+        }),
+      });
+    });
 
     await page.route('**/api/v1/admin/settings/config**', async (route) => {
       await route.fulfill({
@@ -579,17 +610,17 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     await expect(page.locator('h1')).toContainText('Settings');
 
     // Click Integrations tab
-    const integrationsTab = page.getByRole('button', { name: /Integrations/i });
+    const integrationsTab = page.getByRole('button', { name: /integrations/i });
     await expect(integrationsTab).toBeVisible();
     await integrationsTab.click();
 
-    // Click "Test" button for Stripe
-    const testBtn = page.getByRole('button', { name: 'Test' }).first();
+    // Click "Ping Test" button for Stripe
+    const testBtn = page.getByRole('button', { name: 'Ping Test' }).first();
     await expect(testBtn).toBeVisible();
     await testBtn.click();
 
     expect(testCalled).toBe(true);
-    await expect(page.getByText('Connected (OK)')).toBeVisible();
+    await expect(page.getByText('Connected (connected)')).toBeVisible();
 
     await page.screenshot({ path: path.join(__dirname, 'screenshots/06-settings-integrations.png') });
   });
@@ -690,7 +721,7 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     });
 
     await page.goto('/support');
-    await expect(page.locator('h1')).toContainText('Support Tickets');
+    await expect(page.locator('h1')).toContainText('Support Helpdesk');
     await expect(page.getByText('Subscription billing question')).toBeVisible();
 
     // Click on the ticket to open drawer
@@ -700,11 +731,14 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     await expect(page.getByText('I was charged twice on my card this month.')).toBeVisible();
 
     // Send a reply
-    const replyInput = page.locator('textarea[placeholder="Type a reply to the customer..."]');
+    const replyInput = page.locator('input[placeholder="Type a response to the user..."]');
     await replyInput.fill('We are reviewing your duplicate transaction and issuing a refund.');
 
-    const sendBtn = page.getByRole('button', { name: 'Send Reply' });
-    await sendBtn.click();
+    const sendBtn = page.getByRole('button', { name: 'Send', exact: true });
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/reply') && r.request().method() === 'POST'),
+      sendBtn.click(),
+    ]);
 
     expect(replyPayload).toEqual({
       body: 'We are reviewing your duplicate transaction and issuing a refund.',
@@ -798,17 +832,20 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     });
 
     await page.goto('/financial');
-    await expect(page.locator('h1')).toContainText('Financial Management');
+    await expect(page.locator('h1')).toContainText('Financial Overview');
     await expect(page.getByText('Kolawole Creator')).toBeVisible();
 
     // Click Approve on first payout
-    const approveBtn = page.getByRole('button', { name: 'Approve' }).first();
+    const approveBtn = page.getByRole('button', { name: 'Approve', exact: true }).first();
     await expect(approveBtn).toBeVisible();
-    await approveBtn.click();
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/approve') && r.request().method() === 'PUT'),
+      approveBtn.click(),
+    ]);
     expect(approveCalled).toBe(true);
 
     // Click Reject on second payout
-    const rejectBtn = page.getByRole('button', { name: 'Reject' }).nth(1);
+    const rejectBtn = page.getByRole('button', { name: 'Reject', exact: true }).nth(1);
     await expect(rejectBtn).toBeVisible();
     await rejectBtn.click();
 
@@ -817,7 +854,10 @@ test.describe('Admin Ecosystem Live Browser CRUD Pass', () => {
     await page.locator('textarea[placeholder*="Bank details mismatch"]').fill('Bank details mismatch');
 
     const confirmRejectBtn = page.getByRole('button', { name: 'Confirm Rejection' });
-    await confirmRejectBtn.click();
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/reject') && r.request().method() === 'PUT'),
+      confirmRejectBtn.click(),
+    ]);
 
     expect(rejectPayload).toEqual({ reason: 'Bank details mismatch' });
 

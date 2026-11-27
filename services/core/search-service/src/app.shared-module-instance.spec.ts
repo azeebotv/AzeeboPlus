@@ -161,6 +161,17 @@ describe('AppModule shared-module instance counts (A-3/A-13 regression guard)', 
       .useValue({
         $connect: jest.fn(),
         $disconnect: jest.fn(),
+        $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
+        // Delegates used by onApplicationBootstrap (population + retention).
+        // Without them the bootstrap hooks fail with "reading 'upsert'" /
+        // "reading 'findMany'" errors, even though the real PrismaService
+        // exposes them.
+        contentItem: { upsert: jest.fn(async () => ({})) },
+        searchQueryLog: {
+          findMany: jest.fn(async () => []),
+          update: jest.fn(async () => ({})),
+          deleteMany: jest.fn(async () => ({ count: 0 })),
+        },
       })
       .compile();
 

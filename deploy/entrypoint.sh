@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export NODE_PATH="/app/node_modules${NODE_PATH:+:$NODE_PATH}"
 
 # ============================================================
 # Azeebo+ All-in-One Entrypoint
@@ -8,11 +9,130 @@ set -e
 # migrations, then hands off to supervisord.
 # ============================================================
 
+# Platform hostnames (APP_HOST, ADMIN_HOST, BASE_DOMAIN, ...) are generated from
+# the domain registry at image build time (see Dockerfile.all-in-one).
+DOMAIN_ENV_FILE="/etc/azeebo/domains.env"
+if [ ! -f "$DOMAIN_ENV_FILE" ]; then
+  echo "ERROR: $DOMAIN_ENV_FILE is missing; the image was built without the domain registry." >&2
+  exit 1
+fi
+set -a
+. "$DOMAIN_ENV_FILE"
+set +a
+
+# ============================================================
+# 0. Load environment variables from .env file (Coolify / mounted)
+# ============================================================
+# Check standard locations for environment files. Coolify often writes .env
+# in the working directory or mounts it into /app/.env or /etc/azeebo/.env.
+for env_candidate in "/app/.env" "./.env" "/app/.env.production" "/etc/azeebo/.env"; do
+  if [ -f "$env_candidate" ]; then
+    echo "==> Loading environment configuration from $env_candidate..."
+    set -a
+    # shellcheck disable=SC1090
+    . "$env_candidate"
+    set +a
+    break
+  fi
+done
+
+# ============================================================
+# Pre-flight: Validate required environment variables
+# Fail fast with descriptive errors if any mandatory variable
+# is missing from the env file or Coolify configuration.
+# Do NOT silently fall back or invent insecure dummy data.
+# ============================================================
+MISSING_VARS=()
+INVALID_VARS=()
+
+# 1. PostgreSQL password
+if [ -z "${POSTGRES_PASSWORD:-}" ]; then
+  MISSING_VARS+=("POSTGRES_PASSWORD (Required for PostgreSQL superuser & service DB access)")
+fi
+
+# 2. Redis password
+if [ -z "${REDIS_PASSWORD:-}" ]; then
+  MISSING_VARS+=("REDIS_PASSWORD (Required for Redis caching, rate limiting, and pub/sub)")
+fi
+
+# 3. JWT Access Secret
+if [ -z "${JWT_ACCESS_SECRET:-}" ]; then
+  MISSING_VARS+=("JWT_ACCESS_SECRET (Required for signing JWT access tokens - must be >= 64 characters)")
+elif [ ${#JWT_ACCESS_SECRET} -lt 64 ]; then
+  INVALID_VARS+=("JWT_ACCESS_SECRET (Current length: ${#JWT_ACCESS_SECRET} chars; must be at least 64 characters)")
+fi
+
+# 4. JWT Refresh Secret
+if [ -z "${JWT_REFRESH_SECRET:-}" ]; then
+  MISSING_VARS+=("JWT_REFRESH_SECRET (Required for signing JWT refresh tokens - must be >= 64 characters)")
+elif [ ${#JWT_REFRESH_SECRET} -lt 64 ]; then
+  INVALID_VARS+=("JWT_REFRESH_SECRET (Current length: ${#JWT_REFRESH_SECRET} chars; must be at least 64 characters)")
+fi
+
+# 5. Gateway Secret / Internal API Key
+if [ -z "${GATEWAY_SECRET:-}" ] && [ -z "${INTERNAL_API_KEY:-}" ]; then
+  MISSING_VARS+=("GATEWAY_SECRET or INTERNAL_API_KEY (Required for internal service proxying - must be >= 32 characters)")
+else
+  if [ -z "${GATEWAY_SECRET:-}" ]; then
+    GATEWAY_SECRET="$(printf '%s' "gateway:${INTERNAL_API_KEY}" | sha256sum | cut -d' ' -f1)"
+  fi
+  if [ -z "${INTERNAL_API_KEY:-}" ]; then
+    INTERNAL_API_KEY="$(printf '%s' "internal:${GATEWAY_SECRET}" | sha256sum | cut -d' ' -f1)"
+  fi
+  if [ "$GATEWAY_SECRET" = "$INTERNAL_API_KEY" ]; then
+    echo "WARN: GATEWAY_SECRET and INTERNAL_API_KEY are identical; deriving distinct INTERNAL_API_KEY for all-in-one mode." >&2
+    INTERNAL_API_KEY="$(printf '%s' "internal:${GATEWAY_SECRET}" | sha256sum | cut -d' ' -f1)"
+  fi
+  if [ ${#GATEWAY_SECRET} -lt 32 ]; then
+    INVALID_VARS+=("GATEWAY_SECRET (Current length: ${#GATEWAY_SECRET} chars; must be at least 32 characters)")
+  fi
+  if [ ${#INTERNAL_API_KEY} -lt 32 ]; then
+    INVALID_VARS+=("INTERNAL_API_KEY (Current length: ${#INTERNAL_API_KEY} chars; must be at least 32 characters)")
+  fi
+fi
+
+# 6. Allowed Origins (required by services in production)
+if [ "${NODE_ENV:-production}" = "production" ] && [ -z "${ALLOWED_ORIGINS:-}" ]; then
+  MISSING_VARS+=("ALLOWED_ORIGINS (Required in production, e.g. https://app.example.com,https://admin.example.com)")
+fi
+
+if [ ${#MISSING_VARS[@]} -gt 0 ] || [ ${#INVALID_VARS[@]} -gt 0 ]; then
+  echo "" >&2
+  echo "╔══════════════════════════════════════════════════════════════════════════════╗" >&2
+  echo "║                   FATAL CONFIGURATION / ENV ERROR                            ║" >&2
+  echo "╚══════════════════════════════════════════════════════════════════════════════╝" >&2
+  echo "The container failed to start because required environment variables are missing" >&2
+  echo "or invalid in your .env file or Coolify environment configuration." >&2
+  echo "" >&2
+  if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+    echo "MISSING REQUIRED VARIABLES:" >&2
+    for m in "${MISSING_VARS[@]}"; do
+      echo "  ❌ $m" >&2
+    done
+    echo "" >&2
+  fi
+  if [ ${#INVALID_VARS[@]} -gt 0 ]; then
+    echo "INVALID VARIABLES:" >&2
+    for inv in "${INVALID_VARS[@]}"; do
+      echo "  ⚠️  $inv" >&2
+    done
+    echo "" >&2
+  fi
+  echo "HOW TO FIX:" >&2
+  echo "  1. If running with Coolify: Go to your Project -> Environment Variables" >&2
+  echo "     and provide the missing keys listed above." >&2
+  echo "  2. If running with Docker Compose: Ensure your .env file contains these" >&2
+  echo "     keys (see .env.production.example for reference)." >&2
+  echo "  3. Secrets must NOT be hardcoded into container image or git repository." >&2
+  echo "════════════════════════════════════════════════════════════════════════════════" >&2
+  exit 1
+fi
+
 POSTGRES_DATA="/var/lib/postgresql/data"
 POSTGRES_USER="${POSTGRES_USER:-azeebo}"
-POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
 POSTGRES_DB="${POSTGRES_DB:-azeebo_dev}"
-REDIS_PASSWORD="${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+REDIS_PASSWORD="${REDIS_PASSWORD}"
 
 export NO_COLOR=1
 
@@ -169,7 +289,12 @@ requirepass $REDIS_PASSWORD
 dir /var/lib/redis
  logfile ""
 REDISCONF
+# redis runs as the `redis` user (supervisord user=redis); the config contains
+# requirepass so keep it out of world-readability.
+chown root:redis /etc/redis/redis.conf
+chmod 640 /etc/redis/redis.conf
 mkdir -p /var/lib/redis 2>/dev/null || true
+chown -R redis:redis /var/lib/redis 2>/dev/null || true
 
 # ============================================================
 # 6. Configure PgBouncer
@@ -233,6 +358,10 @@ gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"
 # Also add the superuser
 gosu postgres sh -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
 chmod 600 /etc/pgbouncer/userlist.txt 2>/dev/null || true
+# pgbouncer runs as the `pgbouncer` user (supervisord user=pgbouncer) and needs
+# read access to its userlist plus write access to its runtime/log dirs.
+chown pgbouncer:pgbouncer /etc/pgbouncer/pgbouncer.ini /etc/pgbouncer/userlist.txt 2>/dev/null || true
+chown -R pgbouncer:pgbouncer /var/run/pgbouncer /var/log/pgbouncer 2>/dev/null || true
 echo "    PgBouncer userlist generated."
 
 # ============================================================
@@ -280,14 +409,14 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   # Check if prisma_migrations table exists and has stuck failures
   # Find migrations that are not cleanly applied (started but not finished, or finished but still rolling back)
   failed_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
-    "SELECT migration_name FROM prisma_migrations WHERE (finished_at IS NULL AND started_at IS NOT NULL) OR (rolling_back_at IS NOT NULL AND rolled_back_at IS NULL) LIMIT 50" 2>/dev/null || echo "")
+    "SELECT migration_name FROM _prisma_migrations WHERE (finished_at IS NULL AND started_at IS NOT NULL) OR (rolling_back_at IS NOT NULL AND rolled_back_at IS NULL) LIMIT 50" 2>/dev/null || echo "")
 
   if [ -n "$failed_migrations" ]; then
     echo "    Resolving stuck migrations for $svc_name..."
     while IFS= read -r migration_name; do
       [ -z "$migration_name" ] && continue
       echo "      Resolving: $migration_name"
-      DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
+      DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" DIRECT_DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
         prisma migrate resolve --rolled-back "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
         echo "      WARNING: Could not resolve $migration_name (may already be resolved)"
     done <<< "$failed_migrations"
@@ -299,29 +428,42 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   echo "    Migrating $svc_name..."
 
   db_url="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public"
-  migrate_output=$(DATABASE_URL="$db_url" \
+  migrate_output=$(DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
     prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1) || {
     if echo "$migrate_output" | grep -q "P3005"; then
       echo "    P3005: database exists with untracked tables for $svc_name"
-      echo "    Baseline approach: mark all migrations as applied, then re-deploy..."
-      if [ -d "$svc_dir/prisma/migrations" ]; then
-        for migration_dir in "$svc_dir/prisma/migrations"/*/; do
-          [ -d "$migration_dir" ] || continue
-          migration_name=$(basename "$migration_dir")
-          DATABASE_URL="$db_url" \
-            prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
-            echo "      WARNING: Could not baseline $migration_name"
-        done
-        echo "    Re-running migration for $svc_name after baseline..."
-        DATABASE_URL="$db_url" \
-          prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
-          echo "    FATAL: Migration still failed for $svc_name after baseline"
-          echo "    Migration output:"
-          echo "$migrate_output" | head -20
+      # Baseline (marking migrations applied WITHOUT executing their SQL) is
+      # only safe when the DB state is known to match the final migration —
+      # e.g. a volume seeded from coolify-init.sql. It must never run
+      # implicitly: a wrong guess silently desyncs the ledger from the schema.
+      if [ "$ALLOW_UNSAFE_BASELINE" = "true" ]; then
+        echo "    ALLOW_UNSAFE_BASELINE=true — baselining all migrations as applied..."
+        if [ -d "$svc_dir/prisma/migrations" ]; then
+          for migration_dir in "$svc_dir/prisma/migrations"/*/; do
+            [ -d "$migration_dir" ] || continue
+            migration_name=$(basename "$migration_dir")
+            DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
+              prisma migrate resolve --applied "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+              echo "      WARNING: Could not baseline $migration_name"
+          done
+          echo "    Re-running migration for $svc_name after baseline..."
+          DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
+            prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+            echo "    FATAL: Migration still failed for $svc_name after baseline"
+            echo "    Migration output:"
+            echo "$migrate_output" | head -20
+            exit 1
+          }
+        else
+          echo "    FATAL: No migrations directory found for $svc_name"
           exit 1
-        }
+        fi
       else
-        echo "    FATAL: No migrations directory found for $svc_name"
+        echo "    FATAL: Refusing to baseline $svc_name automatically."
+        echo "    Baseline marks migrations applied WITHOUT executing their SQL — only"
+        echo "    do this when the database already matches the final schema."
+        echo "    Re-run with ALLOW_UNSAFE_BASELINE=true to accept that risk, or baseline manually:"
+        echo "      prisma migrate resolve --applied <migration_name> --schema=$svc_dir/prisma/schema.prisma"
         exit 1
       fi
     elif echo "$migrate_output" | grep -q "P3018"; then
@@ -330,40 +472,42 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
       failed_migration=$(echo "$migrate_output" | grep -oP 'Migration name: \K.*' | head -1 || true)
       if [ -n "$failed_migration" ]; then
         echo "    Resolving: $failed_migration"
-        DATABASE_URL="$db_url" \
+        DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
           prisma migrate resolve --rolled-back "$failed_migration" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
       fi
       # Also resolve any stuck migrations in the table
       stuck_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
-        "SELECT migration_name FROM prisma_migrations WHERE finished_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
+        "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
       if [ -n "$stuck_migrations" ]; then
         while IFS= read -r stuck_name; do
           [ -z "$stuck_name" ] && continue
           echo "    Resolving stuck: $stuck_name"
-          DATABASE_URL="$db_url" \
+          DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
             prisma migrate resolve --rolled-back "$stuck_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || true
         done <<< "$stuck_migrations"
       fi
-      # SAFETY: Only allow schema drop in non-production environments.
-      # In production, P3018 should be resolved manually to prevent data loss.
-      if [ "$NODE_ENV" = "production" ] && [ "$ALL_IN_ONE" != "true" ]; then
+      # SAFETY: Never allow schema drop in production unless explicitly opted in
+      # via ALLOW_UNSAFE_P3018_RECOVERY=true or DEMO_MODE=true.
+      if [ "$NODE_ENV" = "production" ] && [ "${ALLOW_UNSAFE_P3018_RECOVERY:-false}" != "true" ] && [ "${DEMO_MODE:-false}" != "true" ]; then
         echo "    FATAL: P3018 recovery with schema drop is NOT allowed in production."
         echo "    Resolve the stuck migration manually:"
         echo "      prisma migrate resolve --rolled-back <migration_name> --schema=$svc_dir/prisma/schema.prisma"
-        echo "    Then re-run the deployment."
+        echo "    Then re-run the deployment (or set ALLOW_UNSAFE_P3018_RECOVERY=true for demo/test environments)."
         exit 1
       fi
       echo "    WARNING: Dropping partially-applied migration objects for $svc_name (P3018 recovery, non-production only)..."
+      gosu postgres psql -d "$db_name" -c \
+        "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO \"$db_user\"; ALTER SCHEMA public OWNER TO \"$db_user\";" >/dev/null 2>&1 || \
       PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -c \
         "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1 || true
       echo "    Re-running migration for $svc_name..."
-      DATABASE_URL="$db_url" \
-        prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || {
+      if ! rerun_output=$(DATABASE_URL="$db_url" DIRECT_DATABASE_URL="$db_url" \
+        prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1); then
         echo "    FATAL: Migration still failed for $svc_name after P3018 resolve"
         echo "    Migration output:"
-        echo "$migrate_output" | head -20
+        echo "$rerun_output" | head -20
         exit 1
-      }
+      fi
     else
       echo "    FATAL: Migration failed for $svc_name"
       echo "    Migration output:"
@@ -394,14 +538,18 @@ if [ "${DEMO_MODE:-false}" = "true" ] && [ "${CLEAR_DB:-0}" = "1" ]; then
 fi
 
 # ============================================================
-# 7c. Load demo content (always run to ensure users exist)
+# 7c. Load demo content if DEMO_MODE=true or SEED_DEMO_DATA=true
 # ============================================================
-echo "==> Loading demo content into all databases..."
-if [ -x /app/scripts/demo-content/deploy-all-in-one.sh ]; then
-  DB_PASSWORD="$POSTGRES_PASSWORD" /app/scripts/demo-content/deploy-all-in-one.sh || \
-    echo "    WARNING: Demo content deployment had errors (non-fatal)"
+if [ "${DEMO_MODE:-false}" = "true" ] || [ "${SEED_DEMO_DATA:-false}" = "true" ]; then
+  echo "==> DEMO_MODE or SEED_DEMO_DATA is true — Loading demo content into all databases..."
+  if [ -x /app/scripts/demo-content/deploy-all-in-one.sh ]; then
+    DB_PASSWORD="$POSTGRES_PASSWORD" /app/scripts/demo-content/deploy-all-in-one.sh || \
+      echo "    WARNING: Demo content deployment had errors (non-fatal)"
+  else
+    echo "    WARNING: /app/scripts/demo-content/deploy-all-in-one.sh not found or not executable"
+  fi
 else
-  echo "    WARNING: /app/scripts/demo-content/deploy-all-in-one.sh not found or not executable"
+  echo "==> DEMO_MODE and SEED_DEMO_DATA are false — skipping demo content seeding (clean state preserved)."
 fi
 
 # ============================================================
@@ -415,8 +563,12 @@ gosu postgres sh -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA stop -m
 # ============================================================
 echo "==> Setting up service environment variables..."
 
-REDIS_URL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
+REDIS_URL="${REDIS_URL:-redis://:${REDIS_PASSWORD}@127.0.0.1:6379}"
+export REDIS_PASSWORD
 export REDIS_URL
+export EVENT_BUS_REDIS_URL="${EVENT_BUS_REDIS_URL:-$REDIS_URL}"
+export FEATURE_FLAG_REDIS_URL="${FEATURE_FLAG_REDIS_URL:-$REDIS_URL}"
+export OPS_REDIS_URL="${OPS_REDIS_URL:-$REDIS_URL}"
 
 # Service DB password defaults
 AUTH_DB_PASSWORD="${AUTH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
@@ -557,19 +709,18 @@ SVC_PATHS[moderation-service]="services/operations/moderation-service"
 SVC_PATHS[api-gateway]="services/gateway/api-gateway"
 SVC_PATHS[knowledge-service]="services/core/knowledge-service"
 
-JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET:-$(openssl rand -hex 64)}"
-JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 64)}"
-GATEWAY_SECRET="${GATEWAY_SECRET:-$(openssl rand -hex 32)}"
-WEBHOOK_SECRET="${WEBHOOK_SECRET:-$(openssl rand -hex 32)}"
+WEBHOOK_SECRET="${WEBHOOK_SECRET:-$GATEWAY_SECRET}"
 # Sanitize injected secrets: http header values cannot contain CR/LF.
 # `openssl rand -base64` wraps at 64 columns, which would embed newlines
 # into header-based secrets (x-gateway-secret) and break every proxied request.
 JWT_ACCESS_SECRET="$(printf '%s' "$JWT_ACCESS_SECRET" | tr -d '\r\n')"
 JWT_REFRESH_SECRET="$(printf '%s' "$JWT_REFRESH_SECRET" | tr -d '\r\n')"
 GATEWAY_SECRET="$(printf '%s' "$GATEWAY_SECRET" | tr -d '\r\n')"
+INTERNAL_API_KEY="$(printf '%s' "$INTERNAL_API_KEY" | tr -d '\r\n')"
 WEBHOOK_SECRET="$(printf '%s' "$WEBHOOK_SECRET" | tr -d '\r\n')"
+export GATEWAY_SECRET INTERNAL_API_KEY
 # In all-in-one mode, localhost origins are expected for inter-service communication
-ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://app.azeeboplus.com,https://admin.azeeboplus.com,https://creator.azeeboplus.com}"
+export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://${APP_HOST},https://${ADMIN_HOST},https://${CREATOR_HOST}}"
 REDIS_URL_VAL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
 
 # Service URLs (all services run on localhost in all-in-one mode)
@@ -610,66 +761,102 @@ for entry in "${SERVICES[@]}"; do
   svc_path="${SVC_PATHS[$svc_name]}"
   main_js="${svc_path}/dist/main.js"
 
+  case "$svc_name" in
+    auth-service) svc_db_pass_var="AUTH_DB_PASSWORD" ;;
+    user-service) svc_db_pass_var="USER_DB_PASSWORD" ;;
+    wallet-service) svc_db_pass_var="WALLET_DB_PASSWORD" ;;
+    payment-service) svc_db_pass_var="PAYMENT_DB_PASSWORD" ;;
+    content-service) svc_db_pass_var="CONTENT_DB_PASSWORD" ;;
+    search-service) svc_db_pass_var="SEARCH_DB_PASSWORD" ;;
+    notification-service) svc_db_pass_var="NOTIFICATION_DB_PASSWORD" ;;
+    reward-service) svc_db_pass_var="REWARD_DB_PASSWORD" ;;
+    analytics-service) svc_db_pass_var="ANALYTICS_DB_PASSWORD" ;;
+    recommendation-service) svc_db_pass_var="RECOMMENDATION_DB_PASSWORD" ;;
+    reality-service) svc_db_pass_var="REALITY_DB_PASSWORD" ;;
+    movie-service) svc_db_pass_var="MOVIE_DB_PASSWORD" ;;
+    comedy-service) svc_db_pass_var="COMEDY_DB_PASSWORD" ;;
+    games-service) svc_db_pass_var="GAMES_DB_PASSWORD" ;;
+    queue-service) svc_db_pass_var="QUEUE_DB_PASSWORD" ;;
+    lifestyle-service) svc_db_pass_var="LIFESTYLE_DB_PASSWORD" ;;
+    vertical-service) svc_db_pass_var="VERTICAL_DB_PASSWORD" ;;
+    creator-service) svc_db_pass_var="CREATOR_DB_PASSWORD" ;;
+    media-service) svc_db_pass_var="MEDIA_DB_PASSWORD" ;;
+    support-service) svc_db_pass_var="SUPPORT_DB_PASSWORD" ;;
+    sports-service) svc_db_pass_var="SPORTS_DB_PASSWORD" ;;
+    moderation-service) svc_db_pass_var="MODERATION_DB_PASSWORD" ;;
+    engagement-service) svc_db_pass_var="ENGAGEMENT_DB_PASSWORD" ;;
+    messaging-service) svc_db_pass_var="MESSAGING_DB_PASSWORD" ;;
+    referral-service) svc_db_pass_var="REFERRAL_DB_PASSWORD" ;;
+    subscription-service) svc_db_pass_var="SUBSCRIPTION_DB_PASSWORD" ;;
+    live-event-service) svc_db_pass_var="LIVE_EVENT_DB_PASSWORD" ;;
+    knowledge-service) svc_db_pass_var="KNOWLEDGE_DB_PASSWORD" ;;
+    *) svc_db_pass_var="POSTGRES_PASSWORD" ;;
+  esac
+
   cat > "/app/service-wrappers/${svc_name}.sh" << WRAPPER
 #!/bin/bash
+# Runtime wrapper for ${svc_name} (dynamic configuration loaded from environment)
 export ALL_IN_ONE="true"
-export DATABASE_URL="postgresql://${db_user}:${db_pass}@127.0.0.1:5432/${db_name}?schema=public"
-export DATABASE_PASSWORD="${db_pass}"
-export DATABASE_HOST="localhost"
-export DATABASE_PORT="5432"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export DATABASE_USER="${db_user}"
 export DATABASE_NAME="${db_name}"
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
+export DATABASE_PASSWORD="\${${svc_db_pass_var}:-\$POSTGRES_PASSWORD}"
+export DATABASE_URL="postgresql://${db_user}:\${DATABASE_PASSWORD}@127.0.0.1:5432/${db_name}?schema=public"
 export PORT="${port}"
 export NODE_ENV="production"
-export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
-export JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET}"
-export GATEWAY_SECRET="${GATEWAY_SECRET}"
-export WEBHOOK_SECRET="${WEBHOOK_SECRET}"
-export JWT_ISSUER="${JWT_ISSUER:-azeebo-auth}"
-export JWT_AUDIENCE="${JWT_AUDIENCE:-azeebo-api}"
-export JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-30m}"
-export JWT_REFRESH_EXPIRES_IN="${JWT_REFRESH_EXPIRES_IN:-7d}"
-export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
-export REDIS_URL="${REDIS_URL_VAL}"
-export EVENT_BUS_REDIS_URL="${EVENT_BUS_REDIS_URL:-redis://:${REDIS_PASSWORD}@127.0.0.1:6379}"
-export FEATURE_FLAG_REDIS_URL="${FEATURE_FLAG_REDIS_URL:-redis://:${REDIS_PASSWORD}@127.0.0.1:6379}"
-export API_GATEWAY_URL="${API_GATEWAY_URL}"
-export AUTH_SERVICE_URL="${AUTH_SERVICE_URL}"
-export USER_SERVICE_URL="${USER_SERVICE_URL}"
-export WALLET_SERVICE_URL="${WALLET_SERVICE_URL}"
-export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL}"
-export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL}"
-export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL}"
-export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL}"
-export REWARD_SERVICE_URL="${REWARD_SERVICE_URL}"
-export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL}"
-export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL}"
-export REALITY_SERVICE_URL="${REALITY_SERVICE_URL}"
-export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL}"
-export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL}"
-export GAMES_SERVICE_URL="${GAMES_SERVICE_URL}"
-export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL}"
-export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL}"
-export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL}"
-export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL}"
-export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL}"
-export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL}"
-export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL}"
-export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL}"
-export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL}"
-export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL}"
-export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL}"
-export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL}"
-export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL}"
-export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL}"
-export PAYSTACK_SECRET_KEY="${PAYSTACK_SECRET_KEY:-}"
-export PAYSTACK_WEBHOOK_SECRET="${PAYSTACK_WEBHOOK_SECRET:-}"
-export FLUTTERWAVE_SECRET_KEY="${FLW_SECRET_KEY:-}"
-export FLUTTERWAVE_WEBHOOK_SECRET="${FLW_WEBHOOK_SECRET:-}"
-export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
-export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
-export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
-export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
+export JWT_REFRESH_SECRET="\${JWT_REFRESH_SECRET}"
+export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
+export WEBHOOK_SECRET="\${WEBHOOK_SECRET}"
+export JWT_ISSUER="\${JWT_ISSUER:-azeebo-auth}"
+export JWT_AUDIENCE="\${JWT_AUDIENCE:-azeebo-api}"
+export JWT_EXPIRES_IN="\${JWT_EXPIRES_IN:-30m}"
+export JWT_REFRESH_EXPIRES_IN="\${JWT_REFRESH_EXPIRES_IN:-7d}"
+export ALLOWED_ORIGINS="\${ALLOWED_ORIGINS}"
+export REDIS_PASSWORD="\${REDIS_PASSWORD}"
+export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
+export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
+export FEATURE_FLAG_REDIS_URL="\${FEATURE_FLAG_REDIS_URL:-\${REDIS_URL}}"
+export API_GATEWAY_URL="\${API_GATEWAY_URL}"
+export AUTH_SERVICE_URL="\${AUTH_SERVICE_URL}"
+export USER_SERVICE_URL="\${USER_SERVICE_URL}"
+export WALLET_SERVICE_URL="\${WALLET_SERVICE_URL}"
+export PAYMENT_SERVICE_URL="\${PAYMENT_SERVICE_URL}"
+export CONTENT_SERVICE_URL="\${CONTENT_SERVICE_URL}"
+export SEARCH_SERVICE_URL="\${SEARCH_SERVICE_URL}"
+export NOTIFICATION_SERVICE_URL="\${NOTIFICATION_SERVICE_URL}"
+export REWARD_SERVICE_URL="\${REWARD_SERVICE_URL}"
+export ANALYTICS_SERVICE_URL="\${ANALYTICS_SERVICE_URL}"
+export RECOMMENDATION_SERVICE_URL="\${RECOMMENDATION_SERVICE_URL}"
+export REALITY_SERVICE_URL="\${REALITY_SERVICE_URL}"
+export MOVIE_SERVICE_URL="\${MOVIE_SERVICE_URL}"
+export COMEDY_SERVICE_URL="\${COMEDY_SERVICE_URL}"
+export GAMES_SERVICE_URL="\${GAMES_SERVICE_URL}"
+export QUEUE_SERVICE_URL="\${QUEUE_SERVICE_URL}"
+export LIFESTYLE_SERVICE_URL="\${LIFESTYLE_SERVICE_URL}"
+export VERTICAL_SERVICE_URL="\${VERTICAL_SERVICE_URL}"
+export CREATOR_SERVICE_URL="\${CREATOR_SERVICE_URL}"
+export MEDIA_SERVICE_URL="\${MEDIA_SERVICE_URL}"
+export SUPPORT_SERVICE_URL="\${SUPPORT_SERVICE_URL}"
+export SPORTS_SERVICE_URL="\${SPORTS_SERVICE_URL}"
+export MODERATION_SERVICE_URL="\${MODERATION_SERVICE_URL}"
+export ENGAGEMENT_SERVICE_URL="\${ENGAGEMENT_SERVICE_URL}"
+export MESSAGING_SERVICE_URL="\${MESSAGING_SERVICE_URL}"
+export REFERRAL_SERVICE_URL="\${REFERRAL_SERVICE_URL}"
+export SUBSCRIPTION_SERVICE_URL="\${SUBSCRIPTION_SERVICE_URL}"
+export LIVE_EVENT_SERVICE_URL="\${LIVE_EVENT_SERVICE_URL}"
+export KNOWLEDGE_SERVICE_URL="\${KNOWLEDGE_SERVICE_URL}"
+export PAYSTACK_SECRET_KEY="\${PAYSTACK_SECRET_KEY:-}"
+export PAYSTACK_WEBHOOK_SECRET="\${PAYSTACK_WEBHOOK_SECRET:-}"
+export FLUTTERWAVE_SECRET_KEY="\${FLW_SECRET_KEY:-\${FLUTTERWAVE_SECRET_KEY:-}}"
+export FLUTTERWAVE_WEBHOOK_SECRET="\${FLW_WEBHOOK_SECRET:-\${FLUTTERWAVE_WEBHOOK_SECRET:-}}"
+export SENDGRID_API_KEY="\${SENDGRID_API_KEY:-}"
+export TWILIO_ACCOUNT_SID="\${TWILIO_ACCOUNT_SID:-}"
+export TWILIO_AUTH_TOKEN="\${TWILIO_AUTH_TOKEN:-}"
+export TWILIO_PHONE_NUMBER="\${TWILIO_PHONE_NUMBER:-}"
 export NODE_OPTIONS="--max-old-space-size=512"
 if [ "$svc_name" = "auth-service" ]; then
   /app/service-wrappers/auth-service-flush.sh || true
@@ -699,52 +886,57 @@ chmod +x /app/service-wrappers/auth-service-flush.sh
 # API gateway wrapper (routes to services)
 cat > /app/service-wrappers/api-gateway.sh << WRAPPER
 #!/bin/bash
+# Runtime wrapper for API Gateway (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_ENV="production"
 export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="3013"
-export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
-export GATEWAY_SECRET="${GATEWAY_SECRET}"
-export REDIS_URL="${REDIS_URL_VAL}"
-export EVENT_BUS_REDIS_URL="${EVENT_BUS_REDIS_URL:-redis://:${REDIS_PASSWORD}@127.0.0.1:6379}"
-export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
-export API_GATEWAY_URL="${API_GATEWAY_URL}"
-export AUTH_SERVICE_URL="${AUTH_SERVICE_URL}"
-export USER_SERVICE_URL="${USER_SERVICE_URL}"
-export WALLET_SERVICE_URL="${WALLET_SERVICE_URL}"
-export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL}"
-export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL}"
-export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL}"
-export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL}"
-export REWARD_SERVICE_URL="${REWARD_SERVICE_URL}"
-export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL}"
-export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL}"
-export REALITY_SERVICE_URL="${REALITY_SERVICE_URL}"
-export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL}"
-export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL}"
-export GAMES_SERVICE_URL="${GAMES_SERVICE_URL}"
-export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL}"
-export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL}"
-export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL}"
-export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL}"
-export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL}"
-export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL}"
-export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL}"
-export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL}"
-export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL}"
-export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL}"
-export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL}"
-export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL}"
-export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL}"
-export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL}"
-export PAYSTACK_SECRET_KEY="${PAYSTACK_SECRET_KEY:-}"
-export PAYSTACK_WEBHOOK_SECRET="${PAYSTACK_WEBHOOK_SECRET:-}"
-export FLUTTERWAVE_SECRET_KEY="${FLW_SECRET_KEY:-}"
-export FLUTTERWAVE_WEBHOOK_SECRET="${FLW_WEBHOOK_SECRET:-}"
-export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
-export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
-export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
-export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
+export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
+export REDIS_PASSWORD="\${REDIS_PASSWORD}"
+export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
+export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
+export FEATURE_FLAG_REDIS_URL="\${FEATURE_FLAG_REDIS_URL:-\${REDIS_URL}}"
+export ALLOWED_ORIGINS="\${ALLOWED_ORIGINS}"
+export API_GATEWAY_URL="\${API_GATEWAY_URL}"
+export AUTH_SERVICE_URL="\${AUTH_SERVICE_URL}"
+export USER_SERVICE_URL="\${USER_SERVICE_URL}"
+export WALLET_SERVICE_URL="\${WALLET_SERVICE_URL}"
+export PAYMENT_SERVICE_URL="\${PAYMENT_SERVICE_URL}"
+export CONTENT_SERVICE_URL="\${CONTENT_SERVICE_URL}"
+export SEARCH_SERVICE_URL="\${SEARCH_SERVICE_URL}"
+export NOTIFICATION_SERVICE_URL="\${NOTIFICATION_SERVICE_URL}"
+export REWARD_SERVICE_URL="\${REWARD_SERVICE_URL}"
+export ANALYTICS_SERVICE_URL="\${ANALYTICS_SERVICE_URL}"
+export RECOMMENDATION_SERVICE_URL="\${RECOMMENDATION_SERVICE_URL}"
+export REALITY_SERVICE_URL="\${REALITY_SERVICE_URL}"
+export MOVIE_SERVICE_URL="\${MOVIE_SERVICE_URL}"
+export COMEDY_SERVICE_URL="\${COMEDY_SERVICE_URL}"
+export GAMES_SERVICE_URL="\${GAMES_SERVICE_URL}"
+export QUEUE_SERVICE_URL="\${QUEUE_SERVICE_URL}"
+export LIFESTYLE_SERVICE_URL="\${LIFESTYLE_SERVICE_URL}"
+export VERTICAL_SERVICE_URL="\${VERTICAL_SERVICE_URL}"
+export CREATOR_SERVICE_URL="\${CREATOR_SERVICE_URL}"
+export MEDIA_SERVICE_URL="\${MEDIA_SERVICE_URL}"
+export SUPPORT_SERVICE_URL="\${SUPPORT_SERVICE_URL}"
+export SPORTS_SERVICE_URL="\${SPORTS_SERVICE_URL}"
+export MODERATION_SERVICE_URL="\${MODERATION_SERVICE_URL}"
+export ENGAGEMENT_SERVICE_URL="\${ENGAGEMENT_SERVICE_URL}"
+export MESSAGING_SERVICE_URL="\${MESSAGING_SERVICE_URL}"
+export REFERRAL_SERVICE_URL="\${REFERRAL_SERVICE_URL}"
+export SUBSCRIPTION_SERVICE_URL="\${SUBSCRIPTION_SERVICE_URL}"
+export LIVE_EVENT_SERVICE_URL="\${LIVE_EVENT_SERVICE_URL}"
+export KNOWLEDGE_SERVICE_URL="\${KNOWLEDGE_SERVICE_URL}"
+export PAYSTACK_SECRET_KEY="\${PAYSTACK_SECRET_KEY:-}"
+export PAYSTACK_WEBHOOK_SECRET="\${PAYSTACK_WEBHOOK_SECRET:-}"
+export FLUTTERWAVE_SECRET_KEY="\${FLW_SECRET_KEY:-\${FLUTTERWAVE_SECRET_KEY:-}}"
+export FLUTTERWAVE_WEBHOOK_SECRET="\${FLW_WEBHOOK_SECRET:-\${FLUTTERWAVE_WEBHOOK_SECRET:-}}"
+export SENDGRID_API_KEY="\${SENDGRID_API_KEY:-}"
+export TWILIO_ACCOUNT_SID="\${TWILIO_ACCOUNT_SID:-}"
+export TWILIO_AUTH_TOKEN="\${TWILIO_AUTH_TOKEN:-}"
+export TWILIO_PHONE_NUMBER="\${TWILIO_PHONE_NUMBER:-}"
 cd /app/services/gateway/api-gateway
 exec node dist/main.js
 WRAPPER
@@ -753,56 +945,64 @@ chmod +x /app/service-wrappers/api-gateway.sh
 # Admin app wrapper
 cat > /app/service-wrappers/admin-app.sh << WRAPPER
 #!/bin/bash
+# Runtime wrapper for Admin App (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_OPTIONS="--max-old-space-size=512"
-export DATABASE_URL="postgresql://azeebo:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/azeebo_admin?schema=public"
-export DATABASE_PASSWORD="${ADMIN_DB_PASSWORD}"
-export DATABASE_HOST="localhost"
-export DATABASE_PORT="5432"
 export DATABASE_USER="azeebo"
 export DATABASE_NAME="azeebo_admin"
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
+export DATABASE_PASSWORD="\${ADMIN_DB_PASSWORD:-\$POSTGRES_PASSWORD}"
+export DATABASE_URL="postgresql://azeebo:\${DATABASE_PASSWORD}@127.0.0.1:5432/azeebo_admin?schema=public"
 export PORT="4016"
 export NODE_ENV="production"
-export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
-export GATEWAY_SECRET="${GATEWAY_SECRET}"
-export API_GATEWAY_URL="${API_GATEWAY_URL}"
-export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
-export AUTH_SERVICE_URL="${AUTH_SERVICE_URL}"
-export USER_SERVICE_URL="${USER_SERVICE_URL}"
-export WALLET_SERVICE_URL="${WALLET_SERVICE_URL}"
-export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL}"
-export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL}"
-export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL}"
-export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL}"
-export REWARD_SERVICE_URL="${REWARD_SERVICE_URL}"
-export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL}"
-export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL}"
-export REALITY_SERVICE_URL="${REALITY_SERVICE_URL}"
-export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL}"
-export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL}"
-export GAMES_SERVICE_URL="${GAMES_SERVICE_URL}"
-export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL}"
-export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL}"
-export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL}"
-export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL}"
-export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL}"
-export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL}"
-export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL}"
-export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL}"
-export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL}"
-export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL}"
-export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL}"
-export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL}"
-export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL}"
-export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL}"
-export PAYSTACK_SECRET_KEY="${PAYSTACK_SECRET_KEY:-}"
-export PAYSTACK_WEBHOOK_SECRET="${PAYSTACK_WEBHOOK_SECRET:-}"
-export FLUTTERWAVE_SECRET_KEY="${FLW_SECRET_KEY:-}"
-export FLUTTERWAVE_WEBHOOK_SECRET="${FLW_WEBHOOK_SECRET:-}"
-export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
-export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
-export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
-export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
+export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
+export REDIS_PASSWORD="\${REDIS_PASSWORD}"
+export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
+export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
+export FEATURE_FLAG_REDIS_URL="\${FEATURE_FLAG_REDIS_URL:-\${REDIS_URL}}"
+export OPS_REDIS_URL="\${OPS_REDIS_URL:-\${REDIS_URL}}"
+export API_GATEWAY_URL="\${API_GATEWAY_URL}"
+export ALLOWED_ORIGINS="\${ALLOWED_ORIGINS}"
+export AUTH_SERVICE_URL="\${AUTH_SERVICE_URL}"
+export USER_SERVICE_URL="\${USER_SERVICE_URL}"
+export WALLET_SERVICE_URL="\${WALLET_SERVICE_URL}"
+export PAYMENT_SERVICE_URL="\${PAYMENT_SERVICE_URL}"
+export CONTENT_SERVICE_URL="\${CONTENT_SERVICE_URL}"
+export SEARCH_SERVICE_URL="\${SEARCH_SERVICE_URL}"
+export NOTIFICATION_SERVICE_URL="\${NOTIFICATION_SERVICE_URL}"
+export REWARD_SERVICE_URL="\${REWARD_SERVICE_URL}"
+export ANALYTICS_SERVICE_URL="\${ANALYTICS_SERVICE_URL}"
+export RECOMMENDATION_SERVICE_URL="\${RECOMMENDATION_SERVICE_URL}"
+export REALITY_SERVICE_URL="\${REALITY_SERVICE_URL}"
+export MOVIE_SERVICE_URL="\${MOVIE_SERVICE_URL}"
+export COMEDY_SERVICE_URL="\${COMEDY_SERVICE_URL}"
+export GAMES_SERVICE_URL="\${GAMES_SERVICE_URL}"
+export QUEUE_SERVICE_URL="\${QUEUE_SERVICE_URL}"
+export LIFESTYLE_SERVICE_URL="\${LIFESTYLE_SERVICE_URL}"
+export VERTICAL_SERVICE_URL="\${VERTICAL_SERVICE_URL}"
+export CREATOR_SERVICE_URL="\${CREATOR_SERVICE_URL}"
+export MEDIA_SERVICE_URL="\${MEDIA_SERVICE_URL}"
+export SUPPORT_SERVICE_URL="\${SUPPORT_SERVICE_URL}"
+export SPORTS_SERVICE_URL="\${SPORTS_SERVICE_URL}"
+export MODERATION_SERVICE_URL="\${MODERATION_SERVICE_URL}"
+export ENGAGEMENT_SERVICE_URL="\${ENGAGEMENT_SERVICE_URL}"
+export MESSAGING_SERVICE_URL="\${MESSAGING_SERVICE_URL}"
+export REFERRAL_SERVICE_URL="\${REFERRAL_SERVICE_URL}"
+export SUBSCRIPTION_SERVICE_URL="\${SUBSCRIPTION_SERVICE_URL}"
+export LIVE_EVENT_SERVICE_URL="\${LIVE_EVENT_SERVICE_URL}"
+export KNOWLEDGE_SERVICE_URL="\${KNOWLEDGE_SERVICE_URL}"
+export PAYSTACK_SECRET_KEY="\${PAYSTACK_SECRET_KEY:-}"
+export PAYSTACK_WEBHOOK_SECRET="\${PAYSTACK_WEBHOOK_SECRET:-}"
+export FLUTTERWAVE_SECRET_KEY="\${FLW_SECRET_KEY:-\${FLUTTERWAVE_SECRET_KEY:-}}"
+export FLUTTERWAVE_WEBHOOK_SECRET="\${FLW_WEBHOOK_SECRET:-\${FLUTTERWAVE_WEBHOOK_SECRET:-}}"
+export SENDGRID_API_KEY="\${SENDGRID_API_KEY:-}"
+export TWILIO_ACCOUNT_SID="\${TWILIO_ACCOUNT_SID:-}"
+export TWILIO_AUTH_TOKEN="\${TWILIO_AUTH_TOKEN:-}"
+export TWILIO_PHONE_NUMBER="\${TWILIO_PHONE_NUMBER:-}"
 cd /app/apps/admin
 exec node dist/main.js
 WRAPPER
@@ -811,57 +1011,64 @@ chmod +x /app/service-wrappers/admin-app.sh
 # Creator portal wrapper
 cat > /app/service-wrappers/creator-app.sh << WRAPPER
 #!/bin/bash
+# Runtime wrapper for Creator App (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_OPTIONS="--max-old-space-size=512"
-export DATABASE_URL="postgresql://azeebo:${CREATOR_DB_PASSWORD}@127.0.0.1:5432/azeebo_creator?schema=public"
-export DATABASE_PASSWORD="${CREATOR_DB_PASSWORD}"
-export DATABASE_HOST="localhost"
-export DATABASE_PORT="5432"
 export DATABASE_USER="azeebo"
 export DATABASE_NAME="azeebo_creator"
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
+export DATABASE_PASSWORD="\${CREATOR_DB_PASSWORD:-\$POSTGRES_PASSWORD}"
+export DATABASE_URL="postgresql://azeebo:\${DATABASE_PASSWORD}@127.0.0.1:5432/azeebo_creator?schema=public"
 export PORT="4014"
 export NODE_ENV="production"
-export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
-export GATEWAY_SECRET="${GATEWAY_SECRET}"
-export CREATOR_ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
-export API_GATEWAY_URL="${API_GATEWAY_URL}"
-export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
-export AUTH_SERVICE_URL="${AUTH_SERVICE_URL}"
-export USER_SERVICE_URL="${USER_SERVICE_URL}"
-export WALLET_SERVICE_URL="${WALLET_SERVICE_URL}"
-export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL}"
-export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL}"
-export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL}"
-export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL}"
-export REWARD_SERVICE_URL="${REWARD_SERVICE_URL}"
-export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL}"
-export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL}"
-export REALITY_SERVICE_URL="${REALITY_SERVICE_URL}"
-export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL}"
-export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL}"
-export GAMES_SERVICE_URL="${GAMES_SERVICE_URL}"
-export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL}"
-export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL}"
-export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL}"
-export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL}"
-export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL}"
-export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL}"
-export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL}"
-export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL}"
-export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL}"
-export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL}"
-export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL}"
-export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL}"
-export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL}"
-export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL}"
-export PAYSTACK_SECRET_KEY="${PAYSTACK_SECRET_KEY:-}"
-export PAYSTACK_WEBHOOK_SECRET="${PAYSTACK_WEBHOOK_SECRET:-}"
-export FLUTTERWAVE_SECRET_KEY="${FLW_SECRET_KEY:-}"
-export FLUTTERWAVE_WEBHOOK_SECRET="${FLW_WEBHOOK_SECRET:-}"
-export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
-export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
-export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
-export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
+export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
+export REDIS_PASSWORD="\${REDIS_PASSWORD}"
+export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
+export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
+export FEATURE_FLAG_REDIS_URL="\${FEATURE_FLAG_REDIS_URL:-\${REDIS_URL}}"
+export CREATOR_ALLOWED_ORIGINS="\${ALLOWED_ORIGINS}"
+export API_GATEWAY_URL="\${API_GATEWAY_URL}"
+export ALLOWED_ORIGINS="\${ALLOWED_ORIGINS}"
+export AUTH_SERVICE_URL="\${AUTH_SERVICE_URL}"
+export USER_SERVICE_URL="\${USER_SERVICE_URL}"
+export WALLET_SERVICE_URL="\${WALLET_SERVICE_URL}"
+export PAYMENT_SERVICE_URL="\${PAYMENT_SERVICE_URL}"
+export CONTENT_SERVICE_URL="\${CONTENT_SERVICE_URL}"
+export SEARCH_SERVICE_URL="\${SEARCH_SERVICE_URL}"
+export NOTIFICATION_SERVICE_URL="\${NOTIFICATION_SERVICE_URL}"
+export REWARD_SERVICE_URL="\${REWARD_SERVICE_URL}"
+export ANALYTICS_SERVICE_URL="\${ANALYTICS_SERVICE_URL}"
+export RECOMMENDATION_SERVICE_URL="\${RECOMMENDATION_SERVICE_URL}"
+export REALITY_SERVICE_URL="\${REALITY_SERVICE_URL}"
+export MOVIE_SERVICE_URL="\${MOVIE_SERVICE_URL}"
+export COMEDY_SERVICE_URL="\${COMEDY_SERVICE_URL}"
+export GAMES_SERVICE_URL="\${GAMES_SERVICE_URL}"
+export QUEUE_SERVICE_URL="\${QUEUE_SERVICE_URL}"
+export LIFESTYLE_SERVICE_URL="\${LIFESTYLE_SERVICE_URL}"
+export VERTICAL_SERVICE_URL="\${VERTICAL_SERVICE_URL}"
+export CREATOR_SERVICE_URL="\${CREATOR_SERVICE_URL}"
+export MEDIA_SERVICE_URL="\${MEDIA_SERVICE_URL}"
+export SUPPORT_SERVICE_URL="\${SUPPORT_SERVICE_URL}"
+export SPORTS_SERVICE_URL="\${SPORTS_SERVICE_URL}"
+export MODERATION_SERVICE_URL="\${MODERATION_SERVICE_URL}"
+export ENGAGEMENT_SERVICE_URL="\${ENGAGEMENT_SERVICE_URL}"
+export MESSAGING_SERVICE_URL="\${MESSAGING_SERVICE_URL}"
+export REFERRAL_SERVICE_URL="\${REFERRAL_SERVICE_URL}"
+export SUBSCRIPTION_SERVICE_URL="\${SUBSCRIPTION_SERVICE_URL}"
+export LIVE_EVENT_SERVICE_URL="\${LIVE_EVENT_SERVICE_URL}"
+export KNOWLEDGE_SERVICE_URL="\${KNOWLEDGE_SERVICE_URL}"
+export PAYSTACK_SECRET_KEY="\${PAYSTACK_SECRET_KEY:-}"
+export PAYSTACK_WEBHOOK_SECRET="\${PAYSTACK_WEBHOOK_SECRET:-}"
+export FLUTTERWAVE_SECRET_KEY="\${FLW_SECRET_KEY:-\${FLUTTERWAVE_SECRET_KEY:-}}"
+export FLUTTERWAVE_WEBHOOK_SECRET="\${FLW_WEBHOOK_SECRET:-\${FLUTTERWAVE_WEBHOOK_SECRET:-}}"
+export SENDGRID_API_KEY="\${SENDGRID_API_KEY:-}"
+export TWILIO_ACCOUNT_SID="\${TWILIO_ACCOUNT_SID:-}"
+export TWILIO_AUTH_TOKEN="\${TWILIO_AUTH_TOKEN:-}"
+export TWILIO_PHONE_NUMBER="\${TWILIO_PHONE_NUMBER:-}"
 cd /app/apps/creator
 exec node dist/main.js
 WRAPPER
@@ -870,51 +1077,53 @@ chmod +x /app/service-wrappers/creator-app.sh
 # Web app wrapper (standalone mode)
 cat > /app/service-wrappers/web-app.sh << WRAPPER
 #!/bin/bash
+# Runtime wrapper for Web App (secrets read from process environment)
 export ALL_IN_ONE="true"
+export NODE_PATH="/app/node_modules\${NODE_PATH:+:\$NODE_PATH}"
 export NODE_ENV="production"
 export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="4000"
 export HOSTNAME="0.0.0.0"
-export API_GATEWAY_URL="${API_GATEWAY_URL}"
-export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
-export AUTH_SERVICE_URL="${AUTH_SERVICE_URL}"
-export USER_SERVICE_URL="${USER_SERVICE_URL}"
-export WALLET_SERVICE_URL="${WALLET_SERVICE_URL}"
-export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL}"
-export CONTENT_SERVICE_URL="${CONTENT_SERVICE_URL}"
-export SEARCH_SERVICE_URL="${SEARCH_SERVICE_URL}"
-export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL}"
-export REWARD_SERVICE_URL="${REWARD_SERVICE_URL}"
-export ANALYTICS_SERVICE_URL="${ANALYTICS_SERVICE_URL}"
-export RECOMMENDATION_SERVICE_URL="${RECOMMENDATION_SERVICE_URL}"
-export REALITY_SERVICE_URL="${REALITY_SERVICE_URL}"
-export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL}"
-export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL}"
-export GAMES_SERVICE_URL="${GAMES_SERVICE_URL}"
-export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL}"
-export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL}"
-export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL}"
-export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL}"
-export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL}"
-export SUPPORT_SERVICE_URL="${SUPPORT_SERVICE_URL}"
-export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL}"
-export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL}"
-export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL}"
-export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL}"
-export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL}"
-export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL}"
-export LIVE_EVENT_SERVICE_URL="${LIVE_EVENT_SERVICE_URL}"
-export KNOWLEDGE_SERVICE_URL="${KNOWLEDGE_SERVICE_URL}"
-export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}"
-export NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}}"
-export PAYSTACK_SECRET_KEY="${PAYSTACK_SECRET_KEY:-}"
-export PAYSTACK_WEBHOOK_SECRET="${PAYSTACK_WEBHOOK_SECRET:-}"
-export FLUTTERWAVE_SECRET_KEY="${FLW_SECRET_KEY:-}"
-export FLUTTERWAVE_WEBHOOK_SECRET="${FLW_WEBHOOK_SECRET:-}"
-export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
-export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
-export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
-export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+export API_GATEWAY_URL="\${API_GATEWAY_URL}"
+export ALLOWED_ORIGINS="\${ALLOWED_ORIGINS}"
+export AUTH_SERVICE_URL="\${AUTH_SERVICE_URL}"
+export USER_SERVICE_URL="\${USER_SERVICE_URL}"
+export WALLET_SERVICE_URL="\${WALLET_SERVICE_URL}"
+export PAYMENT_SERVICE_URL="\${PAYMENT_SERVICE_URL}"
+export CONTENT_SERVICE_URL="\${CONTENT_SERVICE_URL}"
+export SEARCH_SERVICE_URL="\${SEARCH_SERVICE_URL}"
+export NOTIFICATION_SERVICE_URL="\${NOTIFICATION_SERVICE_URL}"
+export REWARD_SERVICE_URL="\${REWARD_SERVICE_URL}"
+export ANALYTICS_SERVICE_URL="\${ANALYTICS_SERVICE_URL}"
+export RECOMMENDATION_SERVICE_URL="\${RECOMMENDATION_SERVICE_URL}"
+export REALITY_SERVICE_URL="\${REALITY_SERVICE_URL}"
+export MOVIE_SERVICE_URL="\${MOVIE_SERVICE_URL}"
+export COMEDY_SERVICE_URL="\${COMEDY_SERVICE_URL}"
+export GAMES_SERVICE_URL="\${GAMES_SERVICE_URL}"
+export QUEUE_SERVICE_URL="\${QUEUE_SERVICE_URL}"
+export LIFESTYLE_SERVICE_URL="\${LIFESTYLE_SERVICE_URL}"
+export VERTICAL_SERVICE_URL="\${VERTICAL_SERVICE_URL}"
+export CREATOR_SERVICE_URL="\${CREATOR_SERVICE_URL}"
+export MEDIA_SERVICE_URL="\${MEDIA_SERVICE_URL}"
+export SUPPORT_SERVICE_URL="\${SUPPORT_SERVICE_URL}"
+export SPORTS_SERVICE_URL="\${SPORTS_SERVICE_URL}"
+export MODERATION_SERVICE_URL="\${MODERATION_SERVICE_URL}"
+export ENGAGEMENT_SERVICE_URL="\${ENGAGEMENT_SERVICE_URL}"
+export MESSAGING_SERVICE_URL="\${MESSAGING_SERVICE_URL}"
+export REFERRAL_SERVICE_URL="\${REFERRAL_SERVICE_URL}"
+export SUBSCRIPTION_SERVICE_URL="\${SUBSCRIPTION_SERVICE_URL}"
+export LIVE_EVENT_SERVICE_URL="\${LIVE_EVENT_SERVICE_URL}"
+export KNOWLEDGE_SERVICE_URL="\${KNOWLEDGE_SERVICE_URL}"
+export NEXT_PUBLIC_API_URL="\${NEXT_PUBLIC_API_URL:-https://\${APP_HOST}}"
+export NEXT_PUBLIC_API_BASE_URL="\${NEXT_PUBLIC_API_BASE_URL:-\${NEXT_PUBLIC_API_URL:-https://\${APP_HOST}}}"
+export PAYSTACK_SECRET_KEY="\${PAYSTACK_SECRET_KEY:-}"
+export PAYSTACK_WEBHOOK_SECRET="\${PAYSTACK_WEBHOOK_SECRET:-}"
+export FLUTTERWAVE_SECRET_KEY="\${FLW_SECRET_KEY:-\${FLUTTERWAVE_SECRET_KEY:-}}"
+export FLUTTERWAVE_WEBHOOK_SECRET="\${FLW_WEBHOOK_SECRET:-\${FLUTTERWAVE_WEBHOOK_SECRET:-}}"
+export SENDGRID_API_KEY="\${SENDGRID_API_KEY:-}"
+export TWILIO_ACCOUNT_SID="\${TWILIO_ACCOUNT_SID:-}"
+export TWILIO_AUTH_TOKEN="\${TWILIO_AUTH_TOKEN:-}"
+export TWILIO_PHONE_NUMBER="\${TWILIO_PHONE_NUMBER:-}"
 # Verify standalone server exists before trying to start
 if [ ! -f /app/apps/web/standalone/server.js ]; then
   echo "ERROR: /app/apps/web/standalone/server.js not found!"
@@ -948,7 +1157,7 @@ if [ ! -f /app/certs/server.crt ] || [ ! -f /app/certs/server.key ]; then
     -keyout /app/certs/server.key \
     -out /app/certs/server.crt \
     -subj "/C=NG/ST=Lagos/L=Lagos/O=Azeebo+/CN=$SSL_DOMAIN" \
-    -addext "subjectAltName=DNS:$SSL_DOMAIN,DNS:localhost,DNS:*.azeeboplus.com,IP:127.0.0.1" \
+    -addext "subjectAltName=DNS:$SSL_DOMAIN,DNS:localhost,DNS:*.${BASE_DOMAIN},IP:127.0.0.1" \
     2>&1
   chmod 600 /app/certs/server.key
   chmod 644 /app/certs/server.crt

@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, generateIdempotencyKey } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import PageShell from '@/components/layout/PageShell';
@@ -91,6 +91,11 @@ export default function WithdrawPage(): React.JSX.Element {
     loadData();
   }, [selectedAccount]);
 
+  // Stable per-intent key: a retry of the SAME withdrawal (e.g. after a
+  // timeout) must reuse the key so the server can dedupe; a fresh key is
+  // minted only after a confirmed success (AUD-03).
+  const withdrawKeyRef = useRef<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
@@ -107,10 +112,13 @@ export default function WithdrawPage(): React.JSX.Element {
         body: JSON.stringify({
           amount: numAmount,
           bankAccountId: selectedMethod === 'bank_transfer' ? selectedAccount : undefined,
-          method: selectedMethod,
+          // NOTE: the server's ValidationPipe runs forbidNonWhitelisted, so
+          // only DTO fields are accepted here (no `method` passthrough).
+          idempotencyKey: (withdrawKeyRef.current ??= generateIdempotencyKey()),
         }),
       });
       if (!result.success) throw new Error(result.message || 'Failed to process withdrawal');
+      withdrawKeyRef.current = null;
       toast.showToast('Withdrawal request submitted successfully!', 'success');
       router.push('/wallet/transactions');
     } catch (error: unknown) {
@@ -127,8 +135,8 @@ export default function WithdrawPage(): React.JSX.Element {
     return (
       <PageShell activeNav="Wallet">
         <div className="max-w-2xl mx-auto py-20 px-4 text-center">
-          <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin mx-auto mb-4" />
-          <p className="text-white/60 text-sm">Loading payout channels...</p>
+          <div className="w-12 h-12 rounded-full border-2 border-az-flame/20 border-t-az-flame animate-spin mx-auto mb-4" />
+          <p className="text-az-ink/60 text-sm">Loading payout channels...</p>
         </div>
       </PageShell>
     );
@@ -143,7 +151,7 @@ export default function WithdrawPage(): React.JSX.Element {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6">
         <Link
           href="/wallet"
-          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-xs font-bold text-az-ink/50 hover:text-az-ink transition-colors mb-6 group"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Back to Wallet</span>
@@ -154,26 +162,26 @@ export default function WithdrawPage(): React.JSX.Element {
         badge="Instant Direct Bank Payout"
         title="Withdraw Funds"
         subtitle="Transfer funds from your Azeebo Pay balance directly into your verified Nigerian bank account."
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       >
-        <div className="az-glass inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full border border-orange-500/30 text-xs font-bold text-orange-400 mt-2">
+        <div className="az-glass inline-flex items-center gap-2.5 px-6 py-2.5 border text-xs font-bold text-az-flame mt-2">
           <span>Available to Withdraw:</span>
-          <span className="text-white font-black text-sm">₦{walletBalance.toLocaleString()}</span>
+          <span className="text-az-ink font-black text-sm">₦{walletBalance.toLocaleString()}</span>
         </div>
       </PageHero>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-20">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Bank Accounts Section */}
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-bold text-white/60 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-az-ink/60 uppercase tracking-wider">
                 Destination Bank Account
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddBankModal(true)}
-                className="text-xs font-bold text-orange-400 hover:text-orange-300 inline-flex items-center gap-1 transition-colors"
+                className="text-xs font-bold text-az-flame hover:text-az-flame inline-flex items-center gap-1 transition-colors"
               >
                 <Plus size={14} />
                 <span>Add Account</span>
@@ -191,10 +199,11 @@ export default function WithdrawPage(): React.JSX.Element {
                       onClick={() => setSelectedAccount(account.id)}
                       role="radio"
                       aria-checked={isSelected}
-                      className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all border text-left ${isSelected
-                          ? 'bg-orange-500/10 border-orange-500/50 ring-1 ring-orange-500 shadow-lg shadow-orange-500/10'
-                          : 'bg-white/[0.02] hover:bg-white/5 border-white/10'
-                        }`}
+                      className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all border text-left ${
+                        isSelected
+                          ? 'bg-az-flame/10 border-az-flame/50 ring-1 ring-az-flame shadow-lg shadow-az-flame/10'
+                          : 'bg-az-ink/[0.02] hover:bg-az-glass-fill border-az-glass-border'
+                      }`}
                     >
                       {account.bankLogo ? (
                         <OptimizedImage
@@ -205,35 +214,38 @@ export default function WithdrawPage(): React.JSX.Element {
                           className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center flex-shrink-0 border border-orange-500/20">
+                        <div className="w-10 h-10 rounded-xl bg-az-flame/10 text-az-flame flex items-center justify-center flex-shrink-0 border border-az-flame/20">
                           <Landmark size={20} />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-white text-sm">{account.bankName}</p>
-                        <p className="text-xs text-white/50 truncate mt-0.5">
+                        <p className="font-bold text-az-ink text-sm">{account.bankName}</p>
+                        <p className="text-xs text-az-ink/50 truncate mt-0.5">
                           {account.accountNumber} • {account.accountName}
                         </p>
                       </div>
                       <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'border-orange-500 bg-orange-500' : 'border-white/20'
-                          }`}
+                        className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+                          isSelected ? 'border-az-flame bg-az-flame' : 'border-az-ink/20'
+                        }`}
                       >
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-az-ink" />}
                       </div>
                     </button>
                   );
                 })}
               </div>
             ) : (
-              <div className="p-6 text-center border border-dashed border-white/15 rounded-2xl bg-white/[0.02]">
-                <Building2 size={32} className="mx-auto text-white/30 mb-2" />
-                <p className="text-sm font-semibold text-white">No bank accounts linked yet</p>
-                <p className="text-xs text-white/40 mt-1 mb-4">Add your Nigerian bank details to receive withdrawals.</p>
+              <div className="p-6 text-center border border-dashed border-az-ink/15 rounded-2xl bg-az-ink/[0.02]">
+                <Building2 size={32} className="mx-auto text-az-ink/30 mb-2" />
+                <p className="text-sm font-semibold text-az-ink">No bank accounts linked yet</p>
+                <p className="text-xs text-az-ink/40 mt-1 mb-4">
+                  Add your Nigerian bank details to receive withdrawals.
+                </p>
                 <button
                   type="button"
                   onClick={() => setShowAddBankModal(true)}
-                  className="az-btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold"
+                  className="az-btn-primary inline-flex items-center gap-1.5"
                 >
                   <Plus size={14} />
                   <span>Link Bank Account</span>
@@ -243,12 +255,15 @@ export default function WithdrawPage(): React.JSX.Element {
           </div>
 
           {/* Amount Section */}
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
-            <label htmlFor="withdrawAmount" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-3">
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+            <label
+              htmlFor="withdrawAmount"
+              className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-3"
+            >
               Withdrawal Amount
             </label>
             <div className="relative mb-4">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 text-2xl font-black">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-az-flame text-2xl font-black">
                 ₦
               </span>
               <input
@@ -259,7 +274,7 @@ export default function WithdrawPage(): React.JSX.Element {
                 placeholder="0.00"
                 min={pricing?.minAmount || 100}
                 max={pricing?.maxAmount || 500000}
-                className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:border-orange-500 text-2xl font-black"
+                className="w-full pl-12 pr-4 py-4 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/20 focus:outline-none focus:border-az-flame text-2xl font-black"
                 required
               />
             </div>
@@ -270,10 +285,11 @@ export default function WithdrawPage(): React.JSX.Element {
                   key={quick}
                   type="button"
                   onClick={() => setAmount(quick.toString())}
-                  className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all border ${amount === quick.toString()
-                      ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
-                      : 'bg-white/5 hover:bg-white/10 text-white/80 border-white/10'
-                    }`}
+                  className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all border ${
+                    amount === quick.toString()
+                      ? 'bg-az-flame text-az-surface-root border-az-flame shadow-md shadow-az-flame/20'
+                      : 'bg-az-glass-fill hover:bg-az-glass-card text-az-ink/80 border-az-glass-border'
+                  }`}
                 >
                   ₦{quick.toLocaleString()}
                 </button>
@@ -283,28 +299,28 @@ export default function WithdrawPage(): React.JSX.Element {
 
           {/* Summary */}
           {parsedAmount > 0 && (
-            <div className="az-glass p-5 rounded-2xl border border-white/10 space-y-2.5">
-              <div className="flex justify-between text-xs text-white/60">
+            <div className="az-glass p-5 border border-az-glass-border space-y-2.5">
+              <div className="flex justify-between text-xs text-az-ink/60">
                 <span>Requested Amount</span>
-                <span className="font-semibold text-white">₦{parsedAmount.toLocaleString()}</span>
+                <span className="font-semibold text-az-ink">₦{parsedAmount.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-xs text-white/60">
+              <div className="flex justify-between text-xs text-az-ink/60">
                 <span>Payout Fee</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-az-ink">
                   {feeAmount > 0 ? `₦${feeAmount.toLocaleString()}` : 'Free'}
                 </span>
               </div>
-              <div className="pt-2 border-t border-white/10 flex justify-between items-center text-sm font-bold">
-                <span className="text-white">Credited to Account</span>
-                <span className="text-lg font-black text-emerald-400">
+              <div className="pt-2 border-t border-az-glass-border flex justify-between items-center text-sm font-bold">
+                <span className="text-az-ink">Credited to Account</span>
+                <span className="text-lg font-black text-az-success-400">
                   ₦{netAmount.toLocaleString()}
                 </span>
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-2 text-xs text-white/40">
-            <ShieldCheck size={14} className="text-emerald-400" />
+          <div className="flex items-center justify-center gap-2 text-xs text-az-ink/40">
+            <ShieldCheck size={14} className="text-az-success-400" />
             <span>Transfers are processed within 5-15 minutes via NIBSS</span>
           </div>
 
@@ -316,7 +332,7 @@ export default function WithdrawPage(): React.JSX.Element {
               parsedAmount > walletBalance ||
               (selectedMethod === 'bank_transfer' && !selectedAccount)
             }
-            className="w-full py-4 rounded-full font-bold text-base transition-all az-btn-primary disabled:opacity-40 disabled:cursor-not-allowed shadow-xl shadow-orange-600/25"
+            className="transition-all az-btn-primary shadow-xl shadow-az-flame/25"
           >
             {isProcessing ? (
               <span>Submitting Payout...</span>
@@ -332,29 +348,29 @@ export default function WithdrawPage(): React.JSX.Element {
       {/* Add Bank Modal */}
       {showAddBankModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="az-glass p-6 sm:p-8 w-full max-w-md rounded-3xl border border-white/15 shadow-2xl relative">
-            <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-              <Landmark size={20} className="text-orange-400" />
+          <div className="az-glass p-6 sm:p-8 w-full max-w-md border relative">
+            <h3 className="text-az-ink text-lg font-bold mb-4 flex items-center gap-2">
+              <Landmark size={20} className="text-az-flame" />
               <span>Add Nigerian Bank Account</span>
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-1.5">
                   Bank Name
                 </label>
                 <input
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm"
+                  className="w-full px-4 py-3 bg-az-glass-fill border border-az-glass-border rounded-xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm"
                   value={newBank.bankName}
                   onChange={(e) => setNewBank({ ...newBank, bankName: e.target.value })}
                   placeholder="e.g. GTBank, Access Bank, Zenith Bank"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-1.5">
                   10-Digit NUBAN Account Number
                 </label>
                 <input
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm font-mono"
+                  className="w-full px-4 py-3 bg-az-glass-fill border border-az-glass-border rounded-xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-mono"
                   value={newBank.accountNumber}
                   onChange={(e) => setNewBank({ ...newBank, accountNumber: e.target.value })}
                   placeholder="0123456789"
@@ -362,18 +378,18 @@ export default function WithdrawPage(): React.JSX.Element {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-1.5">
                   Account Name
                 </label>
                 <input
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm"
+                  className="w-full px-4 py-3 bg-az-glass-fill border border-az-glass-border rounded-xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm"
                   value={newBank.accountName}
                   onChange={(e) => setNewBank({ ...newBank, accountName: e.target.value })}
                   placeholder="Official Account Name"
                 />
               </div>
             </div>
-            {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
+            {error && <p className="text-az-error-400 text-xs mt-3">{error}</p>}
             <div className="flex gap-3 mt-6">
               <button
                 type="button"
@@ -401,7 +417,7 @@ export default function WithdrawPage(): React.JSX.Element {
                   setNewBank({ bankName: '', accountNumber: '', accountName: '' });
                   setError(null);
                 }}
-                className="az-btn-primary flex-1 py-3 text-sm font-bold"
+                className="az-btn-primary flex-1"
               >
                 Save Account
               </button>
@@ -411,7 +427,7 @@ export default function WithdrawPage(): React.JSX.Element {
                   setShowAddBankModal(false);
                   setError(null);
                 }}
-                className="flex-1 py-3 rounded-full text-sm font-semibold text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                className="flex-1 py-3 rounded-full text-sm font-semibold text-az-ink/60 hover:text-az-ink bg-az-glass-fill hover:bg-az-glass-card border border-az-glass-border transition-colors"
               >
                 Cancel
               </button>
@@ -422,4 +438,3 @@ export default function WithdrawPage(): React.JSX.Element {
     </PageShell>
   );
 }
-

@@ -117,7 +117,7 @@ model Wallet {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions WalletTransaction[]
 
   @@map("wallets")
@@ -169,7 +169,7 @@ model PaymentIntent {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   refunds  Refund[]
 
   @@map("payment_intents")
@@ -350,7 +350,7 @@ model PayoutRequest {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("payout_requests")
 }

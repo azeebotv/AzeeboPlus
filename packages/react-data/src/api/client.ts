@@ -1,3 +1,4 @@
+import { ORIGINS } from '@azeebo/shared-types';
 import Constants from 'expo-constants';
 import { certificatePinningService } from '../utils/certificatePinning';
 import { logger } from '../utils/logger';
@@ -7,6 +8,19 @@ export function gatewayPath(endpoint: string): string {
   if (endpoint.startsWith('/api/')) return endpoint;
   if (endpoint.startsWith('/v1/')) return `/api${endpoint}`;
   return `/api/v1${endpoint}`;
+}
+
+/**
+ * Uniqueness token for the Idempotency-Key header on mutating requests
+ * (mirrors @azeebo/http-client). Uniqueness only — not a secret — so a
+ * Math.random v4 is fine, and Hermes has no crypto.randomUUID.
+ */
+export function generateIdempotencyKey(): string {
+  return 'idemp-xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 interface ApiClientConfig {
@@ -50,7 +64,7 @@ class ApiClientClass {
           | Record<string, string>
           | undefined
       )?.apiBaseURL ||
-      (__DEV__ ? 'http://localhost:3013' : 'https://api.azeeboplus.com'),
+      (__DEV__ ? 'http://localhost:3013' : ORIGINS.api),
     token: null,
   };
   private refreshToken: string | null = null;
@@ -154,6 +168,17 @@ class ApiClientClass {
 
     if (this.config.token) {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.config.token}`;
+    }
+
+    // Services guard money mutations with IdempotencyGuard — always send a key
+    // so client-side retries dedupe instead of double-charging.
+    if (
+      method !== 'GET' &&
+      method !== 'DELETE' &&
+      method !== 'HEAD' &&
+      !(headers as Record<string, string>)['Idempotency-Key']
+    ) {
+      (headers as Record<string, string>)['Idempotency-Key'] = generateIdempotencyKey();
     }
 
     const controller = new AbortController();

@@ -8,8 +8,10 @@
 
 | Document | Period / Date | Purpose |
 |----------|--------------|---------|
+| [2026-10-05-FULL-STACK-AUDIT.md](2026-10-05-FULL-STACK-AUDIT.md) | Oct 5, 2026 · `Major-Upgrade` | Full-stack repository audit report (89 findings, AUD-01 to AUD-89) |
 | [SESSION-REPORT.md](SESSION-REPORT.md) | Aug 18–24, 2026 · `Major-Upgrade` | Complete audit session report: 459 commits, 486 files changed |
 | [COMPREHENSIVE-REPORT.md](COMPREHENSIVE-REPORT.md) | Aug 2025 · `Major-Upgrade` | Full audit implementation report: 28 audit-session commits |
+| [2026-07-29-SECURITY-AUDIT.md](2026-07-29-SECURITY-AUDIT.md) | Jul 29, 2026 · `main` | Deep codebase security audit report (25/25 issues resolved) |
 | [todo.md](todo.md) | 2026-08-18 · `Major-Upgrade` | Frontend ↔ backend consistency audit & fix list |
 
 ## What Belongs Here

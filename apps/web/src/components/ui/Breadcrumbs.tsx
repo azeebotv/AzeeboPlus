@@ -10,7 +10,7 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-gray-600 mb-4">
+    <nav aria-label="Breadcrumb" className="az-body text-az-ink-muted mb-4">
       <ol
         className="flex items-center space-x-2"
         itemScope
@@ -25,20 +25,20 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
             itemType="https://schema.org/ListItem"
           >
             {i > 0 && (
-              <span className="mx-2 text-gray-400" aria-hidden="true">
+              <span className="mx-2 text-az-ink-dim" aria-hidden="true">
                 /
               </span>
             )}
             {item.href ? (
               <Link
                 href={item.href}
-                className="hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                className="hover:text-az-flame focus:outline-none focus:ring-2 focus:ring-az-flame rounded"
                 itemProp="item"
               >
                 <span itemProp="name">{item.label}</span>
               </Link>
             ) : (
-              <span className="text-gray-900 font-medium" itemProp="name">
+              <span className="text-az-ink font-medium" itemProp="name">
                 {item.label}
               </span>
             )}

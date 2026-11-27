@@ -66,19 +66,13 @@ export const subscriptionApi = {
     limit = 20
   ): Promise<
     ApiResponse<{
-      items: Subscription[];
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
+      subscriptions: Subscription[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
     }>
   > {
     const response = await apiClient.get<{
-      items: Subscription[];
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
+      subscriptions: Subscription[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
     }>(`/v1/subscription/history?page=${page}&limit=${limit}`);
     return { success: true, data: response };
   },

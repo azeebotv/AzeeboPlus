@@ -7,7 +7,7 @@ import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { EmailModule, FirebaseModule, JwtConfigModule, SmsModule } from '@azeebo/shared-services';
 import { FeatureFlagModule, queueFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
-import { JOB_RETENTION_POLICY } from '@azeebo/queue-policy';
+import { JOB_RETENTION_POLICY, WORKER_LOCK_SETTINGS } from '@azeebo/queue-policy';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
@@ -116,11 +116,15 @@ const QUEUE_CONFIG = {
       defaultJobOptions: JOB_RETENTION_POLICY,
     }),
     BullModule.registerQueue(
-      { name: 'notifications', ...QUEUE_CONFIG.notifications },
-      { name: 'payments', ...QUEUE_CONFIG.payments },
-      { name: 'emails', ...QUEUE_CONFIG.emails },
-      { name: 'analytics', ...QUEUE_CONFIG.analytics },
-      { name: 'content-processing', ...QUEUE_CONFIG['content-processing'] }
+      { name: 'notifications', ...WORKER_LOCK_SETTINGS, ...QUEUE_CONFIG.notifications },
+      { name: 'payments', ...WORKER_LOCK_SETTINGS, ...QUEUE_CONFIG.payments },
+      { name: 'emails', ...WORKER_LOCK_SETTINGS, ...QUEUE_CONFIG.emails },
+      { name: 'analytics', ...WORKER_LOCK_SETTINGS, ...QUEUE_CONFIG.analytics },
+      {
+        name: 'content-processing',
+        ...WORKER_LOCK_SETTINGS,
+        ...QUEUE_CONFIG['content-processing'],
+      }
     ),
   ],
   providers: [

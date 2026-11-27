@@ -49,7 +49,7 @@ function OffersContent() {
   });
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <PageHero
         badge="VIP Privileges"
         title="Exclusive Partner Offers"
@@ -60,7 +60,7 @@ function OffersContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Link
             href="/lifestyle"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Lifestyle Hub
@@ -73,10 +73,10 @@ function OffersContent() {
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  className={`px-3.5 py-1.5 text-xs font-medium transition-all ${
                     selectedCategory === cat
-                      ? 'bg-[var(--brand-orange)] text-white shadow-lg shadow-[var(--brand-orange)]/25 font-bold'
-                      : 'az-glass text-white/60 hover:text-white hover:bg-white/10'
+                      ? 'text-az-ink font-bold'
+                      : 'az-glass text-az-ink/60 hover:text-az-ink hover:bg-az-glass-card'
                   }`}
                 >
                   {cat}
@@ -89,7 +89,7 @@ function OffersContent() {
         {query.isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="az-glass rounded-2xl p-6 space-y-3">
+              <div key={i} className="az-glass p-6 space-y-3">
                 <Skeleton className="h-6 w-1/4 rounded-full" />
                 <Skeleton className="h-6 w-3/4 rounded-md" />
                 <Skeleton className="h-10 w-full rounded-md" />
@@ -106,10 +106,10 @@ function OffersContent() {
             />
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="az-glass p-16 text-center rounded-3xl border border-white/10 max-w-md mx-auto">
-            <Tag className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">No Active Offers</h3>
-            <p className="text-xs text-white/50">
+          <div className="az-glass p-16 text-center border border-az-glass-border max-w-md mx-auto">
+            <Tag className="w-12 h-12 text-az-ink/20 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Active Offers</h3>
+            <p className="text-xs text-az-ink/50">
               New partner privileges and discounts will be announced soon.
             </p>
           </div>
@@ -119,34 +119,37 @@ function OffersContent() {
               <ScrollReveal key={o.id} delay={i * 0.05}>
                 <Link href={`/lifestyle/offers/${o.id}`}>
                   <motion.div whileHover={{ y: -3 }} className="h-full">
-                    <GlowCard universe="lifestyle" className="p-6 rounded-2xl border border-white/10 flex flex-col justify-between h-full group cursor-pointer">
+                    <GlowCard
+                      universe="lifestyle"
+                      className="p-6 rounded-2xl border border-az-glass-border flex flex-col justify-between h-full group cursor-pointer"
+                    >
                       <div className="space-y-3">
                         <div className="flex justify-between items-start">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-az-success-500/20 text-az-success-400 border border-az-success-500/30 flex items-center gap-1">
                             <Percent className="w-3 h-3" />
                             {o.discount}
                           </span>
-                          <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
+                          <span className="text-[10px] font-mono text-az-ink/40 uppercase tracking-wider">
                             {o.category}
                           </span>
                         </div>
-                        <h3 className="text-base font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors">
+                        <h3 className="text-base font-bold text-az-ink group-hover:text-[var(--color-az-flame)] transition-colors">
                           {o.title}
                         </h3>
-                        <p className="text-xs text-white/50 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-az-ink/50 line-clamp-2 leading-relaxed">
                           {o.description}
                         </p>
                       </div>
 
-                      <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-xs">
+                      <div className="pt-4 mt-4 border-t border-az-ink/5 flex items-center justify-between text-xs">
                         <div className="space-y-0.5">
-                          <p className="font-semibold text-white/80">{o.partnerName}</p>
-                          <p className="text-[11px] text-white/40 flex items-center gap-1">
+                          <p className="font-semibold text-az-ink/80">{o.partnerName}</p>
+                          <p className="text-[11px] text-az-ink/40 flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             Valid until {new Date(o.validUntil).toLocaleDateString()}
                           </p>
                         </div>
-                        <span className="text-[var(--brand-orange)] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <span className="text-[var(--color-az-flame)] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                           Claim <ArrowRight className="w-3.5 h-3.5" />
                         </span>
                       </div>
@@ -168,8 +171,8 @@ export default function OffersPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

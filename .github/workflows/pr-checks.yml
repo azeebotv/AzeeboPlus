@@ -2,7 +2,7 @@ name: PR Checks
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [Dev-Branch]
 
 env:
   NODE_VERSION: '22.16.0'
@@ -20,9 +20,9 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Validate PR title
-        uses: amannn/action-semantic-pull-request@v5
+        uses: amannn/action-semantic-pull-request@e32d7e603df1aa1ba07e981f2a23455dee596825 # v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -54,11 +54,11 @@ jobs:
     name: Lint PR
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -73,16 +73,20 @@ jobs:
       # 'error' severity for every service — fails if the rule is downgraded,
       # scope-exceptioned, or left unconfigured for a service.
       - run: pnpm run check:rule-promotion
+      # Dead-code ratchet: knip's unused-file/export/type counts per workspace
+      # may only decrease against scripts/dead-exports-baseline.json
+      # (regenerate with: node scripts/check-dead-exports.mjs --update).
+      - run: pnpm run check:dead-exports
 
   conventions-pr:
     name: Flag & Swagger Conventions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -112,6 +116,34 @@ jobs:
       # or the shared env validator requires — i.e. a service that cannot
       # boot when someone follows .env.example verbatim.
       - run: node scripts/check-env-consistency.mjs
+      # Staging hostnames in tracked deploy/ and workflow files must sit under
+      # the canonical platform domain. A foreign staging host splits CORS
+      # origins, OAuth redirect URIs and CDN config across two domains.
+      - run: node scripts/check-staging-hostnames.mjs
+      # Compose files, workflows, Dockerfiles, .env.example templates and the
+      # tracked deploy/ tree must read hostnames from the domain registry
+      # (deploy/domains.env), never hardcode a host on ANY domain — a stale host
+      # on the previous domain (api.staging.<old-domain>) is exactly what a
+      # registry-only check missed. Env templates may repeat a *current*
+      # registry host only on a key scripts/sync-env-example-hosts.mjs owns
+      # (dotenv cannot interpolate), so a rename regenerates it; any other
+      # template literal, an invented subdomain or a foreign domain fails.
+      # Docs and the generated CDN config are excluded (their own gates own
+      # them). Third parties are declared in scripts/domain-literal-allowlist.json,
+      # and an entry that no tracked file mentions any more fails too — a dead
+      # exception hides the next hardcoded use of that host.
+      - run: node scripts/check-domain-literals.mjs
+      # Ignore files are exceptions too: a *literal* un-ignore (`!scripts/build.sh`)
+      # whose file no longer exists silently stops protecting a path the build
+      # needs. Dead un-ignores fail; unmatched guards are advisory (--strict to
+      # escalate). Dead `eslint-disable` directives are reported by ESLint itself
+      # (linterOptions.reportUnusedDisableDirectives: 'error' in eslint.config.js).
+      - run: node scripts/check-dead-suppressions.mjs
+      # deploy/cdn-config.json carries hostnames in four places (API origin,
+      # CloudFront aliases, CORS allowlist, CSP connect-src). They are generated
+      # from the domain registry; a hand edit that misses one splits CORS, the
+      # CSP and the edge aliases across two hosts and only fails at runtime.
+      - run: node scripts/generate-cdn-config.mjs --check
       # Every seeder media URL must route through the shared host registry
       # (scripts/seeders/seed-image-hosts.ts) and every registered host must
       # be allowlisted in apps/web/next.config.js — a seed host missing from
@@ -138,6 +170,120 @@ jobs:
       - run: node scripts/check-expo-routes.mjs
       - run: node scripts/sweep-flag-usage.mjs
       - run: node scripts/generate-flag-registry-table.mjs --check
+      - run: node scripts/generate-domain-env.mjs --check
+      # .env.example templates cannot interpolate, so their platform hosts are
+      # generated in place from the registry instead of typed by hand; this
+      # fails when a template still points at the previous domain.
+      - run: node scripts/sync-env-example-hosts.mjs --check
+
+  # Renders every static route on all three web surfaces and fails on what a
+  # reader would call broken: horizontal overflow, text cut off with no
+  # ellipsis, images that fail to decode, and text below WCAG AA contrast
+  # against the colour actually behind it.
+  #
+  # Why it exists: the 2026-11-10 sweep found white-on-flame at 3.18:1 on 152 of
+  # 177 pages and admin/creator links that landed on a blank document. Every
+  # unit test passed, because nothing rendered a page. Routes come from the
+  # source tree (Next's app/ pages, each portal's route table), so a new screen
+  # is audited without touching the gate.
+  #
+  # Zero tolerance with a justified allowlist
+  # (scripts/visual-audit-allowlist.json): a finding fails unless an entry names
+  # it and says why. An entry that no longer excuses anything fails too, so an
+  # exception cannot outlive the defect it was written for. --update only prunes
+  # matched entries; it never invents a reason.
+  #
+  # Scope: the web app, against its production build, with the mock gateway the
+  # performance-budget job uses (SSR fetches cannot be stubbed from the browser).
+  # Both sign-in states are audited: as a guest (protected routes bounce to
+  # /auth/login) and signed in (`--signed-in`, so /wallet, /settings, … render
+  # their real layout; `/` then bounces to /home, which is audited on its own
+  # line). The admin and creator portals are supported by the same script (`--app
+  # admin|creator`, see docs/runbooks/visual-audit.md) but are not gated here
+  # yet: a first full pass measured 221 findings in the admin portal alone
+  # (legacy #E8420A text at 4.47:1, #CC1C1C at 3.21:1, a 127px sideways scroll
+  # from the mobile sidebar). That is a design-token pass, not a CI switch —
+  # gating it now would either block every PR or bury the signal in an
+  # allowlist.
+  visual-audit-pr:
+    name: Visual Audit (contrast, overflow, images)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma clients
+        run: pnpm run prisma:generate
+      # Workspace packages ship from dist/ and `next build` cannot resolve them
+      # until they are built (analytics-sdk, feature-flags/registries, ...).
+      - name: Build workspace packages
+        run: pnpm --filter './packages/**' run build
+      - name: Install Chromium
+        run: pnpm --filter @azeebo/web exec playwright install chromium --with-deps
+      - name: Build web app
+        # Bake the gateway origin in: with output:standalone, next start serves
+        # the config from build time, so a runtime env alone is ignored.
+        run: API_GATEWAY_URL=http://localhost:3013 pnpm --filter @azeebo/web build
+      # Server-side fetches (SSR) happen before the browser sees the page and
+      # cannot be stubbed, so every page would render its error state and the
+      # gate would measure the error UI instead of the layout.
+      - name: Start mock API gateway
+        run: |
+          node scripts/build-mock-api.mjs &
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:3013/api/v1/public/settings > /dev/null 2>&1 && break || sleep 1
+          done
+          curl -sf http://localhost:3013/api/v1/public/settings > /dev/null
+      - name: Start web app
+        run: |
+          # apps/web builds with output:standalone, which `next start` refuses to
+          # serve (it logs "does not work with output: standalone" and answers
+          # 500). Run the traced server directly, with the static chunks and
+          # public/ copied into the standalone tree the way a container image
+          # would.
+          cp -R apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+          cp -R apps/web/public apps/web/.next/standalone/apps/web/public
+          PORT=3000 HOSTNAME=127.0.0.1 node apps/web/.next/standalone/apps/web/server.js &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3000 > /dev/null 2>&1 && break || sleep 2
+          done
+          curl -sf http://127.0.0.1:3000 > /dev/null || { echo 'web app did not start'; exit 1; }
+      # Two sign-in states, because they are different layouts. As a guest the
+      # protected routes (/wallet, /settings, /messages, …) 307 to /auth/login,
+      # so signed-in screens were never rendered at all; signed in, `/` 307s to
+      # /home, so the guest homepage is the one that is unreachable. Each state
+      # is measured on its own and fails on its own findings.
+      - name: Run visual audit (guest)
+        run: |
+          node scripts/visual-audit.mjs \
+            --app web \
+            --base-url http://127.0.0.1:3000 \
+            --json-out .visual-audit-out/guest/report.json \
+            --screenshots .visual-audit-out/guest \
+            --verbose
+      - name: Run visual audit (signed in)
+        run: |
+          node scripts/visual-audit.mjs \
+            --app web \
+            --signed-in \
+            --base-url http://127.0.0.1:3000 \
+            --json-out .visual-audit-out/signed-in/report.json \
+            --screenshots .visual-audit-out/signed-in \
+            --verbose
+      - name: Upload visual audit report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visual-audit-report
+          path: .visual-audit-out/
+          if-no-files-found: ignore
 
   pool-budget-pr:
     name: Postgres Pool Budget
@@ -158,7 +304,7 @@ jobs:
     # can never green-light the gate.
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: azeebo
           POSTGRES_PASSWORD: azeebo_test_2024
@@ -171,8 +317,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       # psql for the max_connections read (postgres:15 image in the same
@@ -202,6 +348,17 @@ jobs:
       # review sees both manifest violations in one look.
       - name: Check Ops Health prober has launchd coverage for every service
         run: node scripts/launchd/prober-coverage-gate.mjs
+      # App dev-port drift gate: every launchd manifest dev entry (kinds
+      # vite/next/expo) must equal the app config's pinned port, and every
+      # app dev config must be manifest-covered (both ways). The drift is
+      # real history — vite served admin-backend's 4100 while the manifest
+      # said 5173 (fixed in 9ca2b491), unpinned `next dev` defaults to 3000
+      # (auth-service's port), and two unpinned `expo start` dev servers
+      # collide on Metro 8081 — so this makes all such drift a PR failure
+      # instead of a broken dev boot. Same static-parse, fail-loud
+      # conventions as the prober-coverage gate above.
+      - name: Check app dev ports match their launchd manifest entries
+        run: node scripts/launchd/dev-port-drift-gate.mjs
       - name: Check pool budget against 80% safety margin
         run: node scripts/database/apply-pool-limits.mjs --ci
         env:
@@ -224,7 +381,7 @@ jobs:
       - name: Mint azeebo-drift-bot App token
         id: pool-forecast-app-token
         if: always() && steps.pool-forecast-bot-config.outputs.configured == 'true'
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ vars.DRIFT_BOT_APP_ID }}
           private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
@@ -254,7 +411,7 @@ jobs:
       contents: read
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: azeebo
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
@@ -267,11 +424,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -314,7 +471,7 @@ jobs:
       - name: Mint azeebo-drift-bot App token
         id: app-token
         if: always() && steps.drift-bot-config.outputs.configured == 'true'
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ vars.DRIFT_BOT_APP_ID }}
           private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
@@ -326,7 +483,7 @@ jobs:
         run: node scripts/post-drift-pr-comment.mjs
       - name: Upload drift artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: prisma-drift-diffs
           path: |
@@ -345,7 +502,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: azeebo
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
@@ -358,11 +515,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -372,7 +529,7 @@ jobs:
         env:
           LIVE_DB_URL_BASE: postgresql://azeebo:${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}@localhost:5432
       - name: Upload drift report artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: prisma-live-drift-diffs
           path: .drift-live-out/
@@ -382,11 +539,11 @@ jobs:
     name: Type Check PR
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -397,6 +554,10 @@ jobs:
       # somewhere the schema does not declare, or a skipped rewrite) that
       # would otherwise only surface as confusing type errors below.
       - run: node scripts/check-prisma-client-stale.mjs
+      # Workspace packages resolve through their built dist/ (gitignored, so
+      # absent on a fresh checkout); build them before root tsc or every
+      # @azeebo/* import fails with TS2307.
+      - run: pnpm --filter "./packages/**" run build
       # Repo-root tsc peaked past the runner's default heap on this branch
       # (exit 134 / OOM); give it explicit headroom.
       - run: pnpm run typecheck
@@ -408,11 +569,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -453,7 +614,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: azeebo
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
@@ -475,11 +636,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -506,10 +667,10 @@ jobs:
       - name: Detect leaked clients (auth-service open handles)
         timeout-minutes: 3
         run: pnpm --filter @azeebo/auth-service test:openhandles
-      - run: pnpm run contracts --if-present
+      - run: pnpm run contracts
       - name: Upload sweep artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: test-sweep-artifacts
           path: |
@@ -522,7 +683,7 @@ jobs:
     timeout-minutes: 45
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: azeebo
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_TEST_PASSWORD || 'azeebo_test_2024' }}
@@ -544,11 +705,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -573,17 +734,42 @@ jobs:
         tv-bundle-pr,
         test-pr,
         integration-test-pr,
+        visual-audit-pr,
       ]
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run prisma:generate --if-present
       - run: pnpm run build
+
+  # AUD-03: blocking dependency-advisory gate on every PR. Fails when any
+  # advisory at severity >= high is present outside the expiry-dated
+  # allowlist in scripts/audit-gate.mjs (exceptions re-fail automatically
+  # once their `expires` date passes). Replaces the bare
+  # `pnpm audit --audit-level=high` steps in ci.yml / security-*.yml, which
+  # cannot express "no upstream fix exists".
+  audit-pr:
+    name: Dependency Audit Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Audit gate unit tests
+        run: node --test scripts/__tests__/audit-gate.test.mjs
+      - name: Audit dependencies (fail on high+, allowlist enforced)
+        run: node scripts/audit-gate.mjs --severity=high

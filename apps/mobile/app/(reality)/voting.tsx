@@ -16,21 +16,51 @@ interface Contestant {
   status: string;
 }
 
-const VOTE_PACKAGES = [
-  { id: 'single', label: '1 Vote', votes: 1, price: 100 },
-  { id: 'bronze', label: '5 Votes', votes: 5, price: 450 },
-  { id: 'silver', label: '20 Votes', votes: 20, price: 1600, popular: true },
-  { id: 'gold', label: '50 Votes', votes: 50, price: 3500 },
+interface VotePackage {
+  id: string;
+  label: string;
+  votes: number;
+  price: number;
+  coins?: number;
+  popular?: boolean;
+}
+
+const DEFAULT_VOTE_PACKAGES: VotePackage[] = [
+  { id: 'coins-100', label: '100 Votes', votes: 100, price: 1000 },
+  { id: 'coins-500', label: '500 Votes', votes: 500, price: 4500, popular: true },
+  { id: 'coins-1200', label: '1,200 Votes', votes: 1200, price: 10000 },
+  { id: 'coins-2500', label: '2,500 Votes', votes: 2500, price: 20000 },
 ];
 
 export default function VotingScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { showId } = useLocalSearchParams<{ showId: string }>();
+  const { showId, room, source } = useLocalSearchParams<{
+    showId?: string;
+    room?: string;
+    source?: string;
+  }>();
   const isDark = colorScheme === 'dark';
+  const isTvPaired = Boolean(room || source === 'tv-second-screen');
+
+  const packagesQuery = useQuery({
+    queryKey: ['reality', 'vote-packages'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<VotePackage[]>('/reality/vote-packages');
+        if (Array.isArray(res) && res.length > 0) return res;
+      } catch {
+        // Fall back gracefully
+      }
+      return DEFAULT_VOTE_PACKAGES;
+    },
+    staleTime: 60000,
+  });
+
+  const votePackages = packagesQuery.data ?? DEFAULT_VOTE_PACKAGES;
   const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[2]);
+  const [selectedPackage, setSelectedPackage] = useState<VotePackage>(votePackages[1]);
 
   const contestantsQuery = useQuery({
     queryKey: ['reality', 'contestants', showId],
@@ -79,14 +109,46 @@ export default function VotingScreen() {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Navigates to previous screen"
+          >
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Vote</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 44 }} />
         </View>
 
         <View style={styles.content}>
+          {isTvPaired && (
+            <View
+              style={{
+                backgroundColor: 'rgba(255,107,0,0.12)',
+                borderColor: colors.primary[500],
+                borderWidth: 1,
+                borderRadius: 12,
+                padding: 14,
+                marginBottom: 18,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Text style={{ fontSize: 24 }}>📺</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.primary[500], fontSize: 13, fontWeight: '800' }}>
+                  PAIRED WITH BIG-SCREEN TV
+                </Text>
+                <Text style={{ color: colors.text.secondary, fontSize: 12, marginTop: 2 }}>
+                  Your phone is acting as a synchronized 100x voting remote. Votes update live on TV.
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Contestant Selection */}
           <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
             Choose Contestant
@@ -100,6 +162,9 @@ export default function VotingScreen() {
                 selectedContestant?.id === c.id && styles.contestantSelected,
               ]}
               onPress={() => setSelectedContestant(c)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select contestant ${c.name}, ${c.votes.toLocaleString()} votes`}
+              accessibilityState={{ selected: selectedContestant?.id === c.id }}
             >
               <View
                 style={[styles.contestantAvatar, { backgroundColor: colors.primary[500] + '20' }]}
@@ -132,15 +197,18 @@ export default function VotingScreen() {
             Vote Package
           </Text>
           <View style={styles.packagesGrid}>
-            {VOTE_PACKAGES.map((pkg) => (
+            {votePackages.map((pkg) => (
               <TouchableOpacity
                 key={pkg.id}
                 style={[
                   styles.packageCard,
                   { backgroundColor: isDark ? colors.bg.tertiary : '#f5f5f5' },
-                  selectedPackage.id === pkg.id && styles.packageSelected,
+                  selectedPackage?.id === pkg.id && styles.packageSelected,
                 ]}
                 onPress={() => setSelectedPackage(pkg)}
+                accessibilityRole="button"
+                accessibilityLabel={`${pkg.label}, ₦${pkg.price.toLocaleString()}`}
+                accessibilityState={{ selected: selectedPackage?.id === pkg.id }}
               >
                 {pkg.popular && (
                   <View style={styles.popularBadge}>
@@ -165,6 +233,15 @@ export default function VotingScreen() {
             ]}
             onPress={() => voteMutation.mutate()}
             disabled={!selectedContestant || voteMutation.isPending}
+            accessibilityRole="button"
+            accessibilityLabel={
+              voteMutation.isPending
+                ? 'Voting in progress'
+                : voteMutation.isSuccess
+                  ? 'Vote cast successfully'
+                  : `Vote ${selectedPackage.label}`
+            }
+            accessibilityState={{ disabled: !selectedContestant || voteMutation.isPending }}
           >
             <Text style={styles.voteButtonText}>
               {voteMutation.isPending
@@ -196,9 +273,9 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',

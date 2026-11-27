@@ -13,11 +13,11 @@
     }
   },
   "scripts": {
-    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
-    "prebuild": "prisma generate --schema=prisma/schema.prisma",
     "build": "bash ../../scripts/build-package.sh",
     "clean": "rm -rf dist",
     "lint": "eslint src",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "prebuild": "prisma generate --schema=prisma/schema.prisma",
     "test": "jest",
     "test:watch": "jest --watch"
   },

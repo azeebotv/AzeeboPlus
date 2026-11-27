@@ -6,7 +6,7 @@ import { statusColor, statusText } from '@/components/ChallengeLeaderboard';
 import SubmissionDetailModal from '@/components/SubmissionDetailModal';
 import ChallengeSubmitDialog from '@/components/ChallengeSubmitDialog';
 import type { Challenge, ChallengeSubmission } from '@/lib/creator-types';
-import { formatNgn } from '@/lib/ui';
+import { errorTextStyle, formatNgn } from '@/lib/ui';
 
 export default function ChallengesPage() {
   const navigate = useNavigate();
@@ -14,19 +14,29 @@ export default function ChallengesPage() {
   const [detailSubmissionId, setDetailSubmissionId] = useState<string | null>(null);
   const [tab, setTab] = useState<'active' | 'submissions'>('active');
 
-  const { data: challenges, isLoading: challengesLoading } = useQuery({
+  const {
+    data: challenges,
+    isLoading: challengesLoading,
+    isError: challengesFailed,
+    error: challengesError,
+  } = useQuery({
     queryKey: ['creator', 'challenges'],
     queryFn: async () => {
       const res = await creatorApi.getChallenges();
-      return res.success ? (res.data as Challenge[]) : [];
+      return creatorApi.assertSuccess<Challenge[]>(res);
     },
   });
 
-  const { data: submissions, isLoading: submissionsLoading } = useQuery({
+  const {
+    data: submissions,
+    isLoading: submissionsLoading,
+    isError: submissionsFailed,
+    error: submissionsError,
+  } = useQuery({
     queryKey: ['creator', 'challenge-submissions'],
     queryFn: async () => {
       const res = await creatorApi.getChallengeSubmissions();
-      return res.success ? (res.data as ChallengeSubmission[]) : [];
+      return creatorApi.assertSuccess<ChallengeSubmission[]>(res);
     },
   });
 
@@ -146,6 +156,8 @@ export default function ChallengesPage() {
         <>
           {challengesLoading ? (
             <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+          ) : challengesFailed ? (
+            <p style={errorTextStyle()}>{creatorApi.errorMessage(challengesError)}</p>
           ) : challenges && challenges.length > 0 ? (
             <div
               style={{
@@ -258,6 +270,8 @@ export default function ChallengesPage() {
         <>
           {submissionsLoading ? (
             <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+          ) : submissionsFailed ? (
+            <p style={errorTextStyle()}>{creatorApi.errorMessage(submissionsError)}</p>
           ) : submissions && submissions.length > 0 ? (
             <div
               style={{
@@ -267,7 +281,8 @@ export default function ChallengesPage() {
                 overflow: 'hidden',
               }}
             >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: 500, borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--creator-border)' }}>
                     {['Title', 'Status', 'Submitted', 'Reviewed', ''].map((h) => (
@@ -363,6 +378,7 @@ export default function ChallengesPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           ) : (
             <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 40 }}>No submissions yet</p>

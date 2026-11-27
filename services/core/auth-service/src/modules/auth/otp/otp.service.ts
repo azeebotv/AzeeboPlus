@@ -1,5 +1,5 @@
 import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { mapAndThrow } from '@azeebo/security';
+import { mapAndThrow, pseudonymizeIdentifier } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import * as bcrypt from 'bcrypt';
@@ -18,7 +18,7 @@ export class OtpService {
     @Inject(ConfigService) private readonly configService: ConfigService
   ) {
     this.otpExpiry = this.configService.get<number>('OTP_EXPIRY', 300);
-    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 12);
   }
 
   async generateOtp(userId: string): Promise<{ code: string; expiresAt: Date }> {
@@ -74,7 +74,7 @@ export class OtpService {
           expiresIn: Math.floor((expiresAt.getTime() - Date.now()) / 1000),
         },
       });
-      this.logger.log(`OTP sent to ${phoneNumber}`);
+      this.logger.log(`OTP sent to ${pseudonymizeIdentifier(phoneNumber)}`);
     } catch (error) {
       this.logger.error(`Failed to send OTP via notification-service: ${(error as Error).message}`);
       mapAndThrow(error, 'sending OTP');

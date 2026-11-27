@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
@@ -39,26 +39,25 @@ function FilmsContent() {
   const films: Film[] = query.data ?? [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Cinemaxis" />
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Browse Films</h1>
-          <p className="text-white/50 mb-8">
-            Explore our collection of movies available on Cinemaxis
-          </p>
-        </motion.div>
+    <PageShell maxWidth="7xl" activeNav="Cinemaxis">
+      <PageHero
+        eyebrow="Cinemaxis"
+        title="Browse Films"
+        description="Explore our collection of movies available on Cinemaxis"
+      />
 
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+      <div className="-mt-4 pb-12">
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
           {['', 'Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Nollywood'].map(
             (g) => (
               <button
                 key={g}
                 onClick={() => setGenre(g)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${genre === g ? 'text-white' : 'text-white/50 hover:text-white/70'}`}
-                style={{
-                  backgroundColor: genre === g ? 'var(--brand-orange)' : 'rgba(255,255,255,0.05)',
-                }}
+                className={`az-body-strong whitespace-nowrap rounded-az-pill px-4 py-2 transition-all ${
+                  genre === g
+                    ? 'bg-az-flame text-az-surface-root shadow-az-glow'
+                    : 'bg-az-ink/5 text-az-ink/50 hover:text-az-ink/70'
+                }`}
               >
                 {g || 'All'}
               </button>
@@ -86,7 +85,9 @@ function FilmsContent() {
         ) : films.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4"></p>
-            <p className="text-xl text-white/60">No films available{genre ? ` in ${genre}` : ''}</p>
+            <p className="az-subtitle text-az-ink-muted">
+              No films available{genre ? ` in ${genre}` : ''}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -107,29 +108,23 @@ function FilmsContent() {
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="absolute inset-0 az-scrim" />
                   <div className="absolute bottom-3 left-3 right-3">
-                    <p className="text-xs font-medium text-white/60">
+                    <p className="az-caption font-medium text-az-ink/60">
                       {film.year} · {film.duration}
                     </p>
                   </div>
                   {film.isExclusive && (
                     <div className="absolute top-2 right-2">
-                      <span
-                        className="px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{
-                          backgroundColor: 'var(--brand-orange)',
-                          color: 'var(--brand-white)',
-                        }}
-                      >
+                      <span className="az-micro-label rounded-az-control bg-az-flame px-2 py-0.5 font-bold text-az-surface-root">
                         EXCLUSIVE
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-bold text-white truncate">{film.title}</h3>
-                  <p className="text-xs text-white/40 mt-1">
+                  <h3 className="az-body-strong truncate text-az-ink">{film.title}</h3>
+                  <p className="az-caption mt-1 text-az-ink-dim">
                     {film.genre} · {film.rating}
                   </p>
                 </div>
@@ -137,9 +132,8 @@ function FilmsContent() {
             ))}
           </div>
         )}
-      </section>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -148,8 +142,8 @@ export default function FilmsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

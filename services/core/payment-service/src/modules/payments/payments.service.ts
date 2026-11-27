@@ -470,10 +470,17 @@ export class PaymentsService {
     }
   }
 
-  async verifyPayment(userId: string, transactionId: string): Promise<VerifyPaymentResponse> {
-    const paymentIntent = await this.prisma.paymentIntent.findUnique({
-      where: { id: transactionId },
-    });
+  async verifyPayment(userId: string, idOrReference: string): Promise<VerifyPaymentResponse> {
+    // Callers hold either the intent id (from /initialize) or the provider
+    // reference the checkout hands back in its return URL. Try the id first —
+    // it is the documented handle and resolves in one lookup — then the
+    // reference, scoped to the caller so it cannot match someone else's
+    // payment. Before this, a reference 404'd before it was ever looked up.
+    const paymentIntent =
+      (await this.prisma.paymentIntent.findUnique({ where: { id: idOrReference } })) ??
+      (await this.prisma.paymentIntent.findFirst({
+        where: { userId, providerReference: idOrReference },
+      }));
 
     if (!paymentIntent) {
       throw new NotFoundException(`Payment not found`);

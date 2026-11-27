@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export default function TippingRedirect() {
@@ -6,5 +7,5 @@ export default function TippingRedirect() {
   useEffect(() => {
     router.replace('/(tabs)/tipping');
   }, []);
-  return null;
+  return <View accessible={true} accessibilityLabel="Tipping Redirect Screen" />;
 }

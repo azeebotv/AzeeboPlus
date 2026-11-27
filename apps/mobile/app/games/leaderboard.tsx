@@ -58,7 +58,7 @@ export default function GamesLeaderboardScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Leaderboard Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading leaderboard..." />
       </SafeAreaView>
     );
@@ -82,7 +82,7 @@ export default function GamesLeaderboardScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>

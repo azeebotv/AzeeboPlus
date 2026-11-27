@@ -99,11 +99,11 @@ export default function TalentClearancePage() {
     }
   };
 
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    expired: 'bg-gray-100 text-gray-800',
+  const statusClasses = {
+    pending: 'bg-az-warning-500/20 text-az-warning-400',
+    approved: 'bg-az-success-500/20 text-az-success-400',
+    rejected: 'bg-az-error-500/20 text-az-error-400',
+    expired: 'bg-az-ink/10 text-az-ink-muted',
   };
 
   const typeIcons = {
@@ -114,57 +114,57 @@ export default function TalentClearancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-az-surface-root p-6 text-az-ink">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Talent & Music Clearance</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="az-headline text-3xl text-az-ink">Talent & Music Clearance</h1>
+          <p className="az-body mt-2 text-az-ink-muted">
             Manage talent clearances, music licenses, and rights for content
           </p>
         </div>
 
         {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Total</p>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-5">
+            <div className="az-glass p-4">
+              <p className="az-caption text-az-ink-muted">Total</p>
+              <p className="az-section-title text-az-ink">{stats.total}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+            <div className="az-glass p-4">
+              <p className="az-caption text-az-ink-muted">Pending</p>
+              <p className="az-section-title text-az-warning-500">{stats.pending}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Approved</p>
-              <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+            <div className="az-glass p-4">
+              <p className="az-caption text-az-ink-muted">Approved</p>
+              <p className="az-section-title text-az-success-400">{stats.approved}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Rejected</p>
-              <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+            <div className="az-glass p-4">
+              <p className="az-caption text-az-ink-muted">Rejected</p>
+              <p className="az-section-title text-az-error-500">{stats.rejected}</p>
             </div>
-            <div className="bg-card rounded-xl p-4 border">
-              <p className="text-muted-foreground text-sm">Expiring Soon</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.expiringSoon}</p>
+            <div className="az-glass p-4">
+              <p className="az-caption text-az-ink-muted">Expiring Soon</p>
+              <p className="az-section-title text-az-flame">{stats.expiringSoon}</p>
             </div>
           </div>
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="flex-1 min-w-[200px]">
+        <div className="mb-6 flex flex-wrap gap-4">
+          <div className="min-w-[200px] flex-1">
             <input
               type="text"
               placeholder="Search by talent name, content title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-card border rounded-lg text-foreground placeholder:text-muted-foreground"
+              className="az-input"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-card border rounded-lg text-foreground"
+            className="az-body rounded-az-control border border-az-glass-border bg-az-glass-fill px-4 py-2 text-az-ink"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
@@ -175,7 +175,7 @@ export default function TalentClearancePage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2 bg-card border rounded-lg text-foreground"
+            className="az-body rounded-az-control border border-az-glass-border bg-az-glass-fill px-4 py-2 text-az-ink"
           >
             <option value="all">All Types</option>
             <option value="talent">Talent</option>
@@ -187,9 +187,9 @@ export default function TalentClearancePage() {
 
         {/* Clearances table */}
         {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading clearances...</div>
+          <div className="az-body py-12 text-center text-az-ink-muted">Loading clearances...</div>
         ) : error ? (
-          <div className="text-center py-12 text-destructive">{error}</div>
+          <div className="az-body py-12 text-center text-az-error-400">{error}</div>
         ) : clearances.length === 0 ? (
           <EmptyState
             icon="ClipboardList"
@@ -197,56 +197,40 @@ export default function TalentClearancePage() {
             description="No talent or music clearances have been submitted"
           />
         ) : (
-          <div className="bg-card rounded-xl border overflow-hidden">
+          <div className="az-glass overflow-hidden">
             <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Type
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Talent
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Content
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Scope
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Expires
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Actions
-                  </th>
+              <thead>
+                <tr className="border-b border-az-glass-border">
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Type</th>
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Talent</th>
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Content</th>
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Scope</th>
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Status</th>
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Expires</th>
+                  <th className="az-overline px-4 py-3 text-left text-az-ink-muted">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-az-glass-border">
                 {clearances.map((clearance) => (
-                  <tr key={clearance.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3">
+                  <tr key={clearance.id} className="hover:bg-az-glass-fill">
+                    <td className="az-body px-4 py-3 text-az-ink">
                       <span title={clearance.type}>{typeIcons[clearance.type]}</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground font-medium">
-                      {clearance.talentName}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                    <td className="az-body-strong px-4 py-3 text-az-ink">{clearance.talentName}</td>
+                    <td className="az-body px-4 py-3 text-az-ink-muted">
                       {clearance.contentTitle}
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground capitalize">
+                    <td className="az-body px-4 py-3 capitalize text-az-ink-muted">
                       {clearance.clearanceScope}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${statusColors[clearance.status]}`}
+                        className={`az-caption inline-block rounded-az-pill px-2.5 py-1 capitalize ${statusClasses[clearance.status]}`}
                       >
                         {clearance.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                    <td className="az-body px-4 py-3 text-az-ink-muted">
                       {new Date(clearance.expiryDate).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
@@ -254,13 +238,13 @@ export default function TalentClearancePage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleStatusChange(clearance.id, 'approved')}
-                            className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                            className="rounded-az-control bg-az-success-500 px-3 py-1 text-xs text-az-surface-root transition-colors hover:bg-az-success-600"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleStatusChange(clearance.id, 'rejected')}
-                            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                            className="rounded-az-control bg-az-error-600 px-3 py-1 text-xs text-az-ink transition-colors hover:bg-az-error-700"
                           >
                             Reject
                           </button>

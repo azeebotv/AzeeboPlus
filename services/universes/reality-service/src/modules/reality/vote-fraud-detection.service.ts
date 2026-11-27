@@ -116,12 +116,12 @@ export class VoteFraudDetectionService {
 
     const oneHourAgo = new Date(Date.now() - 3_600_000);
 
-    const result = await this.prisma.$queryRawUnsafe<{ count: bigint }[]>(
-      `SELECT COUNT(DISTINCT "userId") as count FROM "votes" WHERE "showId" = $1 AND "contestantId" = $2 AND "createdAt" > $3`,
-      context.showId,
-      context.contestantId,
-      oneHourAgo
-    );
+    const result = await this.prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(DISTINCT "userId") as count FROM "votes"
+      WHERE "showId" = ${context.showId}
+        AND "contestantId" = ${context.contestantId}
+        AND "createdAt" > ${oneHourAgo}
+    `;
 
     const distinctUsers = Number(result[0]?.count || 0);
     if (distinctUsers > 20) {

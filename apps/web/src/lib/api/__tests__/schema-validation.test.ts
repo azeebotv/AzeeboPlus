@@ -201,8 +201,6 @@ describe('Response Schema — Wallet', () => {
     expect(['credit', 'debit']).toContain(result.data!.items[0].type);
     expect(['pending', 'completed', 'failed']).toContain(result.data!.items[0].status);
   });
-
-
 });
 
 describe('Response Schema — Payment', () => {

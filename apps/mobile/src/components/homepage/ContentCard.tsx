@@ -59,7 +59,7 @@ export default function ContentCard({
   const thumbnailSrc =
     item.mediaAsset?.thumbnailUrl ||
     item.thumbnail ||
-    'https://placehold.co/400x560/0D3B2E/FFF?text=Azeebo%2B';
+    'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=400&h=560&q=80';
 
   // Duration badge uses the shared formatter; hide the badge entirely when
   // duration is unknown (0/negative) instead of rendering "0:00".

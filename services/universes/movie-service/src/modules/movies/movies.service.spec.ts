@@ -61,7 +61,7 @@ describe('MoviesService', () => {
               const config: Record<string, unknown> = {
                 WALLET_SERVICE_URL: 'http://wallet-service:3001',
                 MOVIE_RENTAL_FEE: 500,
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
               };
               return config[key] ?? defaultValue;
             }),

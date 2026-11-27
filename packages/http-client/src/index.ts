@@ -167,6 +167,13 @@ const DEFAULT_SERVICE_RETRY_CONFIG = {
   backoffMultiplier: 2,
 };
 
+// AUD-21: default timeout for API and internal service-to-service calls.
+// 5s fails fast so a hung downstream cannot pin a request handler for 30s
+// (the gateway's circuit-breaker budget is aligned to the same value).
+// Long jobs must opt in per call: `client.get(url, { timeout: 30000 })`
+// (axios per-request config overrides the instance default).
+export const DEFAULT_HTTP_TIMEOUT_MS = 5000;
+
 // ============================================================================
 // ApiClient (Browser-side with token storage)
 // ============================================================================
@@ -182,7 +189,7 @@ export class ApiClient {
 
   constructor(config: ApiClientConfig) {
     this.config = {
-      timeout: 30000,
+      timeout: DEFAULT_HTTP_TIMEOUT_MS,
       ...config,
     };
 
@@ -373,7 +380,8 @@ export class ServiceClient {
     const apiKey = config.apiKey || process.env.INTERNAL_API_KEY;
     this.axiosInstance = axios.create({
       baseURL: config.baseURL,
-      timeout: config.timeout || 30000,
+      // ?? not ||: an explicit timeout of 0 (axios: no timeout) must survive.
+      timeout: config.timeout ?? DEFAULT_HTTP_TIMEOUT_MS,
       headers: {
         'Content-Type': 'application/json',
         ...(apiKey ? { 'x-internal-api-key': apiKey } : {}),

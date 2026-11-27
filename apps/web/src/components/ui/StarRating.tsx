@@ -48,17 +48,17 @@ export function StarRating({
               size={size}
               className={`transition-colors ${
                 isFilled
-                  ? 'fill-yellow-400 text-yellow-400'
+                  ? 'fill-az-warning-500 text-az-warning-500'
                   : isHalf
-                    ? 'fill-yellow-400/50 text-yellow-400/50'
-                    : 'text-white/20'
+                    ? 'fill-az-warning-500/50 text-az-warning-500/50'
+                    : 'text-az-ink/20'
               }`}
             />
           </button>
         );
       })}
       {showValue && rating > 0 && (
-        <span className="text-sm text-white/60 ml-1">{rating.toFixed(1)}</span>
+        <span className="text-sm text-az-ink/60 ml-1">{rating.toFixed(1)}</span>
       )}
     </div>
   );

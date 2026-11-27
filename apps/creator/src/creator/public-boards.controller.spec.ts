@@ -5,7 +5,11 @@ describe('PublicBoardsController', () => {
     const creatorService = {
       getChallengeLeaderboard: jest.fn().mockResolvedValue(board),
     };
-    const jwtService = { verify: jest.fn().mockImplementation(() => { throw new Error('no token'); }) };
+    const jwtService = {
+      verify: jest.fn().mockImplementation(() => {
+        throw new Error('no token');
+      }),
+    };
     return {
       controller: new PublicBoardsController(creatorService as never, jwtService as never),
       creatorService,
@@ -17,8 +21,22 @@ describe('PublicBoardsController', () => {
     challenge: { id: 'ch1', title: 'Dance Marathon', prize: 250000, endDate: '2026-09-30' },
     totalEntries: 2,
     entries: [
-      { position: 1, entryId: 'e2', userId: 'u2', displayName: 'Winner', status: 'winner', submittedAt: '2026-09-20T00:00:00Z' },
-      { position: 2, entryId: 'e1', userId: 'u1', displayName: 'Rookie', status: 'pending', submittedAt: '2026-09-19T00:00:00Z' },
+      {
+        position: 1,
+        entryId: 'e2',
+        userId: 'u2',
+        displayName: 'Winner',
+        status: 'winner',
+        submittedAt: '2026-09-20T00:00:00Z',
+      },
+      {
+        position: 2,
+        entryId: 'e1',
+        userId: 'u1',
+        displayName: 'Rookie',
+        status: 'pending',
+        submittedAt: '2026-09-19T00:00:00Z',
+      },
     ],
   };
 
@@ -110,7 +128,10 @@ describe('PublicBoardsController', () => {
     afterAll(() => {
       const fs = require('fs') as typeof import('fs');
       const path = require('path') as typeof import('path');
-      fs.rmSync(path.join(__dirname, '..', '..', 'client', 'dist'), { recursive: true, force: true });
+      fs.rmSync(path.join(__dirname, '..', '..', 'client', 'dist'), {
+        recursive: true,
+        force: true,
+      });
     });
 
     const buildRes = () => {
@@ -144,7 +165,14 @@ describe('PublicBoardsController', () => {
         ...fullBoard,
         challenge: { ...fullBoard.challenge, title: '<script>"evil"&co</script>' },
         entries: [
-          { position: 1, entryId: 'e2', userId: 'u2', displayName: 'A"B&C', status: 'winner', submittedAt: '2026-09-20T00:00:00Z' },
+          {
+            position: 1,
+            entryId: 'e2',
+            userId: 'u2',
+            displayName: 'A"B&C',
+            status: 'winner',
+            submittedAt: '2026-09-20T00:00:00Z',
+          },
         ],
       });
       const res = buildRes();

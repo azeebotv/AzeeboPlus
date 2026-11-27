@@ -109,7 +109,7 @@ export default function SportsUniverseHome() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Index Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading sports events..." />
       </SafeAreaView>
     );

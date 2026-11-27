@@ -102,7 +102,9 @@ describe('ProxyController routing gates', () => {
 
   it('proxies new routes when gateway_new_routes is on', async () => {
     flagService.isEnabled.mockImplementation((key: string) =>
-      Promise.resolve(key !== gatewayFlags.maintenanceMode)
+      Promise.resolve(
+        key !== gatewayFlags.maintenanceMode && key !== gatewayFlags.endpointEnforcement
+      )
     );
     const res = mockRes();
     const circuitBreaker = (
@@ -212,7 +214,7 @@ describe('ProxyController routing gates', () => {
         // default strategy builds /v{version}/admin + the wildcard path,
         // matching apps/admin's URI-versioned routes (/v1/admin/...).
         path: '/v1/admin/universes/feature-flags/restore',
-        targetUrl: 'http://localhost:4016',
+        targetUrl: 'http://admin-app:4016',
         body,
       })
     );

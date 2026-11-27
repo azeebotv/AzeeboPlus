@@ -23,6 +23,7 @@ import Constants from 'expo-constants';
 import { colors } from '../../src/theme';
 import * as Linking from 'expo-linking';
 import { changeLanguage, LANGUAGES, type SupportedLanguage } from '../../src/i18n';
+import { brand } from '@azeebo/design-tokens';
 
 // Type declaration for expo-constants
 const safeConstants = Constants as unknown as { expoConfig?: { version?: string; name?: string } };
@@ -204,7 +205,7 @@ export default function SettingsScreen() {
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
         </View>
       </SafeAreaView>
     );
@@ -253,7 +254,7 @@ export default function SettingsScreen() {
 
         {updatePreferencesMutation.isPending && (
           <View style={styles.savingIndicator}>
-            <ActivityIndicator size="small" color="#E8420A" />
+            <ActivityIndicator size="small" color={brand.flame} />
             <Text style={styles.savingText}>Saving...</Text>
           </View>
         )}
@@ -286,7 +287,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.push}
               onValueChange={(value) => handleTogglePreference('push', value)}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -314,7 +315,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.email}
               onValueChange={(value) => handleTogglePreference('email', value)}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -342,7 +343,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.sms}
               onValueChange={(value) => handleTogglePreference('sms', value)}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -389,7 +390,7 @@ export default function SettingsScreen() {
           visible={languageModalVisible}
           onRequestClose={() => setLanguageModalVisible(false)}
         >
-          <Pressable style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
+          <Pressable accessibilityRole="button" style={styles.modalOverlay} onPress={() => setLanguageModalVisible(false)}>
             <Pressable
               style={[
                 styles.modalContent,
@@ -493,12 +494,12 @@ export default function SettingsScreen() {
                 </View>
               </View>
               {isBiometricToggling ? (
-                <ActivityIndicator size="small" color="#E8420A" />
+                <ActivityIndicator size="small" color={brand.flame} />
               ) : (
                 <Switch
                   value={isEnabled}
                   onValueChange={handleBiometricToggle}
-                  trackColor={{ false: '#333', true: '#E8420A' }}
+                  trackColor={{ false: '#333', true: brand.flame }}
                   thumbColor="#fff"
                   disabled={!isAvailable || isBiometricToggling}
                 />
@@ -532,7 +533,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.newContent}
               onValueChange={() => handleToggleTypePreference('newContent')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -557,7 +558,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.comments}
               onValueChange={() => handleToggleTypePreference('comments')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -582,7 +583,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.likes}
               onValueChange={() => handleToggleTypePreference('likes')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -607,7 +608,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.followers}
               onValueChange={() => handleToggleTypePreference('followers')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -632,7 +633,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.system}
               onValueChange={() => handleToggleTypePreference('system')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -657,7 +658,7 @@ export default function SettingsScreen() {
             <Switch
               value={currentPreferences.types.payments}
               onValueChange={() => handleToggleTypePreference('payments')}
-              trackColor={{ false: '#333', true: '#E8420A' }}
+              trackColor={{ false: '#333', true: brand.flame }}
               thumbColor="#fff"
             />
           </View>
@@ -778,7 +779,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   savingText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
   },
   section: {
@@ -872,7 +873,7 @@ const styles = StyleSheet.create({
   },
   languageCheck: {
     fontSize: 20,
-    color: '#E8420A',
+    color: brand.flame,
     fontWeight: '700',
   },
   modalCloseButton: {
@@ -883,7 +884,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   modalCloseText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

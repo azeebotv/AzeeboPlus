@@ -1319,10 +1319,31 @@ model EventTeam {
   score   Int     @default(0)
   order   Int     @default(0)
 
-  event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   SportsEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  players SportsPlayer[]
 
   @@map("event_teams")
   @@index([eventId])
+}
+
+model SportsPlayer {
+  id        String   @id @default(uuid())
+  teamId    String
+  name      String
+  number    Int
+  position  String   // GK, CB, LB, RB, CDM, CM, CAM, RW, LW, ST
+  gridX     Int      @default(50)
+  gridY     Int      @default(50)
+  rating    Decimal? @db.Decimal(3, 1)
+  isCaptain Boolean  @default(false)
+  photo     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team EventTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("sports_players")
+  @@index([teamId])
 }
 
 model ExperimentEvent {
@@ -2207,6 +2228,23 @@ model PaymentMethod {
   @@index([provider])
   @@index([isDefault])
   @@map("payment_methods")
+}
+
+model CoinPackage {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  coins       Int
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("NGN")
+  bonus       Int      @default(0)
+  isPopular   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("coin_packages")
 }
 
 model PayoutDispute {
@@ -4147,3 +4185,89 @@ model LiveEventTicket {
   @@index([status])
 }
 
+
+
+model MusicArtist {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  slug             String   @unique
+  genre            String
+  bio              String?
+  image            String?
+  monthlyListeners Int      @default(0)
+  followersCount   Int      @default(0)
+  isVerified       Boolean  @default(true)
+  topTracks        Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([genre])
+  @@index([monthlyListeners])
+  @@map("music_artists")
+}
+
+model WatchPartyRoom {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  title        String
+  contentId    String?
+  hostUserId   String
+  isActive     Boolean  @default(true)
+  playbackTime Float    @default(0.0)
+  isPlaying    Boolean  @default(false)
+  participants Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  messages     WatchPartyMessage[]
+
+  @@map("watch_party_rooms")
+  @@index([code])
+  @@index([isActive])
+}
+
+model WatchPartyMessage {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  userName  String
+  message   String
+  createdAt DateTime @default(now())
+
+  room      WatchPartyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("watch_party_messages")
+  @@index([roomId])
+  @@index([createdAt])
+}
+
+model Cart {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  voucherCode String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       CartItem[]
+
+  @@map("carts")
+  @@index([userId])
+}
+
+model CartItem {
+  id          String   @id @default(cuid())
+  cartId      String
+  itemType    String   // pass, coins, subscription
+  itemId      String
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(18, 2)
+  quantity    Int      @default(1)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+  @@index([cartId])
+}

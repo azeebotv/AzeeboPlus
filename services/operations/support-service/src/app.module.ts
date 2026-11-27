@@ -14,7 +14,6 @@ import { TicketModule } from './modules/ticket/ticket.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './modules/database/database.module';
-import { AuthGuard } from './common/guards/auth.guard';
 import { RateLimiterModule, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { ServiceAuthGuard } from '@azeebo/security';
@@ -62,7 +61,6 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
     },
-    AuthGuard,
     {
       provide: AdminGuard,
       useFactory: (jwtService: JwtService) =>
@@ -74,6 +72,6 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
       useClass: ServiceAuthGuard,
     },
   ],
-  exports: [AuthGuard, JwtModule, AdminGuard],
+  exports: [JwtModule, AdminGuard],
 })
 export class AppModule {}

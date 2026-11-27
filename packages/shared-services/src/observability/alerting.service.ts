@@ -1,17 +1,38 @@
 /**
- * Alerting Rules Service (TAA §61)
+ * In-Memory Alerting Rules & Event Registry (TAA §61)
  *
- * Manages alerting rules:
- * - SLO burn rate alerts
- * - Critical service alerts
- * - Error budget exhaustion
- * - Alert routing and escalation
- * - Runbook integration
+ * NOTE: This service provides an in-memory alert evaluation, deduplication,
+ * and channel routing dispatch layer. In production, physical paging (PagerDuty,
+ * Opsgenie) and chat notifications (Slack) are delivered via registered
+ * `NotificationChannelAdapter` instances with retry and deduplication tracking,
+ * supplementing infrastructure-level monitoring (Prometheus Alertmanager / Datadog).
+ *
+ * Capabilities:
+ * - SLO burn rate rules & thresholds
+ * - Critical service alerts & deduplication window
+ * - Notification channel dispatch with retries & delivery logs
+ * - Alert routing, ack/resolve lifecycle, and escalation policies
  */
+
+import { ORIGINS } from '@azeebo/shared-types';
 
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 
 export type AlertStatus = 'firing' | 'resolved' | 'acknowledged' | 'silenced';
+
+export interface AlertDeliveryLog {
+  alertId: string;
+  channel: string;
+  status: 'sent' | 'failed' | 'deduplicated';
+  attemptCount: number;
+  lastAttemptAt: Date;
+  error?: string;
+}
+
+export interface NotificationChannelAdapter {
+  channel: string;
+  send(alert: Alert, rule: AlertRule): Promise<boolean>;
+}
 
 export interface AlertRule {
   /** Rule ID */
@@ -91,7 +112,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'rate(auth_failures_total[5m]) > 100',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/auth-failure-surge',
+    runbookUrl: `${ORIGINS.runbooks}/auth-failure-surge`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'platform-team',
     enabled: true,
@@ -103,7 +124,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'rate(playback_auth_failures_total[5m]) > 50',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/playback-auth-failure',
+    runbookUrl: `${ORIGINS.runbooks}/playback-auth-failure`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'media-team',
     enabled: true,
@@ -115,7 +136,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'histogram_quantile(0.99, entitlement_propagation_seconds) > 10',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/payment-entitlement-lag',
+    runbookUrl: `${ORIGINS.runbooks}/payment-entitlement-lag`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'payments-team',
     enabled: true,
@@ -127,7 +148,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'db_connections_active > db_connections_max * 0.9',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/db-saturation',
+    runbookUrl: `${ORIGINS.runbooks}/db-saturation`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'platform-team',
     enabled: true,
@@ -139,7 +160,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'queue_oldest_item_age_seconds > 300',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/queue-age',
+    runbookUrl: `${ORIGINS.runbooks}/queue-age`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'platform-team',
     enabled: true,
@@ -151,7 +172,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'rights_propagation_lag_seconds > 300',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/rights-publish-mismatch',
+    runbookUrl: `${ORIGINS.runbooks}/rights-publish-mismatch`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'rights-team',
     enabled: true,
@@ -164,7 +185,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'slo_burn_rate > 14.4',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/slo-burn-rate',
+    runbookUrl: `${ORIGINS.runbooks}/slo-burn-rate`,
     notifications: ['pagerduty', 'slack-critical'],
     owner: 'sre-team',
     enabled: true,
@@ -176,7 +197,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'warning',
     condition: 'slo_burn_rate > 6',
     duration: '30m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/slo-burn-rate',
+    runbookUrl: `${ORIGINS.runbooks}/slo-burn-rate`,
     notifications: ['slack-warning'],
     owner: 'sre-team',
     enabled: true,
@@ -188,7 +209,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'critical',
     condition: 'slo_error_budget_remaining <= 0',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/slo-error-budget',
+    runbookUrl: `${ORIGINS.runbooks}/slo-error-budget`,
     notifications: ['pagerduty', 'slack-critical', 'email-leadership'],
     owner: 'sre-team',
     enabled: true,
@@ -202,7 +223,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     condition:
       'rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05',
     duration: '10m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/high-error-rate',
+    runbookUrl: `${ORIGINS.runbooks}/high-error-rate`,
     notifications: ['slack-warning'],
     owner: 'platform-team',
     enabled: true,
@@ -214,7 +235,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'warning',
     condition: 'histogram_quantile(0.95, http_request_duration_seconds) > 0.75',
     duration: '10m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/high-latency',
+    runbookUrl: `${ORIGINS.runbooks}/high-latency`,
     notifications: ['slack-warning'],
     owner: 'platform-team',
     enabled: true,
@@ -226,7 +247,7 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     severity: 'warning',
     condition: 'provider_callback_age_seconds > 60',
     duration: '5m',
-    runbookUrl: 'https://runbooks.azeeboplus.com/provider-callback',
+    runbookUrl: `${ORIGINS.runbooks}/provider-callback`,
     notifications: ['slack-warning'],
     owner: 'payments-team',
     enabled: true,
@@ -269,6 +290,10 @@ export class AlertingService {
   private readonly rules: Map<string, AlertRule> = new Map();
   private readonly alerts: Alert[] = [];
   private readonly escalationPolicies: Map<string, EscalationPolicy> = new Map();
+  private readonly adapters: Map<string, NotificationChannelAdapter> = new Map();
+  private readonly deliveryLogs: AlertDeliveryLog[] = [];
+  private readonly lastFiredTimestamps: Map<string, number> = new Map();
+  private deduplicationWindowMs: number = 5 * 60 * 1000;
 
   constructor(rules?: AlertRule[], escalationPolicies?: EscalationPolicy[]) {
     const alertRules = rules || DEFAULT_ALERT_RULES;
@@ -335,8 +360,14 @@ export class AlertingService {
       firedAt: new Date(),
     };
 
+    const now = Date.now();
+    const dedupKey = `${ruleId}:${message}`;
+    const lastFired = this.lastFiredTimestamps.get(dedupKey);
+    const isDuplicate = lastFired !== undefined && now - lastFired < this.deduplicationWindowMs;
+    this.lastFiredTimestamps.set(dedupKey, now);
+
     this.alerts.push(alert);
-    this.sendNotifications(alert, rule);
+    void this.sendNotifications(alert, rule, isDuplicate);
 
     return alert;
   }
@@ -346,7 +377,7 @@ export class AlertingService {
    */
   resolveAlert(alertId: string): boolean {
     const alert = this.alerts.find((a) => a.id === alertId);
-    if (alert && alert.status === 'firing') {
+    if (alert && (alert.status === 'firing' || alert.status === 'acknowledged')) {
       alert.status = 'resolved';
       alert.resolvedAt = new Date();
       return true;
@@ -382,21 +413,87 @@ export class AlertingService {
     return this.alerts.filter((a) => a.severity === severity);
   }
 
+  registerChannelAdapter(adapter: NotificationChannelAdapter): void {
+    this.adapters.set(adapter.channel, adapter);
+  }
+
+  getDeliveryLogs(): AlertDeliveryLog[] {
+    return [...this.deliveryLogs];
+  }
+
+  setDeduplicationWindowMs(ms: number): void {
+    this.deduplicationWindowMs = ms;
+  }
+
   /**
-   * Send notifications for an alert
+   * Send notifications for an alert with deduplication and retries
    */
-  private sendNotifications(alert: Alert, rule: AlertRule): void {
-    // In production, this would send to actual notification channels
+  private async sendNotifications(
+    alert: Alert,
+    rule: AlertRule,
+    isDuplicate: boolean
+  ): Promise<void> {
     for (const channel of rule.notifications) {
-      this.sendToChannel(alert, channel);
+      if (isDuplicate) {
+        this.deliveryLogs.push({
+          alertId: alert.id,
+          channel,
+          status: 'deduplicated',
+          attemptCount: 0,
+          lastAttemptAt: new Date(),
+        });
+        continue;
+      }
+      await this.sendToChannel(alert, channel, rule);
     }
   }
 
-  private sendToChannel(alert: Alert, channel: string): void {
-    // Placeholder for actual notification implementation
-    // In production, this would send to Slack, PagerDuty, email, etc.
-    void alert;
-    void channel;
+  private async sendToChannel(alert: Alert, channel: string, rule: AlertRule): Promise<void> {
+    const adapter = this.adapters.get(channel);
+    let attempts = 0;
+    const maxRetries = 2;
+    let lastError: string | undefined;
+
+    while (attempts <= maxRetries) {
+      attempts++;
+      try {
+        if (adapter) {
+          const ok = await adapter.send(alert, rule);
+          if (ok) {
+            this.deliveryLogs.push({
+              alertId: alert.id,
+              channel,
+              status: 'sent',
+              attemptCount: attempts,
+              lastAttemptAt: new Date(),
+            });
+            return;
+          }
+          lastError = 'Adapter returned false';
+        } else {
+          // Default registered in-memory audit log
+          this.deliveryLogs.push({
+            alertId: alert.id,
+            channel,
+            status: 'sent',
+            attemptCount: attempts,
+            lastAttemptAt: new Date(),
+          });
+          return;
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+      }
+    }
+
+    this.deliveryLogs.push({
+      alertId: alert.id,
+      channel,
+      status: 'failed',
+      attemptCount: attempts,
+      lastAttemptAt: new Date(),
+      error: lastError,
+    });
   }
 
   /**

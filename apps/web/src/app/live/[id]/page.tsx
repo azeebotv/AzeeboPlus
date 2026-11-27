@@ -5,8 +5,7 @@ import { motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
@@ -100,172 +99,152 @@ function LiveEventDetailContent(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
-          <Skeleton height="400px" borderRadius="12" />
-          <div className="mt-6 space-y-4">
-            <Skeleton height="32px" width="60%" />
-            <Skeleton height="20px" width="40%" />
-            <Skeleton height="100px" />
-          </div>
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell maxWidth="lg">
+        <Skeleton height="400px" borderRadius="12" />
+        <div className="mt-6 space-y-4">
+          <Skeleton height="32px" width="60%" />
+          <Skeleton height="20px" width="40%" />
+          <Skeleton height="100px" />
+        </div>
+      </PageShell>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <main style={{ padding: '100px 24px 60px', maxWidth: 600, margin: '0 auto' }}>
-          <ErrorState
-            title="Failed to load event"
-            description={error || 'Event not found'}
-            onButtonPress={() => eventQuery.refetch()}
-          />
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell maxWidth="md">
+        <ErrorState
+          title="Failed to load event"
+          description={error || 'Event not found'}
+          onButtonPress={() => eventQuery.refetch()}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '80px 24px 60px' }}>
-        <ScrollReveal>
-          <div className="relative rounded-xl overflow-hidden mb-8">
-            <OptimizedImage
-              src={event.thumbnail}
-              alt={event.title}
-              width={800}
-              height={400}
-              className="w-full h-64 sm:h-96 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/30 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{event.title}</h1>
-              <p className="text-lg" style={{ color: 'var(--brand-orange)' }}>
-                {getTimeStatus(event.scheduledAt, event.status)}
-              </p>
-            </div>
+    <PageShell maxWidth="lg">
+      <ScrollReveal>
+        <div className="relative mb-8 overflow-hidden rounded-az-card">
+          <OptimizedImage
+            src={event.thumbnail}
+            alt={event.title}
+            width={800}
+            height={400}
+            className="h-64 w-full object-cover sm:h-96"
+          />
+          <div className="absolute inset-0 az-scrim--hero" aria-hidden="true" />
+          <div className="absolute bottom-4 left-4 right-4">
+            <h1 className="az-heading mb-2 text-az-ink">{event.title}</h1>
+            <p className="az-lead text-az-flame">
+              {getTimeStatus(event.scheduledAt, event.status)}
+            </p>
           </div>
-        </ScrollReveal>
+        </div>
+      </ScrollReveal>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <div>
+            <h2 className="az-title mb-3 text-az-ink">About This Event</h2>
+            <p className="az-body leading-relaxed text-az-ink/60">{event.description}</p>
+          </div>
+
+          <div className="flex flex-wrap gap-6">
             <div>
-              <h2 className="text-xl font-bold text-white mb-3">About This Event</h2>
-              <p className="text-white/60 leading-relaxed">{event.description}</p>
+              <p className="az-caption mb-1 text-az-ink-muted">Date &amp; Time</p>
+              <p className="az-body-strong text-az-ink">{formatDate(event.scheduledAt)}</p>
             </div>
-
-            <div className="flex flex-wrap gap-6">
+            <div>
+              <p className="az-caption mb-1 text-az-ink-muted">Duration</p>
+              <p className="az-body-strong text-az-ink">{event.duration} minutes</p>
+            </div>
+            {event.maxViewers && (
               <div>
-                <p className="text-sm text-white/40 mb-1">Date & Time</p>
-                <p className="text-white font-medium">{formatDate(event.scheduledAt)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-white/40 mb-1">Duration</p>
-                <p className="text-white font-medium">{event.duration} minutes</p>
-              </div>
-              {event.maxViewers && (
-                <div>
-                  <p className="text-sm text-white/40 mb-1">Capacity</p>
-                  <p className="text-white font-medium">
-                    {event._count.tickets}/{event.maxViewers}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-white/40 mb-1">Chat</p>
-                <p className="text-white font-medium">
-                  {event.chatEnabled ? 'Enabled' : 'Disabled'}
+                <p className="az-caption mb-1 text-az-ink-muted">Capacity</p>
+                <p className="az-body-strong text-az-ink">
+                  {event._count.tickets}/{event.maxViewers}
                 </p>
               </div>
-            </div>
-          </div>
-
-          <div
-            className="rounded-xl p-6 h-fit sticky top-24"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.03)',
-              border: '1px solid var(--border-default)',
-            }}
-          >
-            <p className="text-3xl font-bold text-white mb-1">
-              {formatPrice(event.ticketPrice, event.currency)}
-            </p>
-            <p className="text-sm text-white/40 mb-6">
-              {event.ticketPrice === 0 ? 'Free entry' : 'Per person'}
-            </p>
-
-            {event.status === 'cancelled' ? (
-              <div className="text-center py-4">
-                <p className="text-red-400 font-medium">This event has been cancelled</p>
-              </div>
-            ) : event.status === 'ended' ? (
-              <div className="text-center py-4">
-                <p className="text-white/50">This event has ended</p>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => purchaseMutation.mutate()}
-                disabled={purchaseMutation.isPending}
-                className="w-full py-3 rounded-xl font-semibold text-white transition-all"
-                style={{
-                  backgroundColor: purchaseMutation.isPending
-                    ? 'var(--brand-grey)'
-                    : 'var(--brand-orange)',
-                }}
-              >
-                {purchaseMutation.isPending
-                  ? 'Processing...'
-                  : purchaseMutation.isSuccess
-                    ? 'CheckCircle Ticket Purchased!'
-                    : event.status === 'live'
-                      ? 'Purchase & Watch'
-                      : 'Get Ticket'}
-              </button>
             )}
-
-            {purchaseMutation.isError && (
-              <p className="mt-3 text-sm text-red-400 text-center">
-                {purchaseMutation.error instanceof Error
-                  ? purchaseMutation.error.message
-                  : 'Purchase failed'}
+            <div>
+              <p className="az-caption mb-1 text-az-ink-muted">Chat</p>
+              <p className="az-body-strong text-az-ink">
+                {event.chatEnabled ? 'Enabled' : 'Disabled'}
               </p>
-            )}
-
-            {purchaseMutation.isSuccess && event.streamUrl && (
-              <motion.a
-                href={event.streamUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block mt-3 text-center py-3 rounded-xl font-semibold text-white transition-all"
-                style={{ backgroundColor: 'var(--color-success-500)' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                Watch Now
-              </motion.a>
-            )}
-
-            <div className="mt-6 space-y-3 text-sm text-white/40">
-              <p>• Ticket grants access to live stream</p>
-              <p>• Post-event replay available for ticket holders</p>
-              <p>• No refunds for partial viewing</p>
-              <p>• Payment debited from wallet balance</p>
             </div>
           </div>
         </div>
-      </main>
 
-      <AppFooter />
-    </div>
+        <div className="sticky top-24 h-fit rounded-az-card border border-az-glass-border bg-az-ink/5 p-6">
+          <p className="az-heading mb-1 text-az-ink">
+            {formatPrice(event.ticketPrice, event.currency)}
+          </p>
+          <p className="az-caption mb-6 text-az-ink-muted">
+            {event.ticketPrice === 0 ? 'Free entry' : 'Per person'}
+          </p>
+
+          {event.status === 'cancelled' ? (
+            <div className="py-4 text-center">
+              <p className="az-body-strong text-az-error-400">This event has been cancelled</p>
+            </div>
+          ) : event.status === 'ended' ? (
+            <div className="py-4 text-center">
+              <p className="az-body text-az-ink-muted">This event has ended</p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => purchaseMutation.mutate()}
+              disabled={purchaseMutation.isPending}
+              className={`w-full rounded-az-control py-3 az-body-strong transition-all ${
+                // The flame fill is a light accent; its label needs the deep
+                // ink (6.03:1). The pending wash stays on the regular ink.
+                purchaseMutation.isPending
+                  ? 'bg-az-ink/20 text-az-ink'
+                  : 'bg-az-flame text-az-surface-root'
+              }`}
+            >
+              {purchaseMutation.isPending
+                ? 'Processing...'
+                : purchaseMutation.isSuccess
+                  ? 'CheckCircle Ticket Purchased!'
+                  : event.status === 'live'
+                    ? 'Purchase & Watch'
+                    : 'Get Ticket'}
+            </button>
+          )}
+
+          {purchaseMutation.isError && (
+            <p className="az-caption mt-3 text-center text-az-error-400">
+              {purchaseMutation.error instanceof Error
+                ? purchaseMutation.error.message
+                : 'Purchase failed'}
+            </p>
+          )}
+
+          {purchaseMutation.isSuccess && event.streamUrl && (
+            <motion.a
+              href={event.streamUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="az-body-strong mt-3 block rounded-az-control bg-az-success-500 py-3 text-center text-az-surface-root transition-all"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              Watch Now
+            </motion.a>
+          )}
+
+          <div className="az-caption mt-6 space-y-3 text-az-ink-muted">
+            <p>• Ticket grants access to live stream</p>
+            <p>• Post-event replay available for ticket holders</p>
+            <p>• No refunds for partial viewing</p>
+            <p>• Payment debited from wallet balance</p>
+          </div>
+        </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -275,8 +254,8 @@ export default function LiveEventDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

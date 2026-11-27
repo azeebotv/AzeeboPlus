@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Sentry Error Tracking Integration
  * AN-002: Add error tracking

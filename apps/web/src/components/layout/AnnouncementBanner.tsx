@@ -27,14 +27,14 @@ export default function AnnouncementBanner(): React.JSX.Element | null {
     <div
       role="status"
       data-testid="announcement-banner"
-      className="relative z-50 w-full bg-amber-500/10 border-b border-amber-500/30"
+      className="relative z-50 w-full bg-az-warning-500/10 border-b border-az-warning-500/30"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
-        <p className="text-sm font-medium text-amber-200">{message}</p>
+        <p className="text-sm font-medium text-az-warning-400">{message}</p>
         <button
           type="button"
           aria-label="Dismiss announcement"
-          className="shrink-0 rounded-full p-1 text-amber-200/70 transition hover:text-amber-200"
+          className="shrink-0 rounded-full p-1 text-az-warning-400/70 transition hover:text-az-warning-400"
           onClick={() => setDismissed(true)}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">

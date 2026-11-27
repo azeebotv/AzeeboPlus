@@ -1,7 +1,8 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { unwrapList } from '@/lib/payload';
+import { requireData, unwrapList } from '@/lib/payload';
 import type { LiveEventAdmin } from '@/lib/admin-types';
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
@@ -26,6 +27,7 @@ function formatDate(date: string) {
 }
 
 export default function LiveEventsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -45,11 +47,11 @@ export default function LiveEventsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'live-events', statusFilter],
     queryFn: async () => {
-      const res = await adminApi.listLiveEvents(statusFilter || undefined);
+      const data = requireData(await adminApi.listLiveEvents(statusFilter || undefined), null);
       // Upstream listEvents returns { items, total, page, limit, totalPages } —
       // but an upstream envelope drift must never crash the tree, so unwrap
       // through the shared guard instead of casting.
-      const { items, total } = unwrapList<LiveEventAdmin>(res.success ? res.data : null);
+      const { items, total } = unwrapList<LiveEventAdmin>(data);
       return { items, total: total ?? items.length };
     },
   });
@@ -330,9 +332,8 @@ export default function LiveEventsPage() {
                           </button>
                           {event.status !== 'cancelled' && event.status !== 'ended' && (
                             <button
-                              onClick={() => {
-                                if (
-                                  window.confirm(`Cancel "${event.title}" and refund all tickets?`)
+                              onClick={async () => {
+                                if (await confirm({ title: "Cancel Live Event", message: `Cancel "${event.title}" and refund all tickets?`, variant: "danger", isDualControl: true, dualControlNote: "Cancelling an event will trigger automatic ticket refunds." })
                                 ) {
                                   cancelMutation.mutate(event.id);
                                 }

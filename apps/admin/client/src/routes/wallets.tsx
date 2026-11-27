@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import { apiFetch } from '@/lib/api/base';
 import type { AdminWallet } from '@/lib/admin-types';
+import { requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 function getStatusStyle(status: string): { bg: string; color: string } {
@@ -35,13 +36,11 @@ export default function WalletsPage() {
     queryKey: ['admin', 'wallets', page],
     queryFn: async () => {
       const res = await adminApi.getWallets(page, 20);
-      if (res.success && res.data) {
-        const d = res.data as AdminWallet[] | { items: AdminWallet[]; total: number };
-        if (Array.isArray(d))
-          return { items: d as AdminWallet[], total: (d as AdminWallet[]).length };
-        return d as { items: AdminWallet[]; total: number };
-      }
-      return { items: [], total: 0 };
+      // requireData, not `return { items: [], total: 0 }`: that made the page's
+      // own isError branch unreachable, so a downed wallet service displayed as
+      // "no wallets on this page" instead of an outage.
+      const { items, total } = unwrapList<AdminWallet>(requireData(res, null));
+      return { items, total: total ?? items.length };
     },
   });
 

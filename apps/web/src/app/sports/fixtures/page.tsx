@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 
@@ -47,40 +47,15 @@ function FixturesPageContent(): React.JSX.Element {
   const error = fixturesQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader active="Sports" logoVariant="light" />
-
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20 overflow-hidden"
-        style={{
-          background:
-            'radial-gradient(ellipse at top, rgba(232,66,10,0.2) 0%, var(--bg-secondary) 60%, var(--bg-primary) 100%)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Schedules & Scores
-          </span>
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Fixtures & Results
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto mb-8"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Track all upcoming matches and recent results
-          </motion.p>
-
-          {/* Sport Filter */}
-          <div className="flex flex-wrap justify-center gap-2">
+    <PageShell activeNav="Sports" maxWidth="7xl">
+      <PageHero
+        eyebrow="Schedules & Scores"
+        eyebrowColor="var(--color-az-success-400)"
+        title="Fixtures & Results"
+        subtitle="Track all upcoming matches and recent results"
+        glowColor="color-mix(in srgb, var(--color-az-success-500) 16%, transparent)"
+        actions={
+          <div className="flex flex-wrap gap-2">
             {SPORTS.map((sport) => {
               const active = selectedSport === sport;
               return (
@@ -88,30 +63,25 @@ function FixturesPageContent(): React.JSX.Element {
                   key={sport}
                   type="button"
                   onClick={() => setSelectedSport(sport)}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                  aria-pressed={active}
+                  className={`az-body-strong shrink-0 whitespace-nowrap rounded-az-pill border px-5 py-2 transition-all ${
                     active
-                      ? 'text-white shadow-lg shadow-orange-500/20'
-                      : 'text-white/70 hover:text-white hover:bg-white/5'
+                      ? 'border-az-flame bg-az-scarlet/20 text-az-ink'
+                      : 'border-az-glass-border bg-az-glass-fill text-az-ink-muted hover:border-az-glass-border-hover'
                   }`}
-                  style={{
-                    backgroundColor: active
-                      ? 'var(--brand-orange, #E8420A)'
-                      : 'rgba(255,255,255,0.08)',
-                    border: `1px solid ${active ? 'var(--brand-orange, #E8420A)' : 'rgba(255,255,255,0.12)'}`,
-                  }}
                 >
                   {sport}
                 </button>
               );
             })}
           </div>
-        </div>
-      </section>
+        }
+      />
 
       {/* Fixtures Table */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section className="max-w-5xl mx-auto py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+          <h2 className="az-section-title text-az-ink mb-6 sm:mb-8">
             {selectedSport === 'All' ? 'All Fixtures' : selectedSport}
           </h2>
         </ScrollReveal>
@@ -138,7 +108,7 @@ function FixturesPageContent(): React.JSX.Element {
         ) : filtered.length > 0 ? (
           <div className="space-y-3">
             {/* Header */}
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-white/40 font-semibold uppercase">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-az-ink/40 font-semibold uppercase">
               <div className="col-span-2">Date</div>
               <div className="col-span-1">Sport</div>
               <div className="col-span-4">Home</div>
@@ -154,21 +124,19 @@ function FixturesPageContent(): React.JSX.Element {
                 transition={{ delay: index * 0.03 }}
               >
                 <div
-                  className="az-glass p-4 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-center"
-                  style={{
-                    border:
-                      fixture.status === 'live' ? '1px solid rgba(74,222,128,0.3)' : undefined,
-                  }}
+                  className={`az-glass p-4 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-center ${
+                    fixture.status === 'live' ? 'outline-2 outline-az-success-400/30' : ''
+                  }`}
                 >
                   <div className="sm:col-span-2">
-                    <span className="text-xs text-white/50">
+                    <span className="az-caption text-az-ink/50">
                       {new Date(fixture.date).toLocaleDateString('en-NG', {
                         weekday: 'short',
                         month: 'short',
                         day: 'numeric',
                       })}
                     </span>
-                    <span className="text-xs text-white/50 block sm:hidden">
+                    <span className="az-caption block sm:hidden text-az-ink/50">
                       {new Date(fixture.date).toLocaleTimeString('en-NG', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -176,26 +144,18 @@ function FixturesPageContent(): React.JSX.Element {
                     </span>
                   </div>
                   <div className="sm:col-span-1">
-                    <span
-                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                      style={{
-                        backgroundColor: 'rgba(13,59,46,0.3)',
-                        color: 'var(--color-success-400)',
-                      }}
-                    >
+                    <span className="az-micro-label rounded-az-pill bg-az-success-500/15 px-2 py-0.5 text-az-success-400">
                       {fixture.sport}
                     </span>
                   </div>
-                  <div className="sm:col-span-4 font-semibold text-white text-sm">
-                    {fixture.homeTeam}
-                  </div>
+                  <div className="sm:col-span-4 az-body-strong text-az-ink">{fixture.homeTeam}</div>
                   <div className="sm:col-span-2 text-center">
                     {fixture.homeScore != null && fixture.awayScore != null ? (
-                      <span className="text-lg font-bold text-white">
+                      <span className="text-lg font-bold text-az-ink">
                         {fixture.homeScore} - {fixture.awayScore}
                       </span>
                     ) : (
-                      <span className="text-xs text-white/40">
+                      <span className="az-caption text-az-ink/40">
                         {fixture.date
                           ? new Date(fixture.date).toLocaleTimeString('en-NG', {
                               hour: '2-digit',
@@ -206,27 +166,23 @@ function FixturesPageContent(): React.JSX.Element {
                     )}
                     {fixture.status === 'live' && (
                       <span
-                        className="ml-2 inline-block w-2 h-2 rounded-full animate-pulse"
-                        style={{ backgroundColor: 'var(--color-success-400)' }}
+                        className="ml-2 inline-block w-2 h-2 rounded-full animate-pulse bg-az-success-400"
+                        aria-hidden="true"
                       />
                     )}
                   </div>
-                  <div className="sm:col-span-3 font-semibold text-white text-sm">
-                    {fixture.awayTeam}
-                  </div>
+                  <div className="sm:col-span-3 az-body-strong text-az-ink">{fixture.awayTeam}</div>
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-white/50">No fixtures available</p>
+            <p className="az-lead text-az-ink/50">No fixtures available</p>
           </div>
         )}
       </section>
-
-      <AppFooter logoVariant="light" />
-    </div>
+    </PageShell>
   );
 }
 
@@ -236,8 +192,8 @@ export default function FixturesPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

@@ -4,12 +4,18 @@ export interface CorsOptions {
   allowedOrigins: string[];
   credentials?: boolean;
   maxAge?: number;
-  /** If true, allow requests without an Origin header (server-to-server). Default: true */
+  /**
+   * If true, CORS headers are also emitted for requests that carry no Origin
+   * header. Browsers always attach Origin to CORS-eligible requests, and
+   * same-origin traffic ignores CORS headers entirely, so the default of
+   * false keeps origin-less responses free of Access-Control-* headers.
+   * Default: false
+   */
   allowMissingOrigin?: boolean;
 }
 
 export function configureCors(app: INestApplication, options: CorsOptions): void {
-  const { allowedOrigins, credentials = true, maxAge = 3600, allowMissingOrigin = true } = options;
+  const { allowedOrigins, credentials = true, maxAge = 3600, allowMissingOrigin = false } = options;
 
   const validatedOrigins = allowedOrigins.map((origin) => {
     if (origin === '*') {
@@ -33,14 +39,11 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
       callback: (err: Error | null, allow?: boolean) => void
     ) => {
       if (!origin) {
-        // Allow requests without origin (server-to-server, curl, etc.)
-        // when allowMissingOrigin is true (default). Set to false for
-        // user-facing endpoints to prevent CORS bypass.
-        if (allowMissingOrigin) {
-          callback(null, true);
-        } else {
-          callback(new Error('CORS: Missing Origin header — not allowed for this endpoint'));
-        }
+        // No hard rejection here: health probes and same-origin GETs legitimately
+        // omit Origin, and CORS is browser-enforced anyway. Simply withholding the
+        // Access-Control-* headers keeps origin-less responses from advertising
+        // cross-origin credentialed access.
+        callback(null, allowMissingOrigin);
         return;
       }
 
@@ -67,7 +70,10 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
       'X-Correlation-Id',
       'X-CSRF-Token',
       'Idempotency-Key',
-      'X-Feature-Flag',
+      // The web app keys anonymous feature-flag rollout buckets with this id
+      // (GET /feature-flags/bootstrap); omitting it fails the preflight, so the
+      // whole flag bootstrap is blocked in the browser rather than degrading.
+      'X-Anonymous-Id',
       'Accept',
       'Origin',
     ],

@@ -105,7 +105,7 @@ export default function CinemaxisUniverseHome() {
               <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
                 Featured Films
               </Text>
-              <TouchableOpacity onPress={() => router.push('/movies')}>
+              <TouchableOpacity accessibilityRole="button" onPress={() => router.push('/movies')}>
                 <Text style={styles.seeAll}>See All</Text>
               </TouchableOpacity>
             </View>

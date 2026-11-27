@@ -10,7 +10,7 @@ interface AmbientGlowProps {
 }
 
 export function AmbientGlow({
-  color = 'rgba(204,28,28,0.35)',
+  color = 'rgba(227, 30, 36,0.35)',
   size = 400,
   className = '',
   animate = true,

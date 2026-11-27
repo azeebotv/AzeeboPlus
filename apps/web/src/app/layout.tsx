@@ -1,9 +1,11 @@
+import { getPublicBaseUrl } from '@azeebo/shared-types';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import { FlagsProvider } from '../context/FlagsContext';
 import { WalletProvider } from '../context/WalletContext';
 import { MaintenanceGate } from '../components/layout/MaintenanceGate';
+import { UniverseGate } from '../components/layout/UniverseGate';
 import AnnouncementBanner from '../components/layout/AnnouncementBanner';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -16,24 +18,34 @@ import { OfflineBanner, NetworkProvider } from '../components/ui/OfflineIndicato
 import { OfflineProvider } from '../context/OfflineContext';
 import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration';
 import { WebVitalsInit } from '../components/WebVitalsInit';
+import { PageViewTracker } from '../components/PageViewTracker';
+import { Suspense } from 'react';
 
-import { Inter, Montserrat } from 'next/font/google';
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['600', '700', '800', '900'],
-  variable: '--font-display-base',
-});
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/montserrat/600.css';
+import '@fontsource/montserrat/700.css';
+import '@fontsource/montserrat/800.css';
+import '@fontsource/montserrat/900.css';
+
+// AUD-06: the middleware CSP is nonce-based, and nonces only work when HTML
+// is rendered per request — prerendered (SSG/ISR) HTML is baked at build time
+// without nonce attributes, so `script-src` would block every script on it.
+// Cascades to all routes under this root layout (override per segment only if
+// a route is later proven to need no scripts).
+export const dynamic = 'force-dynamic';
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: 'var(--brand-near-black)',
+  themeColor: 'var(--color-az-surface-root)',
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
+  metadataBase: new URL(getPublicBaseUrl()),
   title: {
     default: 'Azeebo+ - Premium Content Streaming',
     template: '%s | Azeebo+',
@@ -93,8 +105,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
-        className={`${inter.variable} ${montserrat.variable} min-h-screen`}
-        style={{ backgroundColor: 'var(--hp-bg)', color: 'var(--text-primary)' }}
+        className="min-h-screen"
+        style={{ backgroundColor: 'var(--color-az-surface-root)', color: 'var(--text-primary)' }}
       >
         <a href="#main-content" className="skip-link">
           Skip to main content
@@ -112,13 +124,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                             <KeyboardNavigationProvider>
                               <ServiceWorkerRegistration />
                               <WebVitalsInit />
+                              <Suspense fallback={null}>
+                                <PageViewTracker />
+                              </Suspense>
                               <OfflineBanner />
                               <AnnouncementBanner />
                               <CookieConsent />
                               <MaintenanceGate>
-                                <main id="main-content" role="main">
-                                  {children}
-                                </main>
+                                <UniverseGate>
+                                  <main id="main-content" role="main">
+                                    {children}
+                                  </main>
+                                </UniverseGate>
                               </MaintenanceGate>
                             </KeyboardNavigationProvider>
                           </ToastProvider>

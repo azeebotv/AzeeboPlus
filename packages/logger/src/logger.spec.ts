@@ -66,6 +66,32 @@ describe('StructuredLogger', () => {
     jest.restoreAllMocks();
   });
 
+  describe('PII redaction', () => {
+    it('redacts emails and phone numbers in the message before emission', () => {
+      logger.log('user alice@example.com dialed +2348012345678');
+
+      const output = JSON.parse(consoleSpy.log.mock.calls[0][0]);
+      expect(output.message).not.toContain('alice@example.com');
+      expect(output.message).not.toContain('+2348012345678');
+      expect(output.message).toContain('***@***.***');
+    });
+
+    it('redacts sensitive values inside context objects', () => {
+      logger.log('admin action', { email: 'bob@example.com', token: 'supersecret' });
+
+      const output = JSON.parse(consoleSpy.log.mock.calls[0][0]);
+      expect(JSON.stringify(output)).not.toContain('bob@example.com');
+      expect(output.email).toContain('***');
+    });
+
+    it('leaves clean messages untouched', () => {
+      logger.log('healthy heartbeat');
+
+      const output = JSON.parse(consoleSpy.log.mock.calls[0][0]);
+      expect(output.message).toBe('healthy heartbeat');
+    });
+  });
+
   describe('log', () => {
     it('should output structured JSON log', () => {
       logger.log('Hello world');

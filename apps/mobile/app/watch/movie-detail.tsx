@@ -6,6 +6,7 @@ import { contentApi, type ContentItem } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function MovieDetailScreen() {
   const colorScheme = useColorScheme();
@@ -96,7 +97,7 @@ export default function MovieDetailScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text
@@ -104,7 +105,7 @@ export default function MovieDetailScreen() {
         >
           Movie
         </Text>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
           <Text style={styles.shareIcon}>↗</Text>
         </TouchableOpacity>
       </View>
@@ -113,7 +114,7 @@ export default function MovieDetailScreen() {
         <Image source={{ uri: movie.thumbnail }} style={styles.heroImage} />
         {isPlaying ? (
           <View style={styles.playerControls}>
-            <TouchableOpacity style={styles.controlButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.controlButton}>
               <Text style={styles.controlIcon}>⏸</Text>
             </TouchableOpacity>
             <View style={styles.progressBar}>
@@ -122,7 +123,7 @@ export default function MovieDetailScreen() {
             <Text style={styles.timeText}>01:23:45 / 02:34:00</Text>
           </View>
         ) : (
-          <TouchableOpacity style={styles.playButton} onPress={() => setIsPlaying(true)}>
+          <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={() => setIsPlaying(true)}>
             <Text style={styles.playIcon}>▶</Text>
           </TouchableOpacity>
         )}
@@ -147,7 +148,7 @@ export default function MovieDetailScreen() {
       </View>
 
       <View style={styles.actionsSection}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
           <Text style={styles.actionIcon}>🎬</Text>
           <Text
             style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
@@ -155,7 +156,7 @@ export default function MovieDetailScreen() {
             Play
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
           <Text style={styles.actionIcon}>📖</Text>
           <Text
             style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
@@ -163,7 +164,7 @@ export default function MovieDetailScreen() {
             Watchlist
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
           <Text style={styles.actionIcon}>⭐</Text>
           <Text
             style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
@@ -171,7 +172,7 @@ export default function MovieDetailScreen() {
             Rate
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.actionButton}>
           <Text style={styles.actionIcon}>👥</Text>
           <Text
             style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 2,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   timeText: {
     color: '#fff',
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

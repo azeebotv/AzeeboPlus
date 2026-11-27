@@ -1,6 +1,6 @@
 import { Inject, Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard, Public } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, gamesFlags } from '@azeebo/feature-flags';
 
 import { GamesService } from './games.service.js';
@@ -19,6 +19,7 @@ export class GamesController {
     @Inject(GameRealtimeService) private readonly realtimeService: GameRealtimeService
   ) {}
 
+  @Public()
   @Get('home')
   @Get('featured')
   @UseGuards(RateLimitGuard)
@@ -29,6 +30,7 @@ export class GamesController {
     return this.gamesService.getHome();
   }
 
+  @Public()
   @Get('trending')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -38,6 +40,7 @@ export class GamesController {
     return this.gamesService.getHome();
   }
 
+  @Public()
   @Get('trivia')
   @UseGuards(FeatureFlagGuard, RateLimitGuard)
   @FeatureFlag(gamesFlags.triviaAi)
@@ -109,6 +112,7 @@ export class GamesController {
     return this.gamesService.submitAnswer(req.user.id, sessionId, body.answer);
   }
 
+  @Public()
   @Get('leaderboard')
   @UseGuards(FeatureFlagGuard, RateLimitGuard)
   @FeatureFlag(gamesFlags.leaderboardsSeasonal)
@@ -120,6 +124,7 @@ export class GamesController {
     return this.gamesService.getLeaderboard();
   }
 
+  @Public()
   @Get('tournaments')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)

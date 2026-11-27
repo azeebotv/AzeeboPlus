@@ -17,6 +17,7 @@ import { authApi } from '@azeebo/react-data';
 import { PasswordInput } from '../../src/components/PasswordInput';
 import { PasswordStrengthMeter } from '../../src/components/PasswordStrengthMeter';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Reset Password Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -150,7 +151,7 @@ export default function ResetPasswordScreen() {
             <View style={styles.footer}>
               <Text style={styles.footerText}>Remember your password?</Text>
               <Link href="/(auth)/login" asChild>
-                <TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button">
                   <Text style={styles.loginLink}> Sign In</Text>
                 </TouchableOpacity>
               </Link>
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
     marginBottom: 24,
   },
   title: {
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resetButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginLink: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
     fontWeight: '600',
   },

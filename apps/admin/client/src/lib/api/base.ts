@@ -276,63 +276,6 @@ export async function apiFetch<T>(
   }
 }
 
-export function getToken(): string | null {
-  // Check cookie first, fall back to localStorage for backward compat
-  return (
-    getCookie('access_token') ||
-    (typeof window !== 'undefined' ? localStorage.getItem(USER_KEY + '_token') : null)
-  );
-}
-
-export async function setAuthCookies(accessToken: string, refreshToken: string): Promise<void> {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(USER_KEY + '_token', accessToken);
-  }
-  try {
-    const res = await fetch('/api/v1/auth/cookie', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
-      credentials: 'include',
-    });
-    if (!res.ok) throw new Error(`cookie set failed: ${res.status}`);
-  } catch {
-    // Cookie set failed — fallback to localStorage for this session
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(USER_KEY + '_token', accessToken);
-    }
-  }
-}
-
-export function setToken(token: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(USER_KEY + '_token', token);
-  }
-}
-
-export function setRefreshToken(token: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(USER_KEY + '_refresh_token', token);
-  }
-}
-
-export function setUser(user: User): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  }
-}
-
-export function getUser(): User | null {
-  if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as User;
-  } catch {
-    return null;
-  }
-}
-
 export async function clearSession(): Promise<void> {
   // Clear httpOnly cookies via API
   try {
@@ -343,7 +286,8 @@ export async function clearSession(): Promise<void> {
   } catch {
     // Cookie clear failed
   }
-  // Also clear localStorage fallback
+  // Expire the mirrors older builds wrote; the session itself now lives only
+  // in the httpOnly cookie pair.
   if (typeof window !== 'undefined') {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(USER_KEY + '_token');

@@ -15,7 +15,7 @@ name: Federation Drill
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [Dev-Branch]
     paths:
       - 'scripts/database/**'
       - '.github/workflows/federation-drill.yml'
@@ -51,7 +51,7 @@ jobs:
           --health-retries 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Install postgres client tools
         run: |
@@ -69,8 +69,11 @@ jobs:
           for db in azeebo_auth azeebo_wallet azeebo_content azeebo_notification azeebo_payment azeebo_moderation azeebo_creator; do
             psql -h "$PGHOST" -U "$SUPERUSER" -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$db\" OWNER \"azeebo\""
             # fixture is idempotent and applied to every service DB; each DB
-            # only "uses" the tables it owns (extras are harmless).
-            psql -h "$PGHOST" -U "$SUPERUSER" -d "$db" -v ON_ERROR_STOP=1 -f scripts/database/ci/drill-fixture.sql
+            # only "uses" the tables it owns (extras are harmless). Applied as
+            # azeebo, not the superuser: the drill connects as azeebo and
+            # mutates the fixture tables (DELETE/ALTER), which PG ownership
+            # rules only allow for the role that created them.
+            PGPASSWORD=azeebo_ci_pw psql -h "$PGHOST" -U azeebo -d "$db" -v ON_ERROR_STOP=1 -f scripts/database/ci/drill-fixture.sql
           done
           psql -h "$PGHOST" -U "$SUPERUSER" -d postgres -tAc "CREATE DATABASE azeebo_admin OWNER \"azeebo\"" || true
 
@@ -88,8 +91,8 @@ jobs:
 
       - name: Upload drill output on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: federation-drill-output
           path: /tmp/federation-drill-heal-*.log
-        if-no-files-found: ignore
+          if-no-files-found: ignore

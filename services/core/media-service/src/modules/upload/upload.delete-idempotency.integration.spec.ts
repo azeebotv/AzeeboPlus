@@ -1,10 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  INestApplication,
-  CanActivate,
-  ExecutionContext,
-  VersioningType,
-} from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { UploadModule } from '../upload/upload.module';
 import { S3Service } from '../upload/s3.service';
@@ -14,6 +9,7 @@ import { FileValidationService } from '../../common/services/file-validation.ser
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { FeatureFlagGuard, FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
+import { EventBusModule, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 
 /**
@@ -100,11 +96,26 @@ class MockAdminGuard implements CanActivate {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         UploadModule,
+        // UploadModule declares ErasureConsumerService (injects EVENT_BUS_SERVICE).
+        // EventBusModule is @Global() and app.module registers it; a spec that
+        // imports UploadModule alone is outside that scope, so DI fails before
+        // any of these tests run — including when S3_INTEGRATION opts them in.
+        EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'media-service-test', {
+          enableEnhanced: false,
+        }),
         // Global FeatureFlagModule registration mirrors app.module; the stub
         // redis keeps the real (overridden below) service from connecting.
         FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
       ],
     })
+      // subscribe() must return a promise: the consumer chains .catch() on it.
+      .overrideProvider(EVENT_BUS_SERVICE)
+      .useValue({
+        subscribe: jest.fn().mockResolvedValue(undefined),
+        unsubscribe: jest.fn().mockResolvedValue(undefined),
+        publish: jest.fn().mockResolvedValue(undefined),
+        disconnect: jest.fn().mockResolvedValue(undefined),
+      })
       .overrideProvider(RedisService)
       .useValue({ get: jest.fn(), set: jest.fn(), del: jest.fn(), keys: jest.fn() })
       .overrideProvider(PrismaService)
@@ -215,21 +226,19 @@ class MockAdminGuard implements CanActivate {
     it('raises the circuit-open rejection from a real S3Service on a dead endpoint', async () => {
       // A REAL S3Service pointed at a dead port: connection failures trip
       // the circuit breaker exactly like a production outage.
-      const deadS3 = new S3Service(
-        {
-          get: (key: string) => {
-            const cfg: Record<string, string> = {
-              AWS_REGION: 'us-east-1',
-              AWS_S3_BUCKET: BUCKET,
-              S3_ENDPOINT: 'http://127.0.0.1:1', // reserved port ⇒ refused
-              AWS_ACCESS_KEY_ID: 'dead',
-              AWS_SECRET_ACCESS_KEY: 'dead',
-              CDN_URL: '',
-            };
-            return cfg[key];
-          },
-        } as never
-      );
+      const deadS3 = new S3Service({
+        get: (key: string) => {
+          const cfg: Record<string, string> = {
+            AWS_REGION: 'us-east-1',
+            AWS_S3_BUCKET: BUCKET,
+            S3_ENDPOINT: 'http://127.0.0.1:1', // reserved port ⇒ refused
+            AWS_ACCESS_KEY_ID: 'dead',
+            AWS_SECRET_ACCESS_KEY: 'dead',
+            CDN_URL: '',
+          };
+          return cfg[key];
+        },
+      } as never);
 
       const deadKey = 'uploads/it-dead-store.txt';
 
@@ -258,9 +267,20 @@ class MockAdminGuard implements CanActivate {
       const moduleFixture: TestingModule = await Test.createTestingModule({
         imports: [
           UploadModule,
+          // Same global registration as above; this second app needs it too.
+          EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'media-service-test', {
+            enableEnhanced: false,
+          }),
           FeatureFlagModule.register({ global: true, redis: { quit: jest.fn() } as never }),
         ],
       })
+        .overrideProvider(EVENT_BUS_SERVICE)
+        .useValue({
+          subscribe: jest.fn().mockResolvedValue(undefined),
+          unsubscribe: jest.fn().mockResolvedValue(undefined),
+          publish: jest.fn().mockResolvedValue(undefined),
+          disconnect: jest.fn().mockResolvedValue(undefined),
+        })
         .overrideProvider(RedisService)
         .useValue({ get: jest.fn(), set: jest.fn(), del: jest.fn(), keys: jest.fn() })
         .overrideProvider(PrismaService)
@@ -326,8 +346,9 @@ class MockAdminGuard implements CanActivate {
       for (let i = 0; i < 5; i++) {
         await deadS3.getFileMetadata('uploads/circuit-probe.txt').catch(() => undefined);
       }
-      expect((deadS3 as unknown as { circuitBreaker: { isOpen(): boolean } }).circuitBreaker.isOpen())
-        .toBe(true);
+      expect(
+        (deadS3 as unknown as { circuitBreaker: { isOpen(): boolean } }).circuitBreaker.isOpen()
+      ).toBe(true);
 
       const res = await request(deadBaseUrl)
         // URI versioning is enabled (mirrors main.ts) ⇒ /v1 prefix, and the

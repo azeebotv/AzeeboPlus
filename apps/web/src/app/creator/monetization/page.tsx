@@ -90,7 +90,7 @@ export default function MonetizationPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
         <div className="max-w-3xl mx-auto py-20 px-4 space-y-6">
           <Skeleton className="h-12 w-48 rounded-2xl" />
           <Skeleton className="h-44 w-full rounded-3xl" />
@@ -106,7 +106,7 @@ export default function MonetizationPage(): React.JSX.Element {
 
   if (error || !monetization) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
         <div className="max-w-md mx-auto py-20 px-4">
           <ErrorState
             title="Failed to load monetization"
@@ -119,7 +119,7 @@ export default function MonetizationPage(): React.JSX.Element {
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Revenue Architecture"
         title="Monetization Engine"
@@ -129,14 +129,14 @@ export default function MonetizationPage(): React.JSX.Element {
       <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Eligibility Banner */}
         <ScrollReveal>
-          <div className="az-glass p-6 sm:p-7 rounded-3xl border border-white/10">
+          <div className="az-glass p-6 sm:p-7 border border-az-glass-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-4">
                 <div
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                     monetization.eligibility.isEligible
-                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
-                      : 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
+                      ? 'bg-az-success-500/15 border border-az-success-500/30 text-az-success-400'
+                      : 'bg-az-warning-500/15 border border-az-warning-500/30 text-az-warning-400'
                   }`}
                 >
                   {monetization.eligibility.isEligible ? (
@@ -146,12 +146,12 @@ export default function MonetizationPage(): React.JSX.Element {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-bold text-az-ink">
                     {monetization.eligibility.isEligible
                       ? 'Certified for Platform Monetization'
                       : 'Monetization In Review'}
                   </h3>
-                  <p className="text-xs text-white/50 mt-0.5">
+                  <p className="text-xs text-az-ink/50 mt-0.5">
                     {monetization.eligibility.isEligible
                       ? 'Your studio receives active creator rev-shares and super tip payouts.'
                       : 'Complete the threshold requirements below to unlock creator revenue.'}
@@ -161,8 +161,8 @@ export default function MonetizationPage(): React.JSX.Element {
               <span
                 className={`text-[10px] font-mono uppercase px-3 py-1 rounded-full border self-start sm:self-center ${
                   monetization.eligibility.isEligible
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
+                    : 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
                 }`}
               >
                 {monetization.eligibility.isEligible ? 'Active Partner' : 'Pending'}
@@ -170,13 +170,13 @@ export default function MonetizationPage(): React.JSX.Element {
             </div>
 
             {monetization.eligibility.requirements.length > 0 && (
-              <div className="pt-4 border-t border-white/5 space-y-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-white/40 block">
+              <div className="pt-4 border-t border-az-ink/5 space-y-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40 block">
                   Outstanding Milestones:
                 </span>
                 {monetization.eligibility.requirements.map((req, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-amber-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <div key={i} className="flex items-center gap-2 text-xs text-az-warning-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-az-warning-400" />
                     {req}
                   </div>
                 ))}
@@ -193,34 +193,34 @@ export default function MonetizationPage(): React.JSX.Element {
                 label: 'Total Earned',
                 value: `₦${monetization.earnings.totalEarned.toLocaleString()}`,
                 icon: DollarSign,
-                color: 'text-[var(--brand-orange)]',
+                color: 'text-[var(--color-az-flame)]',
               },
               {
                 label: 'Pending Payout',
                 value: `₦${monetization.earnings.pendingPayout.toLocaleString()}`,
                 icon: Clock,
-                color: 'text-amber-400',
+                color: 'text-az-warning-400',
               },
               {
                 label: 'Settled to Bank',
                 value: `₦${monetization.earnings.paidOut.toLocaleString()}`,
                 icon: Wallet,
-                color: 'text-emerald-400',
+                color: 'text-az-success-400',
               },
             ].map((item) => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.label}
-                  className="az-glass p-6 rounded-2xl border border-white/10 hover:border-white/20 transition-all text-center"
+                  className="az-glass p-6 border border-az-glass-border transition-all text-center"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-az-glass-fill border border-az-glass-border flex items-center justify-center mx-auto mb-3">
                     <Icon className={`w-4 h-4 ${item.color}`} />
                   </div>
-                  <p className="text-[11px] font-mono uppercase tracking-wider text-white/40 mb-1">
+                  <p className="text-[11px] font-mono uppercase tracking-wider text-az-ink/40 mb-1">
                     {item.label}
                   </p>
-                  <p className="text-2xl font-extrabold text-white tracking-tight">{item.value}</p>
+                  <p className="text-2xl font-extrabold text-az-ink tracking-tight">{item.value}</p>
                 </div>
               );
             })}
@@ -229,12 +229,12 @@ export default function MonetizationPage(): React.JSX.Element {
 
         {/* Toggles & Settings */}
         <ScrollReveal delay={0.2}>
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10">
-            <h2 className="text-base font-bold text-white mb-6 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[var(--brand-orange)]" />
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+            <h2 className="text-base font-bold text-az-ink mb-6 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[var(--color-az-flame)]" />
               Creator Revenue Channels
             </h2>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-az-ink/5">
               {[
                 {
                   key: 'enableSuperTips',
@@ -251,13 +251,10 @@ export default function MonetizationPage(): React.JSX.Element {
                   monetization.settings[setting.key as keyof typeof monetization.settings]
                 );
                 return (
-                  <div
-                    key={setting.key}
-                    className="py-4 flex items-center justify-between gap-4"
-                  >
+                  <div key={setting.key} className="py-4 flex items-center justify-between gap-4">
                     <div>
-                      <h4 className="text-sm font-semibold text-white">{setting.label}</h4>
-                      <p className="text-xs text-white/50 mt-0.5">{setting.desc}</p>
+                      <h4 className="text-sm font-semibold text-az-ink">{setting.label}</h4>
+                      <p className="text-xs text-az-ink/50 mt-0.5">{setting.desc}</p>
                     </div>
                     <button
                       type="button"
@@ -265,13 +262,13 @@ export default function MonetizationPage(): React.JSX.Element {
                       aria-checked={isChecked}
                       onClick={() => toggleSetting.mutate({ key: setting.key, value: !isChecked })}
                       className={`w-12 h-7 rounded-full p-1 transition-colors relative flex-shrink-0 ${
-                        isChecked ? 'bg-[var(--brand-orange)]' : 'bg-white/10'
+                        isChecked ? 'bg-[var(--color-az-flame)]' : 'bg-az-glass-card'
                       }`}
                     >
                       <motion.div
                         layout
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className={`w-5 h-5 rounded-full bg-white shadow-md ${
+                        className={`w-5 h-5 rounded-full bg-az-ink shadow-md ${
                           isChecked ? 'ml-auto' : 'ml-0'
                         }`}
                       />

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   BackHandler,
   DeviceEventEmitter,
+  Image,
 } from 'react-native';
 import { VideoView } from 'expo-video';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,6 +17,7 @@ import { useTVVideoPlayer } from '../../src/hooks/useTVVideoPlayer';
 import { useFlags } from '@azeebo/react-data/contexts/FlagsContext';
 import { tvFlags } from '@azeebo/feature-flags/registries';
 import { contentApi, type ContentItem } from '@azeebo/react-data';
+import { FocusableButton } from '../../src/components/Focusable';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors, tvTypography, tvSpacing, tvRadius } from '../../src/theme';
@@ -42,6 +44,10 @@ export default function TVWatchScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [audioTrack, setAudioTrack] = useState('English (Dolby Atmos)');
+  const [subtitleTrack, setSubtitleTrack] = useState('English [CC]');
+  const [quality, setQuality] = useState('4K Ultra HD');
   // Timestamp of the last user interaction (any remote key or surface press).
   // The auto-hide timer depends on THIS, not on currentTime — depending on the
   // clock tore the 4s timer down every second and hid controls mid-lookup.
@@ -174,6 +180,14 @@ export default function TVWatchScreen() {
         accessibilityRole="button"
         accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
       >
+        {content.thumbnail ? (
+          <Image
+            source={{ uri: content.thumbnail }}
+            style={StyleSheet.absoluteFill}
+            blurRadius={40}
+            resizeMode="cover"
+          />
+        ) : null}
         <VideoView
           style={StyleSheet.absoluteFill}
           player={player}
@@ -193,13 +207,67 @@ export default function TVWatchScreen() {
       {showControls && (
         <View style={styles.controlsOverlay} pointerEvents="box-none">
           <View style={styles.topBar}>
-            <Text style={styles.title} numberOfLines={1}>
-              {content.title}
-            </Text>
-            {content.universe?.name ? (
-              <Text style={styles.universe}>{content.universe.name}</Text>
-            ) : null}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title} numberOfLines={1}>
+                {content.title}
+              </Text>
+              {content.universe?.name ? (
+                <Text style={styles.universe}>{content.universe.name}</Text>
+              ) : null}
+            </View>
+            <FocusableButton
+              title={showDrawer ? '✕ Close Settings' : '⚙ Audio & Subtitles'}
+              variant="secondary"
+              onPress={() => setShowDrawer((prev) => !prev)}
+            />
           </View>
+
+          {/* ── Audio, Subtitle & Quality Drawer ── */}
+          {showDrawer && (
+            <View style={styles.settingsDrawer}>
+              <View style={styles.drawerSection}>
+                <Text style={styles.drawerSectionTitle}>AUDIO TRACK</Text>
+                <View style={styles.optionsRow}>
+                  {['English (Dolby Atmos)', 'Yoruba', 'Igbo', 'Hausa', 'Pidgin'].map((lang) => (
+                    <FocusableButton
+                      key={lang}
+                      title={lang}
+                      variant={audioTrack === lang ? 'primary' : 'secondary'}
+                      onPress={() => setAudioTrack(lang)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.drawerSection}>
+                <Text style={styles.drawerSectionTitle}>SUBTITLES [CC]</Text>
+                <View style={styles.optionsRow}>
+                  {['Off', 'English [CC]', 'French', 'Swahili'].map((sub) => (
+                    <FocusableButton
+                      key={sub}
+                      title={sub}
+                      variant={subtitleTrack === sub ? 'primary' : 'secondary'}
+                      onPress={() => setSubtitleTrack(sub)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.drawerSection}>
+                <Text style={styles.drawerSectionTitle}>STREAM QUALITY</Text>
+                <View style={styles.optionsRow}>
+                  {['Auto (4K)', '4K Ultra HD', '1080p FHD', '720p HD'].map((q) => (
+                    <FocusableButton
+                      key={q}
+                      title={q}
+                      variant={quality === q ? 'primary' : 'secondary'}
+                      onPress={() => setQuality(q)}
+                    />
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
 
           <View style={styles.bottomBar} pointerEvents="none">
             <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
@@ -212,6 +280,7 @@ export default function TVWatchScreen() {
           <View style={styles.hintBar} pointerEvents="none">
             <Text style={styles.hintText}>◉ Play/Pause</Text>
             <Text style={styles.hintText}>◀ ▶ Seek 10s</Text>
+            <Text style={styles.hintText}>⚙ CC: {subtitleTrack}</Text>
             <Text style={styles.hintText}>⎋ Back to exit</Text>
           </View>
         </View>
@@ -241,6 +310,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: tvSpacing.xxl,
     paddingVertical: tvSpacing.lg,
     backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  titleContainer: {
+    flex: 1,
+    marginRight: tvSpacing.lg,
+  },
+  settingsDrawer: {
+    backgroundColor: 'rgba(15, 12, 20, 0.95)',
+    marginHorizontal: tvSpacing.xxl,
+    padding: tvSpacing.lg,
+    borderRadius: tvRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    gap: tvSpacing.md,
+  },
+  drawerSection: {
+    gap: tvSpacing.xs,
+  },
+  drawerSectionTitle: {
+    color: colors.text.secondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: tvSpacing.sm,
   },
   title: {
     color: colors.text.primary,

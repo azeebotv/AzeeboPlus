@@ -3,45 +3,120 @@ const prettierPlugin = require('eslint-plugin-prettier');
 const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
 const noHexColors = require('./packages/eslint-rules/no-hex-colors');
+const noArbitraryHexClass = require('./packages/eslint-rules/no-arbitrary-hex-class');
+const noDeadClassOverride = require('./packages/eslint-rules/no-dead-class-override');
+const noRetiredBrandAlias = require('./packages/eslint-rules/no-retired-brand-alias');
+const noOffSystemColorUtility = require('./packages/eslint-rules/no-off-system-color-utility');
+const noUndefinedAzUtility = require('./packages/eslint-rules/no-undefined-az-utility');
+const noLowContrastPair = require('./packages/eslint-rules/no-low-contrast-pair');
+const requireSharedRouteBoundary = require('./packages/eslint-rules/require-shared-route-boundary');
 const noConsoleLog = require('./packages/eslint-rules/no-console-log');
 const requireMapAndThrow = require('./packages/eslint-rules/require-map-and-throw');
 
 /**
  * Central no-hex-colors allow-list — the brand/design-system palette that is
- * intentional as a raw literal. Shared by the base config (error) and the
- * apps/web migrating block (warn) below, so a flat-config override can never
- * accidentally drop the list. Register NEW palette colors here, not inline.
+ * intentional as a raw literal. The rule is configured once, at `error`, in the
+ * base block below, so every app and service shares this list and a stray
+ * override can never drop it. Register NEW palette colors here, not inline.
  */
 const HEX_ALLOW_LIST = [
-  '#000000', '#FFFFFF', '#00000000',
-  // Brand colors
-  '#E8420A', '#1A0A0A', '#F5F0EB', '#9A8A7A',
-  '#E5E4E2', '#555', '#000', '#fff',
-  '#a855f7', '#2A1A1A',
-  '#14532D', '#B91C1C', '#1E40AF',
-  '#F5F5F5', '#E0E0E0', '#757575',
-  '#424242', '#212121', '#F44336', '#2196F3',
-  '#4CAF50', '#FF9800', '#9C27B0',
+  '#000000',
+  '#FFFFFF',
+  '#00000000',
+  // Brand colors — `#E8420A`/`#CC1C1C`/`#FF6B35` are the RETIRED accent. They
+  // survive only in the internal consoles and the fixtures below; RETIRED_ACCENT
+  // re-bans them everywhere else, ahead of this list. New code must not use
+  // them at all.
+  '#E8420A',
+  '#1A0A0A',
+  '#F5F0EB',
+  '#9A8A7A',
+  '#E5E4E2',
+  '#555',
+  '#000',
+  '#fff',
+  '#a855f7',
+  '#2A1A1A',
+  '#14532D',
+  '#B91C1C',
+  '#1E40AF',
+  '#F5F5F5',
+  '#E0E0E0',
+  '#757575',
+  '#424242',
+  '#212121',
+  '#F44336',
+  '#2196F3',
+  '#4CAF50',
+  '#FF9800',
+  '#9C27B0',
   // Additional design system colors
-  '#06b6d4', '#1A1A1A', '#1E90FF', '#32CD32',
-  '#4ade80', '#607D8B', '#8b5cf6',
-  '#A78BFA', '#C0C0C0', '#C41E3A', '#CC1C1C',
-  '#CD7F32', '#D1D5DB', '#D97706', '#EC4899',
-  '#FF6B35', '#FFD700',
+  '#06b6d4',
+  '#1A1A1A',
+  '#1E90FF',
+  '#32CD32',
+  '#4ade80',
+  '#607D8B',
+  '#8b5cf6',
+  '#A78BFA',
+  '#C0C0C0',
+  '#C41E3A',
+  '#CC1C1C',
+  '#CD7F32',
+  '#D1D5DB',
+  '#D97706',
+  '#EC4899',
+  '#FF6B35',
+  '#FFD700',
   '#fbbf24',
   // Third-party social brand colors
-  '#1DA1F2', '#1877F2', '#25D366',
+  '#1DA1F2',
+  '#1877F2',
+  '#25D366',
   // Dashboard/analytics colors
-  '#10B981', '#F59E0B', '#3B82F6', '#EF4444',
-  '#10B98120', '#F59E0B20',
+  '#10B981',
+  '#F59E0B',
+  '#3B82F6',
+  '#EF4444',
+  '#10B98120',
+  '#F59E0B20',
   '#6B7280',
   // Creator app theme colors
-  '#140808', '#0D0505', '#6A5A4A', '#6B5A4A',
+  '#140808',
+  '#0D0505',
+  '#6A5A4A',
+  '#6B5A4A',
   '#0D3B2E',
   // Semantic state accents (success/sky variants, see
   // --color-success-500 and the dashboard palette).
-  '#34D399', '#38BDF8', '#22c55e',
+  '#34D399',
+  '#38BDF8',
+  '#22c55e',
 ];
+
+/**
+ * The retired accent pair. apps/web, apps/mobile and apps/tv are fully off them,
+ * so the rule reports them anywhere except the paths below — the internal
+ * consoles (apps/admin, apps/creator) still hardcode them and are outside the
+ * public-page rollout, and scripts/** has to keep tolerating them because the
+ * rule's own unit tests quote the retired hexes as fixtures. Exemptions are
+ * matched against the absolute filename so they hold whether ESLint runs from
+ * the repo root or from a workspace.
+ */
+const RETIRED_ACCENT = ['#E8420A', '#CC1C1C', '#FF6B35'];
+const RETIRED_ACCENT_EXEMPT = ['/apps/admin/', '/apps/creator/', '/scripts/'];
+
+/**
+ * The pre-design-system alias layer that `globals.css` still defines for the
+ * internal consoles. The map lives with the rule (`DEFAULT_ALIASES`) so the
+ * severity configured here and the map the rule falls back to cannot drift: an
+ * edit to a local copy would change what ESLint enforces while the rule's own
+ * tests still passed. Every entry there is a hex-identical retyping of a
+ * generated token, which is what makes the `--fix` rewrite safe; `--text-*`,
+ * `--brand-gold` and the categorical hues are deliberately absent — see
+ * `packages/eslint-rules/README.md`. The apps/web rollout is finished, so this
+ * runs `error` repo-wide with a total-0 canary baseline.
+ */
 
 module.exports = [
   // Ignore patterns
@@ -54,6 +129,18 @@ module.exports = [
       '**/prisma/client/**',
       '**/generated/**',
     ],
+  },
+  // An exception that suppresses nothing is drift: the rule it names was
+  // renamed, removed, or never fired at that site. ESLint knows which
+  // directives suppressed a problem — flat config reports unused ones at
+  // "warn", which `eslint src` prints and still exits 0 on — so raise it to an
+  // error and let a stale `// eslint-disable-next-line` fail the lint job.
+  // No `files` key on purpose: linterOptions propagates to every config below.
+  // scripts/__tests__/check-dead-suppressions.test.mjs pins this setting.
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
   },
   // Base config for TypeScript files
   {
@@ -73,6 +160,13 @@ module.exports = [
       'azeebo-custom': {
         rules: {
           'no-hex-colors': noHexColors,
+          'no-arbitrary-hex-class': noArbitraryHexClass,
+          'no-dead-class-override': noDeadClassOverride,
+          'no-retired-brand-alias': noRetiredBrandAlias,
+          'no-off-system-color-utility': noOffSystemColorUtility,
+          'no-undefined-az-utility': noUndefinedAzUtility,
+          'no-low-contrast-pair': noLowContrastPair,
+          'require-shared-route-boundary': requireSharedRouteBoundary,
           'no-console-log': noConsoleLog,
           'require-map-and-throw': requireMapAndThrow,
         },
@@ -180,7 +274,10 @@ module.exports = [
           leadingUnderscore: 'allow',
         },
       ],
-      'no-console': 'warn',
+      // The critical misuse is accidental debug output, which
+      // azeebo-custom/no-console-log bans outright. warn/error stay allowed here
+      // so the two rules share one boundary (see that rule's header).
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'azeebo-custom/no-console-log': 'error',
       // Catch blocks must not fabricate hardcoded 4xx statuses — mapAndThrow
       // (packages/security) preserves real causes (Prisma/upstream/network)
@@ -203,6 +300,98 @@ module.exports = [
         {
           allowList: HEX_ALLOW_LIST,
           allowTransparent: true,
+          retired: RETIRED_ACCENT,
+          retiredExemptPaths: RETIRED_ACCENT_EXEMPT,
+        },
+      ],
+      // no-hex-colors cannot see Tailwind arbitrary values: `bg-[#0b090e]` is a
+      // plain string inside className, not a style position. This rule closes
+      // that half of the surface. Migration is COMPLETE (every site converted to
+      // a generated `az-*` utility or a `var(--*)` reference), so it goes
+      // straight to `error` with a total-0 canary baseline — the same steady
+      // state as no-hex-colors. Theme-aware surfaces deliberately stay
+      // `bg-[var(--bg-primary)]`-style: the generated tokens are fixed hexes and
+      // would lose the light-mode overrides.
+      // No allowList on purpose — HEX_ALLOW_LIST tolerates semantic hexes like
+      // #4ade80 that a className must still express as `text-az-success-400`.
+      'azeebo-custom/no-arbitrary-hex-class': 'error',
+      // globals.css is unlayered (it never opens a `@layer`), so its `.az-*`
+      // component classes always win over a Tailwind utility on the same
+      // element: `az-glass rounded-3xl shadow-2xl` renders .az-glass's radius
+      // and shadow, and both utilities are dead code that misleads the next
+      // reader about what the page actually looks like. The rollout converted
+      // every site (`--fix` drops the dead utility; a surface that genuinely
+      // wants another radius drops .az-glass and composes utilities instead),
+      // so the rule goes straight to `error` with a total-0 canary baseline —
+      // the same steady state as no-hex-colors.
+      'azeebo-custom/no-dead-class-override': 'error',
+      // The alias layer is the reason the accent could not be changed in one
+      // place. It went through the warn-while-migrating ratchet (238 references
+      // in apps/web, all now on the generated ramp), so it is gated at `error`
+      // repo-wide with a total-0 canary baseline — the same steady state as
+      // no-hex-colors. The alias definitions themselves survive in globals.css
+      // for the internal consoles, which are outside the public-page rollout.
+      'azeebo-custom/no-retired-brand-alias': [
+        'error',
+        { aliases: noRetiredBrandAlias.DEFAULT_ALIASES },
+      ],
+      // The az ramps (--color-az-{error,success,warning,primary,secondary} at
+      // 50–900) are the only colour vocabulary the design system owns. A raw
+      // Tailwind palette class renders the same hue but cannot be looked up,
+      // does not move with the brand, and reads as a free choice. The rollout
+      // converted the 459 apps/web occurrences cluster by cluster (wallet 62,
+      // creator 85, lifestyle+aou 62, system+commerce+downloads 81,
+      // account+ops 98, participation+rewards 71), so this is the steady state
+      // the other colour rules already occupy: `error` repo-wide with a total-0
+      // canary baseline. The purple/violet/pink families stay out of the rule —
+      // the registry has no premium-hue ramp to point at yet.
+      'azeebo-custom/no-off-system-color-utility': 'error',
+      // The 219 error boundaries and 217 loading boundaries of apps/web were
+      // each drawing their own card and spinner, so the same route spun three
+      // ways and one retired accent alias reached ~200 files. All of them now
+      // render the shared RouteErrorFallback / RouteLoading; this rule keeps the
+      // NEXT route from re-inventing one, and it goes straight to `error` with a
+      // total-0 canary baseline because the conversion is already complete.
+      // Only files under an `src/app/` router tree are inspected, so services
+      // resolve the severity without ever matching.
+      'azeebo-custom/require-shared-route-boundary': 'error',
+      // The other half of the colour rules: `no-off-system-color-utility` bans
+      // the raw Tailwind palette, this one guarantees the `az-*` replacement it
+      // points at exists. A class with no generated variable behind it compiles
+      // to nothing, which is how `bg-az-accent-gold` stayed dead for a whole
+      // migration while the registry declared the colour. Files are scoped by
+      // the rule itself: only a workspace that owns the generated stylesheet is
+      // measured, so services and packages resolve the severity inertly.
+      'azeebo-custom/no-undefined-az-utility': 'error',
+      // The colour rules keep the vocabulary consistent; this one keeps it
+      // LEGIBLE. A solid light fill under the theme's white ink fails AA:
+      // flame (#EC691F) measures 3.18:1 — the pairing the 2026-11-10 sweep found
+      // on 152 of 177 pages — and the amber step marker (#f59e0b) measures
+      // 2.15:1. Which fills are measured, and with which ink they pass, is data
+      // (`packages/eslint-rules/contrast-pairs.json`), so a new light surface is
+      // one table entry rather than another rule. Translucent fills
+      // (`bg-az-flame/10`) and large-text roles are exempt; the brand gradient is
+      // left to the rendered audit (`scripts/visual-audit.mjs`), which measures
+      // the actual font size and gradient stops.
+      'azeebo-custom/no-low-contrast-pair': 'error',
+    },
+  },
+  // The shared component library is consumed by every public web page, but it
+  // lives outside apps/web, so the default stylesheet paths above never resolve
+  // from its files and the rule used to skip it silently. That is how the whole
+  // of `packages/ui` came to style itself with the legacy `:root` ramps
+  // (`bg-bg-primary`, `text-text-secondary`, `bg-primary-500`) that Tailwind v4
+  // generates no utility for: nothing rendered, and no gate could see it. Pinning
+  // apps/web's generated theme here means the 458 classes the migration put in
+  // place are now checked against the vocabulary that actually ships.
+  {
+    files: ['packages/ui/**'],
+    rules: {
+      'azeebo-custom/no-undefined-az-utility': [
+        'error',
+        {
+          themeStylesheet: 'apps/web/src/styles/design-tokens.css',
+          sharedStylesheet: 'apps/web/src/app/globals.css',
         },
       ],
     },

@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
+import { requireData } from '@/lib/payload';
 import { PageShell } from '@/components/layout/PageShell';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -24,20 +25,21 @@ function InfluencerDetailContent(): React.JSX.Element {
   const {
     data: influencer,
     isLoading,
+    isError,
     error,
     refetch,
   } = useQuery({
     queryKey: ['influencer', id],
     queryFn: async (): Promise<ContentItem | null> => {
       const res = await api.request<ContentItem>(`/api/v1/content/${id}`);
-      return (res.success ? res.data : null) as ContentItem | null;
+      return requireData(res) ?? null;
     },
     staleTime: 60000,
     enabled: !!id,
   });
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <Breadcrumbs
@@ -50,7 +52,7 @@ function InfluencerDetailContent(): React.JSX.Element {
           />
           <Link
             href="/lifestyle/influencers"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             All Influencers
@@ -63,7 +65,7 @@ function InfluencerDetailContent(): React.JSX.Element {
             <Skeleton className="h-8 w-1/2 rounded-lg" />
             <Skeleton className="h-20 w-full rounded-2xl" />
           </div>
-        ) : error ? (
+        ) : isError ? (
           <div className="max-w-md mx-auto py-16">
             <ErrorState
               title="Failed to Load Creator"
@@ -74,7 +76,7 @@ function InfluencerDetailContent(): React.JSX.Element {
         ) : influencer ? (
           <div className="space-y-8">
             <ScrollReveal>
-              <div className="relative aspect-[21/9] sm:h-[420px] w-full rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl">
+              <div className="relative aspect-[21/9] sm:h-[420px] w-full rounded-3xl overflow-hidden border border-az-glass-border bg-az-glass-fill shadow-2xl">
                 <OptimizedImage
                   src={influencer.thumbnail}
                   alt={influencer.title}
@@ -82,32 +84,32 @@ function InfluencerDetailContent(): React.JSX.Element {
                   className="object-cover"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-black/40 to-transparent" />
+                <div className="absolute inset-0 az-scrim--hero" />
 
                 <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-[var(--brand-orange)] border border-[var(--brand-orange)]/30 text-xs font-mono font-bold uppercase">
+                  <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-[var(--color-az-flame)] border border-[var(--color-az-flame)]/30 text-xs font-mono font-bold uppercase">
                     {influencer.contentType || 'Featured Creator'}
                   </span>
                 </div>
 
                 <div className="absolute bottom-6 left-6 right-6 space-y-3">
-                  <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  <h1 className="az-headline text-2xl sm:text-4xl font-extrabold text-az-ink">
                     {influencer.title}
                   </h1>
-                  <p className="text-sm text-white/70 max-w-2xl line-clamp-2 leading-relaxed">
+                  <p className="text-sm text-az-ink/70 max-w-2xl line-clamp-2 leading-relaxed">
                     {influencer.description}
                   </p>
                 </div>
               </div>
             </ScrollReveal>
 
-            <div className="az-glass p-8 rounded-3xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="az-glass p-8 border border-az-glass-border flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="space-y-1 text-center sm:text-left">
-                <h3 className="text-base font-bold text-white flex items-center justify-center sm:justify-start gap-2">
-                  <Sparkles className="w-4 h-4 text-[var(--brand-orange)]" />
+                <h3 className="text-base font-bold text-az-ink flex items-center justify-center sm:justify-start gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--color-az-flame)]" />
                   Creator Feature & Vlogs
                 </h3>
-                <p className="text-xs text-white/50">
+                <p className="text-xs text-az-ink/50">
                   Follow their lifestyle episodes, day-in-the-life vlogs, and brand edits
                 </p>
               </div>
@@ -115,14 +117,14 @@ function InfluencerDetailContent(): React.JSX.Element {
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <Link
                   href={`/watch/${influencer.id}`}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-white bg-[var(--brand-orange)] hover:bg-[var(--brand-orange)]/90 transition-all shadow-lg shadow-[var(--brand-orange)]/25"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-az-surface-root bg-[var(--color-az-flame)] hover:bg-[var(--color-az-flame)]/90 transition-all shadow-lg shadow-[var(--color-az-flame)]/25"
                 >
                   <Play className="w-4 h-4 fill-white" />
                   Watch Content
                 </Link>
                 <Link
                   href="/lifestyle/influencers"
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-xs font-semibold text-white/80 hover:text-white az-glass hover:bg-white/10 transition-all border border-white/10"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-semibold text-az-ink/80 hover:text-az-ink az-glass hover:bg-az-glass-card transition-all border border-az-glass-border"
                 >
                   More Creators
                 </Link>
@@ -130,10 +132,10 @@ function InfluencerDetailContent(): React.JSX.Element {
             </div>
           </div>
         ) : (
-          <div className="az-glass p-16 text-center rounded-3xl border border-white/10 max-w-md mx-auto">
-            <Users className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">Creator Not Found</h3>
-            <p className="text-xs text-white/50">
+          <div className="az-glass p-16 text-center border border-az-glass-border max-w-md mx-auto">
+            <Users className="w-12 h-12 text-az-ink/20 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">Creator Not Found</h3>
+            <p className="text-xs text-az-ink/50">
               The requested creator profile could not be loaded.
             </p>
           </div>
@@ -149,8 +151,8 @@ export default function InfluencerDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

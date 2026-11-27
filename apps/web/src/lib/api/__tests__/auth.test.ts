@@ -99,6 +99,23 @@ describe('Auth API Methods', () => {
       );
       expect(result).toEqual(mockResponse);
     });
+
+    it('sends no body when the refresh token is httpOnly-cookie-only', async () => {
+      client.request.mockResolvedValue({
+        success: true,
+        data: { access_token: 'new-tok', refresh_token: 'new-ref' },
+      });
+
+      await auth.refreshToken();
+
+      // The token lives only in an httpOnly cookie, so the web client cannot
+      // read it; the backend falls back to that cookie on a bodyless POST.
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/auth/refresh',
+        { method: 'POST' },
+        { retryOn401: true }
+      );
+    });
   });
 
   describe('requestPasswordReset', () => {

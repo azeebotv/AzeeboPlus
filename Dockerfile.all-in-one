@@ -15,7 +15,7 @@
 # ============================================================
 # Stage 1: Build — compile everything
 # ============================================================
-FROM node:22.16.0-bookworm-slim AS builder
+FROM node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34 AS builder
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
@@ -92,8 +92,16 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 COPY . .
 
+# Platform hostnames come from the domain registry. Fail the build if the
+# generated deploy/domains.env is stale rather than baking old hosts in.
+RUN node scripts/generate-domain-env.mjs --check
+
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
+
+ARG COMMIT_SHA=""
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV NODE_PATH="/app/node_modules"
 
 ARG NEXT_PUBLIC_BASE_URL=""
 ARG NEXT_PUBLIC_AUTH_URL=""
@@ -149,13 +157,13 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/validation run build && \
     pnpm --filter @azeebo/error-handling run build && \
+    pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/logger run build && \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
     pnpm --filter @azeebo/analytics-sdk run build && \
     pnpm --filter @azeebo/feature-flags run build && \
     pnpm --filter @azeebo/shared-services run build && \
-    pnpm --filter @azeebo/security run build && \
     pnpm --filter @azeebo/flag-metrics run build && \
     pnpm --filter @azeebo/queue-policy run build && \
     pnpm --filter @azeebo/ui run build && \
@@ -278,8 +286,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Flattened dist inventory:" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
     echo "==> Packaging workspace package dists for runtime" && \
-    find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
-      tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
+    { find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
+      tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true; }
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ---- Verify ALL outputs exist — crash if anything is missing ----
@@ -323,7 +331,7 @@ RUN echo "==> Verifying build outputs..." && \
 # silently skip the others (which was the root cause of the dist-missing bug).
 RUN echo "Cache bust: $CACHEBUST" && \
     mkdir -p /runtime/node_modules && \
-    cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
+    cp package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
       -not -path "*/node_modules/*" \
       -not -path "*/dist/*" \
@@ -389,7 +397,7 @@ RUN echo "Cache bust: $CACHEBUST" && \
 # ============================================================
 # Stage 2: Runtime — lean image with production deps only
 # ============================================================
-FROM node:22.16.0-bookworm-slim
+FROM node:22.16.0-bookworm-slim@sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34
 
 # Stage 2 RUNs pipe find(1) output; keep pipefail semantics identical to the
 # builder stage so a failed find is never silently swallowed under /bin/sh.
@@ -413,6 +421,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && useradd -r -s /bin/false pgbouncer || true \
+    && useradd -r -s /bin/false -u 65532 nodejs || true \
     && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql \
     && chown -R redis:redis /var/lib/redis \
     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer \
@@ -423,12 +432,16 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
+ARG COMMIT_SHA=""
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV NODE_PATH="/app/node_modules"
+
 WORKDIR /app
 
 # Copy runtime skeleton from builder (workspace structure + built artifacts)
 # CACHEBUST ensures this layer is invalidated when builder output changes
 ARG CACHEBUST
-COPY --from=builder /runtime /app
+COPY --from=builder --chown=nodejs:nodejs /runtime /app
 
 # Fix nested standalone output: flatten apps/web/.next/standalone/apps/web/ -> apps/web/standalone/
 RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalone/server.js ]; then \
@@ -457,34 +470,24 @@ RUN echo "==> Verifying critical build artifacts..." && \
     fi && \
     echo "  Build artifact check complete (warnings are non-fatal)"
 
-# Fresh production install — only production dependencies, no devDeps
+# Production install + workspace dist restore + symlinks + Prisma clients + chown
+# combined into a single RUN layer so `chown -R nodejs:nodejs /app` mutates
+# newly-created node_modules in-place instead of triggering a 10+ minute
+# overlayfs copy-up across layers.
 ENV CI=true
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
-
-# pnpm install --prod can wipe workspace package dist/ directories.
-# Restore them from the builder stage so workspace package symlinks resolve.
 COPY --from=builder /tmp/pkg-dist.tar.gz /tmp/pkg-dist.tar.gz
-RUN tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts && \
+    tar xzf /tmp/pkg-dist.tar.gz -C /app 2>/dev/null && \
     rm -f /tmp/pkg-dist.tar.gz && \
-    echo "  Restored workspace package dist directories from builder"
-
-# Verify standalone output survived pnpm install (warn only)
-RUN if [ -f /app/apps/web/standalone/server.js ] || [ -f /app/apps/web/standalone/apps/web/server.js ]; then \
+    echo "  Restored workspace package dist directories from builder" && \
+    if [ -f /app/apps/web/standalone/server.js ] || [ -f /app/apps/web/standalone/apps/web/server.js ]; then \
       echo "  OK: server.js after pnpm install"; \
     else \
       echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
       echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
       echo "  Standalone contents:" && ls -la /app/apps/web/standalone/ 2>&1; \
-    fi
-
-# All post-install setup in a single layer:
-#   1. Symlink workspace packages (avoid duplicate node_modules copies)
-#   2. Remove orphaned pnpm packages (replaced by symlinks)
-#   3. Install Prisma CLI (needed for migrate deploy in entrypoint.sh)
-#   4. Generate Prisma clients (schema-specific, must run per-service)
-#   5. Copy @prisma/client shim to each service's local node_modules
-#   6. Aggressive cleanup of all caches and temp files
-RUN mkdir -p /app/node_modules/@azeebo && \
+    fi && \
+    mkdir -p /app/node_modules/@azeebo && \
     find packages services apps -maxdepth 3 -name "package.json" \
       -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*" | while read -r pkg_json; do \
       name=$(node -e "process.stdout.write(require('./$pkg_json').name||'')" 2>/dev/null); \
@@ -499,31 +502,7 @@ RUN mkdir -p /app/node_modules/@azeebo && \
     find /app/services /app/apps -path "*/node_modules/.pnpm" -type d -exec rm -rf {} + 2>/dev/null; \
     rm -rf /root/.local/share/pnpm 2>/dev/null; \
     npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; \
-    true
-
-# Generate Prisma clients per-service with ISOLATED output.
-#
-# All services share a single @prisma/client pnpm package, so `prisma generate`
-# writes the generated client to the SHARED .pnpm/@prisma+client@*/node_modules/.prisma/client.
-# Without isolation, each generate overwrites the previous, and only the LAST schema's
-# enums/models survive — causing `@IsEnum(SomePrismaEnum)` to crash with
-# "Cannot convert undefined or null to object" at module load for every other service.
-#
-# Fix: after each service's `prisma generate`, copy a real (de-symlinked) copy of
-# @prisma/client into that service's own node_modules and write a shim that
-# re-exports the generated client (either from a custom output dir or from the
-# shared .prisma/client that prisma generate just wrote).
-#
-# IMPORTANT: Do NOT rm -rf .prisma — that deletes the generated client that
-# prisma generate just wrote. Only rm -rf @prisma/client (to replace with shared).
-#
-# Non-custom-output services: leave @prisma/client intact — the real package's
-# index.js resolves .prisma/client/ automatically via relative require.
-# Custom-output services: replace @prisma/client/index.js with shim pointing to
-# the custom output dir (e.g., src/prisma/client/).
-#
-# DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
-RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
+    echo "==> Installing per-service Prisma clients from builder stage..." && \
     for schema in $(find services apps -maxdepth 5 -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/prisma/client/*" -not -path "*/src/prisma/*" -not -path "*/generated/*" | sort); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
@@ -565,24 +544,26 @@ RUN echo "==> Installing per-service Prisma clients from builder stage..." && \
     find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null; \
     find /app/node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null; \
-    true
+    chown -R nodejs:nodejs /app && \
+    gosu nodejs true
 
 # Copy config files (single layer with final cleanup)
 COPY deploy/supervisord.conf /etc/supervisord.conf
 COPY deploy/nginx.conf /etc/nginx/nginx.conf
 COPY deploy/entrypoint.sh /entrypoint.sh
+# Generated from packages/shared-types/src/platform-domains.json at build time.
+COPY --from=builder /app/deploy/domains.env /etc/azeebo/domains.env
 COPY scripts/demo-content /app/scripts/demo-content
 RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
     chmod +x /app/scripts/demo-content/*.sh && \
+    chown -R nodejs:nodejs /app/scripts/demo-content && \
     mkdir -p /usr/share/nginx/html && \
     echo '<!DOCTYPE html><html><head><title>Azeebo+ is starting</title><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#0a0a0a;color:#fff}c{text-align:center}h1{font-size:1.5rem;margin-bottom:.5rem}p{color:#888;font-size:.9rem}</style></head><body><c><h1>Azeebo+ is starting up</h1><p>This usually takes 2-3 minutes on first boot. Please wait and refresh.</p></c></body></html>' > /usr/share/nginx/html/50x.html && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN useradd -r -s /bin/false -u 65532 nodejs && \
-    chown -R nodejs:nodejs /app && \
-    gosu nodejs true
-
-EXPOSE 80 443 3013 4000 4014 4016
+# Only the public edge needs to be reachable; internal services talk over
+# localhost inside the container and stay unmapped.
+EXPOSE 80 443
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
   CMD ["curl", "-f", "http://localhost:80/health"]

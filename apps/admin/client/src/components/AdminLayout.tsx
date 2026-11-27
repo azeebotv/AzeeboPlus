@@ -6,7 +6,9 @@ import { useAdminFlags, ADMIN_FLAG_KEYS } from '@/hooks/useAdminFlags';
 import { adminApi } from '@/lib/api/admin';
 import type { StaleFlagMetrics } from '@/lib/admin-types';
 import StaleFlagSummary from './StaleFlagSummary';
+import QueryErrorToasts from './QueryErrorToasts';
 import { Icon } from './Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /** Minimal shape of the universe-feature-flag rows used for the stale list. */
 interface StaleUniverseFlagRow {
@@ -52,7 +54,7 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Overview',
         icon: 'trending',
         flag: ADMIN_FLAG_KEYS.newDashboard,
-        description: 'Cross-service metrics telemetry',
+        description: 'Platform metrics, user activity & revenue overview',
       },
       {
         href: '/reports',
@@ -86,10 +88,22 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Videos, series, and catalog management',
       },
       {
+        href: '/movies',
+        label: 'Movies',
+        icon: 'film',
+        description: 'Feature films, cinema passes & premiere windows (Admin Only)',
+      },
+      {
         href: '/content-review',
         label: 'Review Queue',
         icon: 'checkCircle',
         description: 'Moderation and compliance approval',
+      },
+      {
+        href: '/acdp-validation',
+        label: 'ACDP Validation',
+        icon: 'checkCircle',
+        description: 'Delivery package inspection, audio loudness & quality clearance',
       },
       {
         href: '/challenge-entries',
@@ -120,6 +134,36 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Reality Shows',
         icon: 'theater',
         description: 'Interactive reality voting & games',
+      },
+      {
+        href: '/vertical-series',
+        label: 'Vertical Series',
+        icon: 'film',
+        description: '9:16 vertical series, episodes & coin costs (Admin Managed)',
+      },
+      {
+        href: '/sports',
+        label: 'Sports Hub',
+        icon: 'activity',
+        description: 'Sports events, matches, teams & prediction markets',
+      },
+      {
+        href: '/comedy',
+        label: 'Comedy Hub',
+        icon: 'star',
+        description: 'Stand-up specials, sketches & roast challenges',
+      },
+      {
+        href: '/games',
+        label: 'Games & Esports',
+        icon: 'gem',
+        description: 'Games catalog, esports tournaments & trivia',
+      },
+      {
+        href: '/music',
+        label: 'Music Universe',
+        icon: 'music',
+        description: 'Afrobeats tracks, artist catalog & audio playlists',
       },
       {
         href: '/lifestyle-guides',
@@ -177,10 +221,22 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         description: 'Special bundle access tickets',
       },
       {
+        href: '/merchandise',
+        label: 'Merchandise & Store',
+        icon: 'gift',
+        description: 'Physical merchandise catalog & customer orders',
+      },
+      {
         href: '/tipping',
         label: 'Tipping',
         icon: 'gem',
         description: 'Creator tipping & direct gifts',
+      },
+      {
+        href: '/partner-banks',
+        label: 'Borrow Partners',
+        icon: 'shield',
+        description: 'Banks approved to lend on the Borrow page',
       },
     ],
   },
@@ -200,6 +256,18 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Engagement',
         icon: 'flame',
         description: 'Audience activity & interaction rates',
+      },
+      {
+        href: '/rewards',
+        label: 'Rewards & Badges',
+        icon: 'gem',
+        description: 'Fan points, streak multipliers, missions & achievement badges',
+      },
+      {
+        href: '/referrals',
+        label: 'Referral Program',
+        icon: 'users',
+        description: 'Viral invite rules, referral bonuses & conversion tracking',
       },
       {
         href: '/notifications',
@@ -246,21 +314,21 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Task Router',
         icon: 'clipboardList',
         flag: ADMIN_FLAG_KEYS.governanceDashboard,
-        description: 'Queue dispatch & agent allocation',
+        description: 'Workload distribution & automated task assignments',
       },
       {
         href: '/risk-engine',
         label: 'Risk Engine',
         icon: 'shield',
         flag: ADMIN_FLAG_KEYS.governanceDashboard,
-        description: 'Safety policies & anomaly detection',
+        description: 'Safety guardrails, risk scores & flagged content policies',
       },
       {
         href: '/capacity-ledger',
         label: 'Capacity Ledger',
         icon: 'clock',
         flag: ADMIN_FLAG_KEYS.governanceDashboard,
-        description: 'Throughput allocations & rate limits',
+        description: 'Hours saved, workload capacity & automation tracking',
       },
     ],
   },
@@ -292,7 +360,7 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         href: '/rate-limits',
         label: 'Rate Limits',
         icon: 'shield',
-        description: 'API throttling & DDoS policies',
+        description: 'Traffic controls, fair use limits & bot protection',
       },
       {
         href: '/automations',
@@ -323,6 +391,12 @@ const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: 'Settings',
         icon: 'settings',
         description: 'Global administrative configuration',
+      },
+      {
+        href: '/menus',
+        label: 'Navigation Menus',
+        icon: 'menu',
+        description: 'Menu creation & visibility controls (Super Admin)',
       },
     ],
   },
@@ -375,7 +449,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         : { available: false, fetchedAt: null, staleRunning: {}, autoDisabled: {} };
     },
     staleTime: 30_000,
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
   const autoDisabledKeys = new Set(
     Object.entries(staleMetrics?.autoDisabled ?? {})
@@ -396,7 +470,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       });
       return res.success ? (res.data?.total ?? 0) : 0;
     },
-    refetchInterval: 60_000,
+    refetchInterval: pollingIntervals.idle,
   });
 
   const badgeFor = (href: string): number => {
@@ -435,9 +509,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated || !user) {
-      navigate('/login');
+      // /login hands off to the web app, so carry the page the admin actually
+      // wanted; it is restored after the round trip.
+      const intended = `${location.pathname}${location.search}`;
+      navigate(
+        intended === '/login'
+          ? '/login'
+          : `/login?next=${encodeURIComponent(intended)}`,
+        { replace: true }
+      );
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, isAuthenticated, user, navigate, location.pathname, location.search]);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -460,7 +542,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!activeSectionId) return;
     setCollapsedSections((prev) =>
-      prev[activeSectionId] ? { ...prev, [activeSectionId]: false } : prev,
+      prev[activeSectionId] ? { ...prev, [activeSectionId]: false } : prev
     );
   }, [activeSectionId]);
 
@@ -589,11 +671,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 fontWeight: 700,
                 letterSpacing: 1.2,
                 textTransform: 'uppercase',
-                padding: '3px 8px',
-                borderRadius: 6,
-                background: 'rgba(232, 66, 10, 0.14)',
+                padding: '4px 10px',
+                borderRadius: 9999,
+                background: 'rgba(255, 91, 0, 0.15)',
                 color: 'var(--admin-orange)',
-                border: '1px solid rgba(232, 66, 10, 0.3)',
+                border: '1px solid rgba(255, 91, 0, 0.3)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
@@ -605,7 +687,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   height: 5,
                   borderRadius: '50%',
                   backgroundColor: 'var(--admin-orange)',
-                  boxShadow: '0 0 6px var(--admin-orange)',
+                  boxShadow: '0 0 8px var(--admin-orange)',
                 }}
               />
               Console
@@ -619,13 +701,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               alignItems: 'center',
               gap: 6,
               marginLeft: 10,
-              padding: '4px 10px',
-              borderRadius: 20,
-              backgroundColor: 'rgba(16, 185, 129, 0.08)',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
+              padding: '4px 12px',
+              borderRadius: 9999,
+              backgroundColor: 'rgba(0, 210, 106, 0.1)',
+              border: '1px solid rgba(0, 210, 106, 0.25)',
               fontSize: 11,
               fontWeight: 500,
-              color: 'var(--admin-emerald)',
+              color: 'var(--admin-green)',
             }}
           >
             <span
@@ -633,8 +715,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                backgroundColor: 'var(--admin-emerald)',
-                boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
+                backgroundColor: 'var(--admin-green)',
+                boxShadow: '0 0 8px rgba(0, 210, 106, 0.6)',
               }}
             />
             System Online
@@ -658,7 +740,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               alignItems: 'center',
               gap: 10,
               padding: '4px 12px 4px 6px',
-              borderRadius: 24,
+              borderRadius: 9999,
               backgroundColor: 'var(--admin-surface)',
               border: '1px solid var(--admin-border)',
             }}
@@ -668,7 +750,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #E8420A 0%, var(--admin-red) 100%)',
+                background: 'linear-gradient(135deg, #FF5B00 0%, var(--admin-red) 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -715,10 +797,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              padding: '7px 12px',
-              borderRadius: 8,
+              padding: '7px 16px',
+              borderRadius: 9999,
               border: '1px solid var(--admin-border)',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
               color: 'var(--admin-text-muted)',
               fontSize: 12,
               fontWeight: 500,
@@ -969,7 +1051,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 fontSize: 13,
                                 fontWeight: active ? 600 : 500,
                                 color: active ? '#ffffff' : 'var(--admin-text-muted)',
-                                backgroundColor: active ? 'rgba(232, 66, 10, 0.12)' : 'transparent',
+                                backgroundColor: active ? 'rgba(255, 91, 0, 0.14)' : 'transparent',
                                 borderLeft: active
                                   ? '3px solid var(--admin-orange)'
                                   : '3px solid transparent',
@@ -1071,6 +1153,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {children}
         </main>
+        <QueryErrorToasts />
       </div>
     </div>
   );

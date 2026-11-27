@@ -32,13 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Sweep recent Actions runs and maintain the tracking issue
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          # Narrow the sweep to the long-lived branch carrying current work.
-          # Unset → repo-wide (main, develop, and PR-head batteries).
-          WATCHDOG_BRANCH: Major-Upgrade
         run: node scripts/ci-dark-watchdog.mjs

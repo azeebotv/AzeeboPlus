@@ -22,29 +22,39 @@ export function usePushNotifications() {
 
   useEffect(() => {
     const initialize = async () => {
-      const supported = PushNotificationService.isSupported();
+      try {
+        const supported = PushNotificationService.isSupported();
 
-      if (!supported) {
+        if (!supported) {
+          setState({
+            isSupported: false,
+            permission: 'denied',
+            isSubscribed: false,
+            isLoading: false,
+            error: 'Push notifications are not supported in this browser',
+          });
+          return;
+        }
+
+        const permission = await PushNotificationService.getPermissionStatus();
+        const subscription = await PushNotificationService.getSubscription();
+
+        setState({
+          isSupported: true,
+          permission,
+          isSubscribed: !!subscription,
+          isLoading: false,
+          error: null,
+        });
+      } catch (err) {
         setState({
           isSupported: false,
           permission: 'denied',
           isSubscribed: false,
           isLoading: false,
-          error: 'Push notifications are not supported in this browser',
+          error: err instanceof Error ? err.message : 'Failed to initialize notifications',
         });
-        return;
       }
-
-      const permission = await PushNotificationService.getPermissionStatus();
-      const subscription = await PushNotificationService.getSubscription();
-
-      setState({
-        isSupported: true,
-        permission,
-        isSubscribed: !!subscription,
-        isLoading: false,
-        error: null,
-      });
     };
 
     initialize();

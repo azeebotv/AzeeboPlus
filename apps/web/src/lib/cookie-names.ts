@@ -19,8 +19,7 @@ export const AUTH_COOKIE = 'azeebo_web_auth';
 export const LEGACY_AUTH_COOKIE = 'auth';
 
 /** Set-Cookie header string that expires the legacy bare `auth` cookie. */
-export const LEGACY_AUTH_CLEAR_HEADER =
-  `${LEGACY_AUTH_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+export const LEGACY_AUTH_CLEAR_HEADER = `${LEGACY_AUTH_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 
 /** True when a middleware marker value represents an authenticated session. */
 export function isAuthMarkerValid(value: string | undefined | null): boolean {

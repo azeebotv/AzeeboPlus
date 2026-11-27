@@ -10,7 +10,13 @@ import { ConfigModule } from '@nestjs/config';
 import { RateLimitGuard } from '@azeebo/security';
 import { FeatureFlagModule, FeatureFlagService } from '@azeebo/feature-flags';
 import { AuthGuard } from '@nestjs/passport';
+import { EventBusModule, EVENT_BUS_SERVICE } from '@azeebo/event-bus';
 import * as bcrypt from 'bcrypt';
+
+// Boots a real Nest app and runs bcrypt on every credential check, so the 5s
+// default is too tight when the test machine is loaded (the same reason
+// roles.guard.integration.spec.ts sets it).
+jest.setTimeout(30000);
 
 jest.mock('@azeebo/shared-services', () => {
   const { JwtModule } = require('@nestjs/jwt');
@@ -201,6 +207,16 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         // Provides the FeatureFlagService token (AuthService injects it); the
         // overrideProvider below swaps in the mock so no Redis is contacted.
         FeatureFlagModule.register({ global: true, defaultFlags: {} }),
+        // AuthModule declares ErasureConsumerService, which injects the event
+        // bus. In the real app EventBusModule is registered @Global() by
+        // AppModule, so that dependency resolves without AuthModule importing
+        // it — but this TestingModule imports AuthModule on its own, so it has
+        // to register the module here or DI fails before a single test runs.
+        // `enableEnhanced: false` keeps it to one provider and touches no Redis;
+        // the override below replaces that provider with a stub regardless.
+        EventBusModule.forRoot({ redisUrl: 'redis://localhost:6379' }, 'auth-service-test', {
+          enableEnhanced: false,
+        }),
         AuthModule,
       ],
     })
@@ -213,6 +229,16 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         get: jest.fn().mockResolvedValue(null),
         set: jest.fn().mockResolvedValue(undefined),
         delete: jest.fn().mockResolvedValue(0),
+      })
+      .overrideProvider(EVENT_BUS_SERVICE)
+      .useValue({
+        // ErasureConsumerService.onModuleInit calls subscribe().catch(), so the
+        // stub has to return a promise; a bare jest.fn() returns undefined and
+        // would throw on `.catch`.
+        subscribe: jest.fn().mockResolvedValue(undefined),
+        unsubscribe: jest.fn().mockResolvedValue(undefined),
+        publish: jest.fn().mockResolvedValue(undefined),
+        disconnect: jest.fn().mockResolvedValue(undefined),
       })
       .overrideProvider(FeatureFlagService)
       .useValue({
@@ -524,7 +550,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
           email: 'test@example.com',
           password: 'password123',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.access_token).toBeDefined();

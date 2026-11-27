@@ -8,6 +8,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { ServiceAuthGuard, RateLimiterModule } from '@azeebo/security';
 import { FeatureFlagModule, mediaFlags } from '@azeebo/feature-flags';
 import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
+import { EventBusModule } from '@azeebo/event-bus';
 
 @Module({
   imports: [
@@ -16,6 +17,12 @@ import { FlagMetricsModule, flagHooks } from '@azeebo/flag-metrics';
       envFilePath: ['.env', '../../.env'],
     }),
     RateLimiterModule.forRoot(),
+    EventBusModule.forRoot(
+      {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || 'redis://localhost:6379',
+      },
+      'media-service'
+    ),
     UploadModule,
     AdminModule,
     HealthModule,

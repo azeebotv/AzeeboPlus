@@ -19,7 +19,7 @@ import path from 'node:path';
 const {
   parseLintDirs,
   discoverWorkspaces,
-  countWarnings,
+  countFindings,
   validateBaseline,
   compare,
   buildBaselineRecord,
@@ -136,14 +136,14 @@ test('discoverWorkspaces falls back to relative path when package.json has no na
 });
 
 // ---------------------------------------------------------------------------
-// countWarnings
+// countFindings
 // ---------------------------------------------------------------------------
 
 const WS = (name, dirs) => ({ name, dir: dirs[0], lintDirs: dirs });
 const root = process.platform === 'win32' ? 'C:\\repo' : '/repo';
 const sep = path.sep;
 
-test('countWarnings counts severity-1 matches of the rule per workspace', () => {
+test('countFindings counts the rule\'s matches per workspace', () => {
   const workspaces = [WS('svc', [root + `${sep}services${sep}core${sep}svc${sep}src`])];
   const results = [
     {
@@ -154,28 +154,60 @@ test('countWarnings counts severity-1 matches of the rule per workspace', () => 
       ],
     },
   ];
-  const { counts, other } = countWarnings(results, workspaces);
+  const { counts, other } = countFindings(results, workspaces);
   assert.equal(counts.get('svc'), 2);
   assert.deepEqual(other, []);
 });
 
-test('countWarnings ignores non-matching rules and error-severity duplicates', () => {
+test('countFindings counts errors as well as warnings, and ignores other rules', () => {
+  // The severity-agnostic half is the point. A rule promoted to `error` emits
+  // severity 2 only, so a warnings-only counter reported 0 for every migrated
+  // workspace and the total-0 canary could never fire on the regression it
+  // exists to catch.
   const workspaces = [WS('svc', [root + `${sep}a${sep}src`])];
   const results = [
     {
       filePath: root + `${sep}a${sep}src${sep}x.ts`,
       messages: [
         { ruleId: 'no-console', severity: 1, line: 1, message: 'unrelated' },
-        { ruleId: 'azeebo-custom/require-map-and-throw', severity: 2, line: 2, message: 'error-severity' },
+        {
+          ruleId: 'azeebo-custom/require-map-and-throw',
+          severity: 2,
+          line: 2,
+          message: 'error-severity',
+        },
       ],
     },
   ];
-  const { counts, other } = countWarnings(results, workspaces);
-  assert.equal(counts.get('svc'), 0);
+  const { counts, other } = countFindings(results, workspaces);
+  assert.equal(counts.get('svc'), 1);
   assert.deepEqual(other, []);
 });
 
-test('countWarnings buckets warnings outside every workspace into other with location', () => {
+test('countFindings splits the warning-only counts the promotion gate needs', () => {
+  // Two questions, one pass: the ratchet asks "did findings grow" (both
+  // severities) and the promotion gate asks "is this service still converting"
+  // (warnings only — an error-severity finding is a lint failure, not a
+  // migration). If `counts` and `warnCounts` were the same number, a fully
+  // gated service with one real violation would read as mid-conversion and the
+  // promotion gate would fail on the thing the ratchet is supposed to catch.
+  const workspaces = [WS('svc', [root + `${sep}a${sep}src`])];
+  const results = [
+    {
+      filePath: root + `${sep}a${sep}src${sep}x.ts`,
+      messages: [
+        { ruleId: 'azeebo-custom/require-map-and-throw', severity: 1, line: 2, message: 'w1' },
+        { ruleId: 'azeebo-custom/require-map-and-throw', severity: 2, line: 3, message: 'e1' },
+        { ruleId: 'azeebo-custom/require-map-and-throw', severity: 2, line: 4, message: 'e2' },
+      ],
+    },
+  ];
+  const { counts, warnCounts } = countFindings(results, workspaces);
+  assert.equal(counts.get('svc'), 3);
+  assert.equal(warnCounts.get('svc'), 1);
+});
+
+test('countFindings buckets warnings outside every workspace into other with location', () => {
   const workspaces = [WS('svc', [root + `${sep}a${sep}src`])];
   const outside = root + `${sep}docs${sep}snippet.ts`;
   const results = [
@@ -184,13 +216,13 @@ test('countWarnings buckets warnings outside every workspace into other with loc
       messages: [{ ruleId: 'azeebo-custom/require-map-and-throw', severity: 1, line: 7, message: 'stray' }],
     },
   ];
-  const { counts, other } = countWarnings(results, workspaces);
+  const { counts, other } = countFindings(results, workspaces);
   assert.equal(counts.get('svc'), 0);
   assert.equal(other.length, 1);
   assert.ok(other[0].includes(outside) && other[0].includes(':7'));
 });
 
-test('countWarnings assigns nested workspaces by longest lintDir prefix', () => {
+test('countFindings assigns nested workspaces by longest lintDir prefix', () => {
   const outerSrc = root + `${sep}services${sep}core${sep}outer${sep}src`;
   const innerSrc = root + `${sep}services${sep}core${sep}outer${sep}packages${sep}inner${sep}src`;
   const workspaces = [WS('outer', [outerSrc]), WS('inner', [innerSrc])];
@@ -204,12 +236,12 @@ test('countWarnings assigns nested workspaces by longest lintDir prefix', () => 
       messages: [{ ruleId: 'azeebo-custom/require-map-and-throw', severity: 1, line: 1, message: 'm' }],
     },
   ];
-  const { counts } = countWarnings(results, workspaces);
+  const { counts } = countFindings(results, workspaces);
   assert.equal(counts.get('inner'), 1);
   assert.equal(counts.get('outer'), 1);
 });
 
-test('countWarnings never misassigns sibling dirs sharing a prefix', () => {
+test('countFindings never misassigns sibling dirs sharing a prefix', () => {
   const workspaces = [WS('svc-a', [root + `${sep}services${sep}a`])];
   const results = [
     {
@@ -218,7 +250,7 @@ test('countWarnings never misassigns sibling dirs sharing a prefix', () => {
       messages: [{ ruleId: 'azeebo-custom/require-map-and-throw', severity: 1, line: 1, message: 'm' }],
     },
   ];
-  const { counts, other } = countWarnings(results, workspaces);
+  const { counts, other } = countFindings(results, workspaces);
   assert.equal(counts.get('svc-a'), 0);
   assert.equal(other.length, 1);
 });

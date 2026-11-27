@@ -42,6 +42,10 @@ export class NotificationsService {
     'flag-stale': 'Action Required: Stale Feature Flag',
   };
 
+  // AUD-12: how many user-service lookups may be in flight at once while
+  // pre-fetching digest recipients (each call has a 5s timeout).
+  private static readonly DIGEST_USER_FETCH_CONCURRENCY = 10;
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(FirebaseService) private readonly firebaseService: FirebaseService,
@@ -58,7 +62,7 @@ export class NotificationsService {
     );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -89,6 +93,33 @@ export class NotificationsService {
       this.logger.warn(`Failed to fetch user data for ${userId}: ${error}`);
       return null;
     }
+  }
+
+  /**
+   * AUD-12: run `fn` over `items` with at most `limit` promises in flight,
+   * preserving input order in the result array. A rejected item resolves to
+   * `null` so one bad lookup can never abort the whole batch.
+   */
+  private async mapWithConcurrency<T, R>(
+    items: readonly T[],
+    fn: (item: T) => Promise<R>,
+    limit: number
+  ): Promise<(R | null)[]> {
+    const results: (R | null)[] = new Array(items.length).fill(null);
+    let cursor = 0;
+    const workers = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        try {
+          results[index] = await fn(items[index]);
+        } catch (error) {
+          this.logger.warn(`Prefetch item failed at index ${index}: ${(error as Error).message}`);
+          results[index] = null;
+        }
+      }
+    });
+    await Promise.all(workers);
+    return results;
   }
 
   async getNotifications(
@@ -649,20 +680,39 @@ export class NotificationsService {
     );
     const markerMap = new Map(targetUserIds.map((id, i) => [id, markers[i]]));
 
+    // Resolve each user's pending items once, up front (marker-aware), so only
+    // real recipients get a lookup and the send loop never re-filters.
+    const itemsByUser = new Map<string, typeof allNotifications>();
+    for (const targetId of targetUserIds) {
+      const lastSentRaw = markerMap.get(targetId);
+      const since = lastSentRaw ? new Date(parseInt(lastSentRaw, 10)) : cutoff;
+      const items = (notificationsByUser.get(targetId) || []).filter((n) => n.createdAt >= since);
+      if (items.length > 0) {
+        itemsByUser.set(targetId, items);
+      }
+    }
+
+    // AUD-12: pre-fetch every recipient's user record with bounded concurrency
+    // instead of awaiting getUserData serially inside the loop — the old code
+    // scaled as O(N×5s) worst-case (one 5s axios timeout per recipient).
+    // getUserData fails soft (null on error), which the loop treats as a skip.
+    const recipientIds = [...itemsByUser.keys()];
+    const users = await this.mapWithConcurrency(
+      recipientIds,
+      (id) => this.getUserData(id),
+      NotificationsService.DIGEST_USER_FETCH_CONCURRENCY
+    );
+    const userMap = new Map(recipientIds.map((id, i) => [id, users[i]]));
+
     for (const targetId of targetUserIds) {
       try {
-        const lastSentRaw = markerMap.get(targetId);
-        const since = lastSentRaw ? new Date(parseInt(lastSentRaw, 10)) : cutoff;
-
-        // Filter from pre-fetched batch
-        const items = (notificationsByUser.get(targetId) || []).filter((n) => n.createdAt >= since);
-
-        if (items.length === 0) {
+        const items = itemsByUser.get(targetId);
+        if (!items) {
           skipped++;
           continue;
         }
 
-        const user = await this.getUserData(targetId);
+        const user = userMap.get(targetId) ?? null;
         if (!user?.email) {
           skipped++;
           continue;

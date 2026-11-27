@@ -19,7 +19,7 @@ export default function AnalyticsPage() {
     queryKey: ['creator', 'analytics', period],
     queryFn: async () => {
       const res = await creatorApi.getAnalytics(period);
-      return res.success ? (res.data as AnalyticsData) : null;
+      return creatorApi.assertSuccess<AnalyticsData>(res);
     },
   });
 
@@ -45,7 +45,7 @@ export default function AnalyticsPage() {
               cursor: 'pointer',
             }}
           >
-            {p === '7days' ? '7 Days' : p === '30days' ? '30 Days' : '90 Days'}
+            {p === '7days' ? 'Last 7 Days' : p === '30days' ? 'Last 30 Days' : 'Last 90 Days'}
           </button>
         ))}
       </div>
@@ -67,7 +67,8 @@ export default function AnalyticsPage() {
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Total Views</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 2 }}>Total Views</p>
+              <p style={{ fontSize: 11, color: 'var(--creator-text-muted)', marginBottom: 6, opacity: 0.8 }}>Video & audio plays</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.totalViews.toLocaleString()}</p>
             </div>
             <div
@@ -80,7 +81,8 @@ export default function AnalyticsPage() {
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Engagement Rate</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 2 }}>Engagement Rate</p>
+              <p style={{ fontSize: 11, color: 'var(--creator-text-muted)', marginBottom: 6, opacity: 0.8 }}>Likes, comments, shares & tips</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.engagementRate}%</p>
             </div>
             <div
@@ -93,7 +95,8 @@ export default function AnalyticsPage() {
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>Avg Watch Time</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 2 }}>Avg Watch Time</p>
+              <p style={{ fontSize: 11, color: 'var(--creator-text-muted)', marginBottom: 6, opacity: 0.8 }}>Average viewer duration</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>{data.avgWatchTime}</p>
             </div>
             <div
@@ -106,7 +109,8 @@ export default function AnalyticsPage() {
                 minWidth: 150,
               }}
             >
-              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 4 }}>New Subscribers</p>
+              <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 2 }}>New Subscribers</p>
+              <p style={{ fontSize: 11, color: 'var(--creator-text-muted)', marginBottom: 6, opacity: 0.8 }}>Fans subscribed in period</p>
               <p style={{ fontSize: 24, fontWeight: 700 }}>
                 {(data.newSubscribers ?? 0).toLocaleString()}
               </p>

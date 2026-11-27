@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SearchCorrectionsData, SearchCorrectionDay, SearchStats } from '@/lib/admin-types';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 const RANGES = [7, 14, 30, 90] as const;
 
@@ -337,7 +338,7 @@ export default function SearchAnalyticsPage(): React.JSX.Element {
       }
       return res.data as SearchStats;
     },
-    refetchInterval: 60000,
+    refetchInterval: pollingIntervals.idle,
   });
 
   const totalShown = data?.overall.shown ?? 0;

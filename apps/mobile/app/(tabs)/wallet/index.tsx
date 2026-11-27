@@ -21,7 +21,7 @@ import {
   useWithdraw,
 } from '@azeebo/react-data/hooks/useWalletQuery';
 import { colors, radius } from '../../../src/theme';
-import { colors as dtColors } from '@azeebo/design-tokens';
+import { colors as dtColors, brand } from '@azeebo/design-tokens';
 
 export default function WalletScreen() {
   const colorScheme = useColorScheme();
@@ -209,13 +209,13 @@ export default function WalletScreen() {
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={onRefresh} accessibilityLabel="Retry loading wallet">
+            <TouchableOpacity accessibilityRole="button" onPress={onRefresh} accessibilityLabel="Retry loading wallet">
               <Text style={styles.retryText}>Tap to retry</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <View style={[styles.balanceCard, { backgroundColor: '#E8420A' }]}>
+        <View style={[styles.balanceCard, { backgroundColor: brand.flame }]}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>
             {wallet ? formatCurrency(wallet.balance) : '₦0.00'}
@@ -257,7 +257,7 @@ export default function WalletScreen() {
           </Text>
 
           {isLoading && transactions.length === 0 ? (
-            <ActivityIndicator size="large" color="#E8420A" style={styles.loader} />
+            <ActivityIndicator size="large" color={brand.flame} style={styles.loader} />
           ) : transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>

@@ -38,9 +38,9 @@ export default function MusicTracksScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <SafeAreaView accessibilityLabel="Tracks Screen" style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Tracks</Text>

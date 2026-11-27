@@ -14,6 +14,7 @@ import { createUserMethods } from './user';
 import { createContentMethods } from './content';
 import { createRealityMethods } from './reality';
 import { createWalletMethods } from './wallet';
+import { createBorrowMethods } from './borrow';
 import { createPaymentMethods } from './payment';
 import { createRecommendationMethods } from './recommendation';
 import { createUniverseMethods } from './universe';
@@ -118,6 +119,7 @@ class ApiClient {
   content: ReturnType<typeof createContentMethods>;
   reality: ReturnType<typeof createRealityMethods>;
   wallet: ReturnType<typeof createWalletMethods>;
+  borrow: ReturnType<typeof createBorrowMethods>;
   payment: ReturnType<typeof createPaymentMethods>;
   recommendation: ReturnType<typeof createRecommendationMethods>;
   universe: ReturnType<typeof createUniverseMethods>;
@@ -144,6 +146,7 @@ class ApiClient {
     this.content = createContentMethods(this);
     this.reality = createRealityMethods(this);
     this.wallet = createWalletMethods(this);
+    this.borrow = createBorrowMethods(this);
     this.payment = createPaymentMethods(this);
     this.recommendation = createRecommendationMethods(this);
     this.universe = createUniverseMethods(this);
@@ -170,21 +173,33 @@ class ApiClient {
    * Deduplicates concurrent refresh attempts.
    * Returns the auth response on success, null on failure.
    */
-  async attemptRefresh(): Promise<import('./base').RefreshTokensResponse | null> {
+  async attemptRefresh(
+    explicitToken?: string
+  ): Promise<import('./base').RefreshTokensResponse | null> {
     if (this.refreshPromise) {
       return this.refreshPromise;
     }
 
     this.refreshPromise = (async (): Promise<import('./base').RefreshTokensResponse | null> => {
       try {
-        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-        if (!refreshToken) return null;
+        const refreshToken =
+          explicitToken ||
+          (typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null);
 
-        const response = await this.auth.refreshToken(refreshToken);
+        // The refresh token lives only in an httpOnly cookie, so "JS cannot
+        // read it" is the normal case, not a dead end. Falling back to the
+        // cookie-only POST is what keeps a session alive past the 15-minute
+        // access cookie; returning null here used to make every ApiClient 401
+        // hard-redirect a still-valid user to the login page.
+        const response = refreshToken
+          ? await this.auth.refreshToken(refreshToken)
+          : await this.auth.refreshToken();
+
         if (response.success && response.data) {
           this.token = response.data.access_token;
           localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
-          localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
+          // AUD-03: Sweep legacy refresh tokens from localStorage
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
 
           // Update the middleware auth cookie with the new access token,
           // and keep the httpOnly refresh cookie in sync with rotation so
@@ -393,7 +408,7 @@ export const api = new ApiClient(resolvedApiUrl);
 // Re-export the standalone fetch helper
 // ---------------------------------------------------------------------------
 
-export { apiFetch, resolvedApiUrl } from './base';
+export { apiFetch, resolvedApiUrl, generateIdempotencyKey } from './base';
 
 // ---------------------------------------------------------------------------
 // Re-export ALL types for backward compatibility
@@ -427,3 +442,5 @@ export type {
   UserUniverseEngagement,
   RecommendationGroup,
 } from './engagement';
+
+export type { PartnerBankOffer } from './borrow';

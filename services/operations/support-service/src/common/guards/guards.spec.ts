@@ -1,103 +1,74 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from './auth.guard';
-import { AdminGuard } from '@azeebo/security';
+import { ServiceAuthGuard, AdminGuard } from '@azeebo/security';
 
-describe('Auth Guard Tests', () => {
-  let authGuard: AuthGuard;
+describe('Service Auth Guard Tests', () => {
+  let authGuard: ServiceAuthGuard;
   let jwtService: JwtService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthGuard,
-        {
-          provide: JwtService,
-          useValue: {
-            verify: jest.fn(),
-          },
-        },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
-          },
-        },
-      ],
-    }).compile();
+  const reflector = {
+    getAllAndOverride: jest.fn().mockReturnValue(false),
+  };
 
-    authGuard = module.get<AuthGuard>(AuthGuard);
-    jwtService = module.get<JwtService>(JwtService);
+  const mockContext = (request: unknown) =>
+    ({
+      getHandler: () => undefined,
+      getClass: () => undefined,
+      switchToHttp: () => ({ getRequest: () => request }),
+    }) as unknown as ExecutionContext;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jwtService = new JwtService({});
+    authGuard = new ServiceAuthGuard(reflector as unknown as Reflector, jwtService);
   });
 
-  it('should allow authenticated user', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockReq: { headers: { authorization?: string }; user?: any } = {
+  it('should allow request with a valid bearer token', async () => {
+    jest.spyOn(jwtService, 'verify').mockReturnValue({
+      sub: 'user-123',
+      role: 'user',
+      email: 'user@example.com',
+    });
+
+    const mockReq: { headers: Record<string, string>; user?: unknown } = {
       headers: { authorization: 'Bearer valid-token' },
     };
 
-    const mockContext = {
-      switchToHttp: () => ({
-        getRequest: () => mockReq,
-      }),
-    } as ExecutionContext;
-
-    jest.spyOn(jwtService, 'verify').mockReturnValue({
-      sub: 'user-123',
-      id: 'user-123',
-      role: 'user',
-    });
-
-    expect(authGuard.canActivate(mockContext)).toBe(true);
-    expect(mockReq.user).toBeDefined();
+    await expect(authGuard.canActivate(mockContext(mockReq))).resolves.toBe(true);
+    expect(mockReq.user).toMatchObject({ id: 'user-123', sub: 'user-123', role: 'user' });
+    expect(jwtService.verify).toHaveBeenCalledWith(
+      'valid-token',
+      expect.objectContaining({ algorithms: ['HS256'] })
+    );
   });
 
-  it('should reject request without authorization header', () => {
-    const mockReq = {
-      headers: {},
-    };
+  it('should reject request with no identity at all', async () => {
+    const mockReq = { headers: {} };
 
-    const mockContext = {
-      switchToHttp: () => ({
-        getRequest: () => mockReq,
-      }),
-    } as ExecutionContext;
-
-    expect(() => authGuard.canActivate(mockContext)).toThrow('Missing authorization header');
+    await expect(authGuard.canActivate(mockContext(mockReq))).rejects.toThrow(
+      'Authentication required. No user identity found in request.'
+    );
   });
 
-  it('should reject request with invalid authorization format', () => {
-    const mockReq = {
-      headers: { authorization: 'Invalid token' },
-    };
+  it('should reject request with invalid authorization format', async () => {
+    const mockReq = { headers: { authorization: 'Invalid token' } };
 
-    const mockContext = {
-      switchToHttp: () => ({
-        getRequest: () => mockReq,
-      }),
-    } as ExecutionContext;
-
-    expect(() => authGuard.canActivate(mockContext)).toThrow('Invalid authorization format');
+    await expect(authGuard.canActivate(mockContext(mockReq))).rejects.toThrow(
+      'Invalid authorization header format.'
+    );
   });
 
-  it('should reject request with invalid token', () => {
-    const mockReq = {
-      headers: { authorization: 'Bearer invalid-token' },
-    };
-
-    const mockContext = {
-      switchToHttp: () => ({
-        getRequest: () => mockReq,
-      }),
-    } as ExecutionContext;
-
+  it('should reject request with an unverifiable token', async () => {
     jest.spyOn(jwtService, 'verify').mockImplementation(() => {
-      throw new Error('Invalid token');
+      throw new Error('jwt malformed');
     });
 
-    expect(() => authGuard.canActivate(mockContext)).toThrow('Invalid or expired token');
+    const mockReq = { headers: { authorization: 'Bearer invalid-token' } };
+
+    await expect(authGuard.canActivate(mockContext(mockReq))).rejects.toThrow(
+      'Invalid or expired token.'
+    );
   });
 });
 
@@ -105,37 +76,14 @@ describe('Admin Guard Tests', () => {
   let adminGuard: AdminGuard;
   let jwtService: JwtService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        {
-          provide: AdminGuard,
-          useFactory: (jwtService: JwtService) =>
-            new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
-          inject: [JwtService],
-        },
-        {
-          provide: JwtService,
-          useValue: {
-            verify: jest.fn(),
-          },
-        },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((_key: string, defaultValue?: string) => defaultValue),
-          },
-        },
-      ],
-    }).compile();
-
-    adminGuard = module.get<AdminGuard>(AdminGuard);
-    jwtService = module.get<JwtService>(JwtService);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jwtService = new JwtService({});
+    adminGuard = new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] });
   });
 
   it('should allow ADMIN role', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockReq: { headers: { authorization?: string }; user?: any } = {
+    const mockReq: { headers: { authorization?: string }; user?: unknown } = {
       headers: { authorization: 'Bearer admin-token' },
     };
 

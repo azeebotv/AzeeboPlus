@@ -13,7 +13,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard, IdempotencyGuard } from '@azeebo/security';
 import { FeatureFlagGuard, FeatureFlag, walletFlags } from '@azeebo/feature-flags';
 import { CacheInterceptor, Cache } from '../../cache/index.js';
 
@@ -36,6 +36,7 @@ interface AuthenticatedRequest {
     role?: string;
     email?: string;
   };
+  headers: Record<string, string | string[] | undefined>;
 }
 
 @ApiTags('Wallet')
@@ -92,7 +93,7 @@ export class WalletController {
 
   @Post('fund')
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(RateLimitGuard)
+  @UseGuards(IdempotencyGuard, RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initialize wallet funding' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
@@ -250,7 +251,7 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
   @FeatureFlag(walletFlags.withdrawalsEnabled)
   @RateLimit(5, 3600000)
   @ApiOperation({ summary: 'Withdraw funds from wallet' })
@@ -258,12 +259,17 @@ export class WalletController {
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async withdraw(@Request() req: AuthenticatedRequest, @Body() withdrawDto: WithdrawWalletDto) {
-    const result = await this.walletService.withdraw(req.user.id, withdrawDto);
+    const headerKey = req.headers['idempotency-key'];
+    const result = await this.walletService.withdraw(
+      req.user.id,
+      withdrawDto,
+      Array.isArray(headerKey) ? headerKey[0] : headerKey
+    );
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('transfer')
-  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
   @FeatureFlag(walletFlags.transfersEnabled)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Transfer funds to another user' })
@@ -271,7 +277,12 @@ export class WalletController {
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async transfer(@Request() req: AuthenticatedRequest, @Body() transferDto: TransferWalletDto) {
-    const result = await this.walletService.transfer(req.user.id, transferDto);
+    const headerKey = req.headers['idempotency-key'];
+    const result = await this.walletService.transfer(
+      req.user.id,
+      transferDto,
+      Array.isArray(headerKey) ? headerKey[0] : headerKey
+    );
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 

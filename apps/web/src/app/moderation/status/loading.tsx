@@ -1,13 +1,5 @@
+import RouteLoading from '@/components/ui/RouteLoading';
+
 export default function StatusLoading(): React.JSX.Element {
-  return (
-    <div
-      className="flex flex-col items-center justify-center min-h-[50vh] gap-4"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
-      role="status"
-      aria-label="Loading report status"
-    >
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--brand-orange)]" />
-      <p className="text-sm text-white/50">Fetching report status...</p>
-    </div>
-  );
+  return <RouteLoading label="Loading report status" hint="Fetching report status..." />;
 }

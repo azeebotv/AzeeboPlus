@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
+import KeyvRedis from '@keyv/redis';
 import { JwtModule } from '@nestjs/jwt';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
@@ -23,6 +24,8 @@ import {
   gatewayFlags,
   webFlags,
   mobileFlags,
+  tvFlags,
+  authFlags,
   universeEnabledKey,
 } from '@azeebo/feature-flags';
 import { UNIVERSE_SLUGS } from '@azeebo/shared-types';
@@ -36,6 +39,22 @@ import { UNIVERSE_SLUGS } from '@azeebo/shared-types';
 const universeSentinelDefaults = Object.fromEntries(
   UNIVERSE_SLUGS.map((slug) => [universeEnabledKey(slug), true])
 ) as Record<string, boolean>;
+
+/**
+ * Shared proxy-response cache store. With REDIS_URL the 5-minute gateway
+ * cache is Redis-backed so N gateway replicas agree (in-memory diverges per
+ * pod and silently caps at 100 entries); without it the default per-process
+ * memory store is used. KeyvRedis connects lazily and, with
+ * throwOnConnectError/throwOnErrors off, degrades to cache misses instead of
+ * failing requests when Redis is unreachable.
+ */
+const gatewayCacheStore = process.env.REDIS_URL
+  ? new KeyvRedis(process.env.REDIS_URL, {
+      namespace: 'gateway-cache',
+      throwOnConnectError: false,
+      throwOnErrors: false,
+    })
+  : undefined;
 
 @Module({
   imports: [
@@ -53,7 +72,7 @@ const universeSentinelDefaults = Object.fromEntries(
     CacheModule.register({
       isGlobal: true,
       ttl: 300_000, // 5 minutes — keep in sync with proxy controller CACHE_TTL_MS
-      max: 100, // maximum number of items in cache
+      ...(gatewayCacheStore ? { stores: [gatewayCacheStore] } : { max: 100 }), // in-memory fallback only (single replica / dev)
     }),
     ThrottlerModule.forRoot({
       throttlers: [
@@ -79,6 +98,10 @@ const universeSentinelDefaults = Object.fromEntries(
     // disable them instantly during incidents.
     FeatureFlagModule.register({
       global: true,
+      // Universe visibility sentinels default ON: during a Redis outage the
+      // plain fail-closed path would re-enable universes ops disabled, so the
+      // gateway serves last-known state from the expired cache instead.
+      staleOnRedisError: true,
       defaultFlags: {
         [gatewayFlags.maintenanceMode]: false,
         [gatewayFlags.newRoutes]: true,
@@ -88,6 +111,10 @@ const universeSentinelDefaults = Object.fromEntries(
         [gatewayFlags.csrfEnforce]: true,
         [gatewayFlags.legacyRedirect]: true,
         [gatewayFlags.apiV2]: false,
+        [gatewayFlags.endpointEnforcement]:
+          process.env.GATEWAY_ENDPOINT_ENFORCEMENT !== undefined
+            ? process.env.GATEWAY_ENDPOINT_ENFORCEMENT === 'true'
+            : true,
         // Client-driven flags served via GET /feature-flags/bootstrap.
         [webFlags.maintenanceMode]: false,
         [webFlags.newHome]: false,
@@ -104,6 +131,13 @@ const universeSentinelDefaults = Object.fromEntries(
         [mobileFlags.lowDataDefault]: false,
         [mobileFlags.pushEnabled]: true,
         [mobileFlags.biometricAuth]: false,
+        // Client-driven TV flags served via GET /feature-flags/bootstrap.
+        [tvFlags.autoplay]: true,
+        // Provider kill switches the web login page must reflect: the social
+        // buttons appear only when their flag is on, so turning a provider off
+        // is a UI change and not just a server 503 (prd-social-login.md FR-7).
+        [authFlags.socialGoogle]: true,
+        [authFlags.socialApple]: true,
         // Per-universe nav sentinels: universe.<name>.enabled keyed by the
         // canonical DB universe names (admin toggles these via the admin app;
         // web/mobile hide nav entries when disabled). Derived from the shared
@@ -130,6 +164,12 @@ const universeSentinelDefaults = Object.fromEntries(
         mobileFlags.lowDataDefault,
         mobileFlags.pushEnabled,
         mobileFlags.biometricAuth,
+        tvFlags.autoplay,
+        // Login provider switches — public because the button visibility is
+        // the whole point of the flag. Exposing an enabled/disabled boolean
+        // reveals nothing about the client secret behind it.
+        authFlags.socialGoogle,
+        authFlags.socialApple,
         ...UNIVERSE_SLUGS.map(universeEnabledKey),
       ],
     }),

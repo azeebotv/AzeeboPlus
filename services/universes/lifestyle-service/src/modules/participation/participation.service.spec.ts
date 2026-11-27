@@ -124,8 +124,20 @@ describe('ParticipationService', () => {
       (prismaService.poll.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.quizAttempt.findUnique as jest.Mock).mockResolvedValue(attempt);
       (prismaService.quizAttempt.findMany as jest.Mock).mockResolvedValue([
-        { userId: 'user-9', answers: [{ questionId: 'q1', correct: true }, { questionId: 'q2', correct: true }] },
-        { userId: 'user-8', answers: [{ questionId: 'q1', correct: true }, { questionId: 'q2', correct: false }] },
+        {
+          userId: 'user-9',
+          answers: [
+            { questionId: 'q1', correct: true },
+            { questionId: 'q2', correct: true },
+          ],
+        },
+        {
+          userId: 'user-8',
+          answers: [
+            { questionId: 'q1', correct: true },
+            { questionId: 'q2', correct: false },
+          ],
+        },
         { userId: 'user-7', answers: [{ questionId: 'q1', correct: false }] },
       ]);
 

@@ -39,7 +39,7 @@ describe('MessagingService Integration', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
-              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3008';
               if (key === 'USER_SERVICE_URL') return 'http://user-service:3001';
               return defaultValue;
             }),

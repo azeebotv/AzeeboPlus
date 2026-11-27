@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +15,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { apiClient } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Mission {
   id: string;
@@ -34,6 +36,20 @@ export default function MissionsScreen() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  const claimMission = async (missionId: string) => {
+    setClaimingId(missionId);
+    try {
+      await apiClient.post(`/rewards/missions/${missionId}/claim`);
+      Alert.alert('Bounty Claimed! 🎉', 'Your mission points have been added to your balance.');
+      await loadData();
+    } catch (err) {
+      Alert.alert('Error', (err as Error).message || 'Failed to claim reward');
+    } finally {
+      setClaimingId(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -83,8 +99,8 @@ export default function MissionsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Missions Screen" style={styles.container}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading missions...</Text>
       </SafeAreaView>
     );
@@ -95,10 +111,10 @@ export default function MissionsScreen() {
       <ScrollView
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 
@@ -146,6 +162,19 @@ export default function MissionsScreen() {
                     />
                   </View>
                 </View>
+
+                {(mission.progress ?? 0) >= (mission.total ?? 100) && (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    disabled={claimingId === mission.id}
+                    onPress={() => claimMission(mission.id)}
+                    style={styles.claimButton}
+                  >
+                    <Text style={styles.claimButtonText}>
+                      {claimingId === mission.id ? 'Claiming...' : `Claim +${mission.points} pts`}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ))
           )}
@@ -210,10 +239,10 @@ const styles = StyleSheet.create({
   missionTypeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#E8420A',
+    color: brand.flame,
     textTransform: 'capitalize',
   },
-  missionPoints: { fontSize: 16, fontWeight: '700', color: '#E8420A' },
+  missionPoints: { fontSize: 16, fontWeight: '700', color: brand.flame },
   missionPointsCompleted: { fontSize: 16, fontWeight: '700', color: '#10B981' },
   missionTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', marginBottom: 4 },
   missionTitleCompleted: {
@@ -241,7 +270,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   completedBadge: {
     backgroundColor: 'rgba(16,185,129,0.15)',
@@ -250,4 +279,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   completedBadgeText: { fontSize: 12, fontWeight: '600', color: '#10B981' },
+  claimButton: {
+    marginTop: 12,
+    backgroundColor: brand.flame,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  claimButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
 });

@@ -6,9 +6,10 @@ import { colors, radius } from '../../src/theme';
 import { lifestyleApi } from '@azeebo/react-data/api/lifestyle';
 import { extractGenres } from '../../src/lib/music';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { brand } from '@azeebo/design-tokens';
 
 const GENRE_COLORS: Record<string, string> = {
-  afrobeats: '#E8420A',
+  afrobeats: brand.flame,
   hiphop: '#8B5CF6',
   'hip-hop': '#8B5CF6',
   rnb: '#EC4899',
@@ -34,9 +35,9 @@ export default function MusicGenresScreen() {
   const genres = genresQuery.data ?? [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg.primary }]}>
+    <SafeAreaView accessibilityLabel="Genres Screen" style={[styles.container, { backgroundColor: colors.bg.primary }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Genres</Text>

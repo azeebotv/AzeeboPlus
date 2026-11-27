@@ -152,7 +152,16 @@ export function checkDeployed(root, rel, runId, index, opts = {}) {
     // 1. Deploy exactly like a fresh environment would.
     let deployOut;
     try {
-      deployOut = runPrismaFn(root, dir, ['migrate', 'deploy'], { DATABASE_URL: deployUrl }, prismaBinaryDir);
+      // DIRECT_DATABASE_URL is injected too (schemas declare directUrl): the
+      // throwaway deploy must not pick up a real direct URL from the caller's
+      // environment, and CI has neither variable set.
+      deployOut = runPrismaFn(
+        root,
+        dir,
+        ['migrate', 'deploy'],
+        { DATABASE_URL: deployUrl, DIRECT_DATABASE_URL: deployUrl },
+        prismaBinaryDir
+      );
     } catch (err) {
       const stderr = String(err.stderr || err.message || '');
       result.status = 'BROKEN';

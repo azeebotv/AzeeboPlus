@@ -192,17 +192,17 @@ describe('UploadService Integration', () => {
             },
           },
           { provide: CdnPurgeService, useValue: { purgeKeys: jest.fn(), purgePrefix: jest.fn() } },
-        {
-          provide: PrismaService,
-          useValue: {
-            mediaUpload: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
-            $transaction: jest.fn(),
+          {
+            provide: PrismaService,
+            useValue: {
+              mediaUpload: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn() },
+              $transaction: jest.fn(),
+            },
           },
-        },
-        {
-          provide: CdnInvalidationQueueService,
-          useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) },
-        },
+          {
+            provide: CdnInvalidationQueueService,
+            useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) },
+          },
         ],
       }).compile();
 

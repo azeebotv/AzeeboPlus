@@ -95,7 +95,7 @@ export function Dropdown({ trigger, items, onSelect, align = 'left' }: DropdownP
             setActiveIndex(0);
           }
         }}
-        className="inline-flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] rounded-lg"
+        className="inline-flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame rounded-lg"
       >
         {trigger}
       </div>
@@ -105,13 +105,11 @@ export function Dropdown({ trigger, items, onSelect, align = 'left' }: DropdownP
           role="menu"
           aria-orientation="vertical"
           onKeyDown={handleKeyDown}
-          className={`absolute z-50 mt-1 w-48 bg-white dark:bg-[#18151e] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl py-1 backdrop-blur-md ${align === 'right' ? 'right-0' : 'left-0'}`}
+          className={`az-glass text-az-ink absolute z-50 mt-1 w-48 py-1 ${align === 'right' ? 'right-0' : 'left-0'}`}
         >
           {items.map((item, i) => {
             if (item.divider)
-              return (
-                <div key={item.id} className="border-t border-gray-100 dark:border-white/10 my-1" />
-              );
+              return <div key={item.id} className="border-t border-az-glass-border my-1" />;
             const enabledIdx =
               items.slice(0, i + 1).filter((x) => !x.disabled && !x.divider).length - 1;
             return (
@@ -122,11 +120,11 @@ export function Dropdown({ trigger, items, onSelect, align = 'left' }: DropdownP
                 }}
                 role="menuitem"
                 disabled={item.disabled}
-                className={`min-h-[44px] w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-inset ${
+                className={`min-h-[44px] w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:ring-inset ${
                   item.disabled
-                    ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
-                } ${enabledIdx === activeIndex ? 'bg-gray-100 dark:bg-white/10' : ''}`}
+                    ? 'text-az-ink-dim cursor-not-allowed'
+                    : 'text-az-ink hover:bg-az-glass-card'
+                } ${enabledIdx === activeIndex ? 'bg-az-glass-card' : ''}`}
                 onClick={() => {
                   if (!item.disabled) {
                     onSelect(item.id);

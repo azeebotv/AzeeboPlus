@@ -11,6 +11,9 @@ export class RedisService implements OnModuleDestroy {
       throw new Error('REDIS_URL environment variable must be set');
     }
     this.redis = new Redis(url);
+    this.redis.on('error', (err: Error) => {
+      console.error(`[RedisService] Redis error: ${err.message}`);
+    });
   }
 
   async get(key: string): Promise<string | null> {

@@ -40,9 +40,7 @@ import {
 @Controller('lifestyle/admin')
 @UseGuards(AdminGuard)
 export class GuidesAdminController {
-  constructor(
-    @Inject(GuidesAdminService) private readonly adminService: GuidesAdminService
-  ) {}
+  constructor(@Inject(GuidesAdminService) private readonly adminService: GuidesAdminService) {}
 
   /** AdminGuard-established identity; falls back to `sub` for Bearer tokens. */
   private adminId(req: { user?: { id?: string; sub?: string } }): string {
@@ -66,7 +64,10 @@ export class GuidesAdminController {
 
   @Post('itineraries')
   @ApiOperation({ summary: 'Create an itinerary with ordered stops (admin)' })
-  async createItinerary(@Request() req: { user?: { id?: string; sub?: string } }, @Body() dto: CreateItineraryDto) {
+  async createItinerary(
+    @Request() req: { user?: { id?: string; sub?: string } },
+    @Body() dto: CreateItineraryDto
+  ) {
     return this.adminService.createItinerary(dto, this.adminId(req));
   }
 
@@ -171,10 +172,7 @@ export class GuidesAdminController {
 
   @Post('partners/:partnerId/offers')
   @ApiOperation({ summary: 'Create an offer under a partner (admin)' })
-  async createOffer(
-    @Param('partnerId') partnerId: string,
-    @Body() dto: CreatePartnerOfferDto
-  ) {
+  async createOffer(@Param('partnerId') partnerId: string, @Body() dto: CreatePartnerOfferDto) {
     return this.adminService.createOffer(partnerId, dto);
   }
 

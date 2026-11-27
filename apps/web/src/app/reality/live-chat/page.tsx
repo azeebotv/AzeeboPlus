@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { GlowCard } from '@/components/motion/GlowCard';
 import analytics from '@/lib/analytics';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 interface ChatMessage {
   id: string;
@@ -44,7 +45,7 @@ function LiveChatPageContent(): React.JSX.Element {
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to load messages');
     },
-    refetchInterval: 3000,
+    refetchInterval: pollingIntervals.chat,
     staleTime: 1000,
   });
 
@@ -55,7 +56,7 @@ function LiveChatPageContent(): React.JSX.Element {
       if (res.success && res.data) return res.data;
       throw new Error(res.message || 'Failed to load participants');
     },
-    refetchInterval: 10000,
+    refetchInterval: pollingIntervals.active,
     staleTime: 5000,
   });
 
@@ -106,58 +107,34 @@ function LiveChatPageContent(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
-    >
-      <AppHeader active="Reality" />
+    <PageShell maxWidth="7xl" activeNav="Reality">
+      <PageHero
+        title="Live Chat"
+        description="Join the conversation with other fans"
+        actions={
+          <motion.button
+            type="button"
+            role="switch"
+            aria-checked={showParticipants}
+            onClick={() => setShowParticipants(!showParticipants)}
+            className="az-chip az-body-strong inline-flex items-center gap-2 px-4 py-2 text-az-ink"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span className="size-2 rounded-full bg-az-success-400" aria-hidden="true" />
+            {onlineCount} Online
+          </motion.button>
+        }
+      />
 
-      <section
-        className="relative py-8 sm:py-12"
-        style={{
-          background: 'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <motion.h1
-                className="text-3xl sm:text-4xl font-bold text-white mb-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                Live Chat
-              </motion.h1>
-              <motion.p
-                className="text-white/80"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                Join the conversation with other fans
-              </motion.p>
-            </div>
-            <motion.button
-              type="button"
-              onClick={() => setShowParticipants(!showParticipants)}
-              className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2"
-              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'var(--brand-white)' }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="w-2 h-2 rounded-full bg-green-400" />
-              {onlineCount} Online
-            </motion.button>
-          </div>
-        </div>
-      </section>
-
-      <div className="flex-1 flex max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex-1 flex flex-col">
-          <GlowCard className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex w-full items-start gap-4">
+        <div className="flex min-h-[420px] flex-1 flex-col">
+          <GlowCard className="flex flex-1 flex-col overflow-hidden">
             <div
-              className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{ maxHeight: 'calc(100vh - 400px)' }}
+              role="log"
+              aria-live="polite"
+              aria-label="Chat messages"
+              className="flex-1 space-y-4 overflow-y-auto p-4 max-h-[calc(100vh-400px)]"
             >
               {isLoading ? (
                 <div className="space-y-4">
@@ -199,18 +176,15 @@ function LiveChatPageContent(): React.JSX.Element {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-semibold text-white">{msg.username}</span>
-                          <span className="text-xs text-white/30">{formatTime(msg.timestamp)}</span>
+                          <span className="az-body-strong text-az-ink">{msg.username}</span>
+                          <span className="az-caption text-az-ink/30">
+                            {formatTime(msg.timestamp)}
+                          </span>
                         </div>
                         <p
-                          className="text-sm rounded-lg px-3 py-2 inline-block"
-                          style={{
-                            backgroundColor:
-                              msg.type === 'vote'
-                                ? 'rgba(232,66,10,0.15)'
-                                : 'rgba(255,255,255,0.05)',
-                            color: 'rgba(255,255,255,0.8)',
-                          }}
+                          className={`az-body inline-block rounded-az-control px-3 py-2 text-az-ink/80 ${
+                            msg.type === 'vote' ? 'bg-az-scarlet/15' : 'bg-az-ink/5'
+                          }`}
                         >
                           {msg.type === 'vote' ? 'Vote ' : ''}
                           {msg.content}
@@ -223,28 +197,21 @@ function LiveChatPageContent(): React.JSX.Element {
               <div ref={messagesEndRef} />
             </div>
 
-            <div
-              className="p-4 flex items-center gap-3"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
-            >
+            <div className="flex items-center gap-3 border-t border-az-glass-border p-4">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type a message..."
-                className="flex-1 px-4 py-2.5 rounded-full text-sm text-white placeholder-white/30 focus:outline-none"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                }}
+                aria-label="Type a message"
+                className="az-input min-w-0 flex-1"
               />
               <motion.button
                 type="button"
                 onClick={handleSendMessage}
                 disabled={!message.trim()}
-                className="px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                className="az-btn-primary az-btn-primary--sm az-btn-primary--inline shrink-0"
                 whileHover={{ scale: message.trim() ? 1.05 : 1 }}
                 whileTap={{ scale: message.trim() ? 0.95 : 1 }}
               >
@@ -263,13 +230,14 @@ function LiveChatPageContent(): React.JSX.Element {
               className="ml-4 overflow-hidden"
             >
               <GlowCard className="h-full p-4">
-                <h3 className="text-lg font-bold text-white mb-4">Participants ({onlineCount})</h3>
-                <div
-                  className="space-y-3 overflow-y-auto"
-                  style={{ maxHeight: 'calc(100vh - 400px)' }}
-                >
+                <h3 className="az-subtitle mb-4 text-az-ink">Participants ({onlineCount})</h3>
+                <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-400px)]">
                   {participants.map((participant) => (
-                    <div key={participant.id} className="flex items-center gap-3">
+                    <div
+                      key={participant.id}
+                      className="flex items-center gap-3"
+                      aria-label={`${participant.username} is ${participant.isOnline ? 'online' : 'offline'}`}
+                    >
                       <div className="relative">
                         <OptimizedImage
                           src={
@@ -282,16 +250,15 @@ function LiveChatPageContent(): React.JSX.Element {
                           className="w-8 h-8 rounded-full object-cover"
                         />
                         <span
-                          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                          style={{
-                            backgroundColor: participant.isOnline
-                              ? 'var(--color-success-500)'
-                              : 'var(--brand-grey)',
-                            borderColor: 'var(--brand-near-black)',
-                          }}
+                          aria-hidden="true"
+                          className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-az-surface-root ${
+                            participant.isOnline ? 'bg-az-success-500' : 'bg-az-ink-muted'
+                          }`}
                         />
                       </div>
-                      <span className="text-sm text-white/80 truncate">{participant.username}</span>
+                      <span className="az-body truncate text-az-ink/80">
+                        {participant.username}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -300,9 +267,7 @@ function LiveChatPageContent(): React.JSX.Element {
           )}
         </AnimatePresence>
       </div>
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 

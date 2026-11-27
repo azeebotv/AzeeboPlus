@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
-import { isRecord, num } from '@/lib/payload';
+import { isRecord, requireData, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /**
  * Cost summary — matched to the model-cost-tracker service contract:
@@ -83,15 +84,15 @@ export default function CostDashboardPage() {
       const res = await apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
       return res.success ? asSummary(res.data) : null;
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const eventsQuery = useQuery({
     queryKey: ['admin', 'cost-events'],
     queryFn: async () => {
       const res = await apiFetch<CostEvent[]>('/api/v1/analytics/cost/events?limit=50');
-      if (!res.success) return [];
-      return (Array.isArray(res.data) ? res.data : []).map((e) => {
+      const rows = requireData(res, []);
+      return (Array.isArray(rows) ? rows : []).map((e) => {
         const rec: Record<string, unknown> = isRecord(e) ? e : {};
         return {
           id: String(rec.id ?? ''),
@@ -143,7 +144,7 @@ export default function CostDashboardPage() {
       color: 'var(--admin-emerald)',
     },
     {
-      label: 'Total Tokens',
+      label: 'Total AI Tokens',
       value: summary.totalTokens.toLocaleString(),
       color: 'var(--admin-orange)',
     },
@@ -311,7 +312,7 @@ export default function CostDashboardPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--admin-card)' }}>
-                {['Time', 'Model', 'Agent', 'Domain', 'In', 'Out', 'Cost', 'Latency'].map((h) => (
+                {['Time', 'Model', 'Agent', 'Domain', 'Prompt In', 'Response Out', 'Cost', 'Latency'].map((h) => (
                   <th key={h} style={thStyle}>
                     {h}
                   </th>
@@ -344,8 +345,12 @@ export default function CostDashboardPage() {
                     </td>
                     <td style={tdStyle}>{evt.agentId || '—'}</td>
                     <td style={tdStyle}>{evt.domain || '—'}</td>
-                    <td style={tdStyle}>{(evt.inputTokens / 1000).toFixed(1)}K</td>
-                    <td style={tdStyle}>{(evt.outputTokens / 1000).toFixed(1)}K</td>
+                    <td style={tdStyle} title={`${evt.inputTokens.toLocaleString()} prompt input tokens`}>
+                      {(evt.inputTokens / 1000).toFixed(1)}K
+                    </td>
+                    <td style={tdStyle} title={`${evt.outputTokens.toLocaleString()} generated response tokens`}>
+                      {(evt.outputTokens / 1000).toFixed(1)}K
+                    </td>
                     <td style={{ ...tdStyle, color: 'var(--admin-emerald)', fontWeight: 600 }}>
                       ${Number(evt.costUsd).toFixed(6)}
                     </td>

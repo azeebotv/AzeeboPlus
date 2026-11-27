@@ -85,9 +85,7 @@ describe('AiProvenanceService', () => {
     });
 
     it('falls back to a placeholder when the content relation is gone', async () => {
-      prisma.aiProvenanceRecord.findMany.mockResolvedValue([
-        { ...baseRow, content: null },
-      ]);
+      prisma.aiProvenanceRecord.findMany.mockResolvedValue([{ ...baseRow, content: null }]);
 
       const result = await service.list({});
 
@@ -178,9 +176,9 @@ describe('AiProvenanceService', () => {
     it('404s on an unknown record', async () => {
       prisma.aiProvenanceRecord.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.setClearance('missing', 'approved', 'x', 'admin-a')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.setClearance('missing', 'approved', 'x', 'admin-a')).rejects.toThrow(
+        NotFoundException
+      );
       expect(prisma.aiProvenanceRecord.update).not.toHaveBeenCalled();
     });
   });

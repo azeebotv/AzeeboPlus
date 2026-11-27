@@ -24,6 +24,8 @@ describe('SearchService', () => {
       .mockImplementation((key: string) => Promise.resolve(key !== 'search_typo_tolerance')),
     // Numeric flags: the shipped default trigram weight (0.4 = 60/40 blend).
     getValue: jest.fn().mockResolvedValue(0.4),
+    // Universe visibility sentinels: nothing stored → everything visible.
+    getFlags: jest.fn().mockResolvedValue(new Map()),
   };
 
   const mockContentItem = {
@@ -130,6 +132,13 @@ describe('SearchService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks wipes implementations; restore the base flag routing so
+    // later describes (and the universe-visibility memo) start from defaults.
+    mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key !== 'search_typo_tolerance')
+    );
+    (mockFeatureFlagService.getValue as jest.Mock).mockResolvedValue(0.4);
+    mockFeatureFlagService.getFlags.mockResolvedValue(new Map());
   });
 
   describe('search', () => {
@@ -238,6 +247,270 @@ describe('SearchService', () => {
       (prismaService.contentItem.findMany as jest.Mock).mockRejectedValue(new Error('DB error'));
 
       await expect(service.search('test query')).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('universe visibility gating (universe.<slug>.enabled sentinels)', () => {
+    const seedExactSearch = () => {
+      (cacheService.get as jest.Mock).mockResolvedValue(null);
+      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.contentItem.count as jest.Mock).mockResolvedValue(0);
+      (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.creatorProfile.count as jest.Mock).mockResolvedValue(0);
+      (prismaService.universe.count as jest.Mock).mockResolvedValue(0);
+      // The visibility lookup and the universe search surface share
+      // universe.findMany — distinguish by the lookup's select-only args.
+      (prismaService.universe.findMany as jest.Mock).mockImplementation((args?: unknown) => {
+        const a = args as { select?: unknown } | undefined;
+        return Promise.resolve(a?.select ? [{ id: 'u-comedy' }] : []);
+      });
+    };
+
+    afterEach(() => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(new Map());
+      // jest.clearAllMocks wipes implementations; later describes assume the
+      // base everything-on-except-typo flag routing.
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key !== 'search_typo_tolerance')
+      );
+    });
+
+    it('excludes a universe whose sentinel is stored disabled from content and universe rows', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: false }]])
+      );
+      seedExactSearch();
+
+      await service.search('test');
+
+      expect(mockFeatureFlagService.getFlags).toHaveBeenCalledWith(
+        expect.arrayContaining(['universe.comedy.enabled', 'universe.reality.enabled'])
+      );
+      expect(prismaService.contentItem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              { universe: { notIn: ['comedy'] } },
+              { universeId: { notIn: ['u-comedy'] } },
+            ]),
+          }),
+        })
+      );
+      const universeCall = (prismaService.universe.findMany as jest.Mock).mock.calls.find(
+        ([args]) => !(args as { select?: unknown })?.select
+      );
+      expect(universeCall?.[0]).toEqual(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: [
+              expect.any(Object),
+              { AND: [{ name: { notIn: ['comedy'] } }, { id: { notIn: ['u-comedy'] } }] },
+            ],
+          }),
+        })
+      );
+    });
+
+    it('leaves results unfiltered when no sentinel is stored (default visible)', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(new Map());
+      seedExactSearch();
+
+      await service.search('test');
+
+      expect(prismaService.universe.findMany).not.toHaveBeenCalledWith(
+        expect.objectContaining({ select: expect.anything() })
+      );
+      expect(prismaService.contentItem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({ AND: expect.anything() }),
+        })
+      );
+    });
+
+    it('an explicitly enabled sentinel changes nothing', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: true }]])
+      );
+      seedExactSearch();
+
+      await service.search('test');
+
+      expect(prismaService.contentItem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({ AND: expect.anything() }),
+        })
+      );
+    });
+
+    it('memoizes the visibility lookup across searches (60s window)', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: false }]])
+      );
+      seedExactSearch();
+
+      await service.search('alpha');
+      await service.search('beta');
+
+      // One batched flag call for both searches; different queries → no
+      // shared response cache entry short-circuiting the second lookup.
+      expect(mockFeatureFlagService.getFlags).toHaveBeenCalledTimes(1);
+    });
+
+    it('fail-opens to visible when the flag lookup errors (no cached state)', async () => {
+      mockFeatureFlagService.getFlags.mockRejectedValue(new Error('redis down'));
+      seedExactSearch();
+
+      await service.search('test');
+
+      expect(prismaService.contentItem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({ AND: expect.anything() }),
+        })
+      );
+    });
+
+    it('injects NOT IN predicates into the fuzzy (pg_trgm) SQL paths', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: false }]])
+      );
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === 'search_typo_tolerance')
+      );
+      (cacheService.get as jest.Mock).mockResolvedValue(null);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { available: true, indexesPresent: true },
+      ]);
+      await service.onModuleInit();
+      // Reset so probe calls don't shift the once-chain indices of the six
+      // search queries (a lazy re-probe would also consume a once value).
+      (prismaService.$queryRaw as jest.Mock).mockReset();
+      (prismaService.universe.findMany as jest.Mock).mockImplementation((args?: unknown) => {
+        const a = args as { select?: unknown } | undefined;
+        return Promise.resolve(a?.select ? [{ id: 'u-comedy' }] : []);
+      });
+      (prismaService.$queryRaw as jest.Mock)
+        .mockResolvedValueOnce([]) // content pool
+        .mockResolvedValueOnce([{ count: 0 }]) // content count
+        .mockResolvedValueOnce([]) // creators pool
+        .mockResolvedValueOnce([{ count: 0 }]) // creators count
+        .mockResolvedValueOnce([]) // universes pool
+        .mockResolvedValueOnce([{ count: 0 }]); // universes count
+
+      await service.search('avngers');
+
+      // Prisma renders NOT IN members as ? placeholders — assert the clause
+      // shape on the SQL and the membership on the params.
+      const rawCalls = (prismaService.$queryRaw as jest.Mock).mock.calls.map(
+        ([q]) => q as { sql: string; values: unknown[] }
+      );
+      expect(rawCalls[0].sql).toContain('ci.universe NOT IN (?)');
+      expect(rawCalls[0].sql).toContain('ci."universeId" NOT IN (?)');
+      expect(rawCalls[0].values).toContain('comedy');
+      expect(rawCalls[0].values).toContain('u-comedy');
+      expect(rawCalls[1].sql).toContain('ci."universeId" NOT IN');
+      expect(rawCalls[1].values).toContain('comedy');
+      expect(rawCalls[4].sql).toContain('u.id NOT IN');
+      expect(rawCalls[4].values).toContain('u-comedy');
+      expect(rawCalls[5].sql).toContain('u.id NOT IN');
+      expect(rawCalls[5].values).toContain('u-comedy');
+      expect(rawCalls[0].sql).not.toContain('FALSE');
+    });
+
+    it('a fuzzy filter on a disabled universe renders an always-false predicate', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: false }]])
+      );
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === 'search_typo_tolerance')
+      );
+      (cacheService.get as jest.Mock).mockResolvedValue(null);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
+        { available: true, indexesPresent: true },
+      ]);
+      await service.onModuleInit();
+      (prismaService.$queryRaw as jest.Mock).mockClear();
+      (mockFeatureFlagService.getFlags as jest.Mock).mockClear();
+      (prismaService.universe.findMany as jest.Mock).mockImplementation((args?: unknown) => {
+        const a = args as { select?: unknown } | undefined;
+        return Promise.resolve(a?.select ? [{ id: 'u-comedy' }] : []);
+      });
+      (prismaService.$queryRaw as jest.Mock)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ count: 0 }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ count: 0 }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ count: 0 }]);
+
+      await service.search('avngers', { universe: 'u-comedy' });
+
+      const contentPoolSql = (prismaService.$queryRaw as jest.Mock).mock.calls[0][0] as {
+        sql: string;
+      };
+      expect(contentPoolSql.sql).toContain('AND FALSE');
+    });
+
+    it('getFacets drops disabled universes alongside the local isEnabled column', async () => {
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: false }]])
+      );
+      (prismaService.contentItem.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.tag.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.contentItem.count as jest.Mock).mockResolvedValue(0);
+      (prismaService.universe.findMany as jest.Mock).mockImplementation((args?: unknown) => {
+        const a = args as { select?: unknown; where?: { AND?: unknown[] } } | undefined;
+        if (a?.select) return Promise.resolve([{ id: 'u-comedy' }]);
+        expect(a?.where?.AND?.[0]).toEqual({ isEnabled: true });
+        expect(a?.where?.AND?.[1]).toEqual({
+          AND: [{ name: { notIn: ['comedy'] } }, { id: { notIn: ['u-comedy'] } }],
+        });
+        return Promise.resolve([]);
+      });
+
+      await service.getFacets();
+
+      expect(prismaService.universe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ select: expect.anything() })
+      );
+    });
+
+    it('searchWithFacets excludes disabled universes from content, rows and facets', async () => {
+      mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+        Promise.resolve(key === 'search_faceted')
+      );
+      mockFeatureFlagService.getFlags.mockResolvedValue(
+        new Map([['universe.comedy.enabled', { key: 'universe.comedy.enabled', enabled: false }]])
+      );
+      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.contentItem.groupBy as jest.Mock).mockResolvedValue([]);
+      (prismaService.contentItem.count as jest.Mock).mockResolvedValue(0);
+      (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.universe.findMany as jest.Mock).mockImplementation((args?: unknown) => {
+        const a = args as { select?: unknown } | undefined;
+        return Promise.resolve(a?.select ? [{ id: 'u-comedy' }] : []);
+      });
+
+      await service.searchWithFacets('test');
+
+      // Content query carries the visibility AND fragment (same helper as the
+      // exact path, and computeFacets reuses it for the groupBy predicate).
+      expect(prismaService.contentItem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              { universe: { notIn: ['comedy'] } },
+              { universeId: { notIn: ['u-comedy'] } },
+            ]),
+          }),
+        })
+      );
+      const rowCalls = (prismaService.universe.findMany as jest.Mock).mock.calls
+        .map(([args]) => args as { where?: { AND?: unknown[] } })
+        .filter((a) => a?.where?.AND && !('id' in ((a.where as Record<string, unknown>) ?? {})));
+      expect(rowCalls.length).toBeGreaterThan(0);
+      expect(rowCalls[0].where?.AND?.[1]).toEqual({
+        AND: [{ name: { notIn: ['comedy'] } }, { id: { notIn: ['u-comedy'] } }],
+      });
     });
   });
 

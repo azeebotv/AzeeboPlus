@@ -73,12 +73,12 @@ export default function CharacterLoreScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Character Lore Screen" style={styles.container}>
       <ScrollView
         style={[styles.scrollView, { backgroundColor: isDark ? colors.bg.primary : '#FFFFFF' }]}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Character Lore</Text>
@@ -171,7 +171,7 @@ export default function CharacterLoreScreen() {
               </Text>
               <View style={styles.relationshipsList}>
                 {character.relationships.map((rel, index) => (
-                  <TouchableOpacity key={index} style={styles.relationshipItem}>
+                  <TouchableOpacity accessibilityRole="button" key={index} style={styles.relationshipItem}>
                     <View style={styles.relAvatar}>
                       <Text style={styles.relAvatarText}>{rel.avatar}</Text>
                     </View>

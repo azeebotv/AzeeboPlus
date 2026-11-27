@@ -28,7 +28,9 @@ export class PaymentGatewaysService {
    * gateways flip back to enabled on the next list — lying to the operator.
    * Corruption inside a valid row is still tolerated; real DB errors throw.
    */
-  private async readOverrides(): Promise<Record<string, { enabled: boolean; mode: 'live' | 'test' }>> {
+  private async readOverrides(): Promise<
+    Record<string, { enabled: boolean; mode: 'live' | 'test' }>
+  > {
     const row = await this.prisma.systemSettings.findUnique({ where: { key: GATEWAYS_KEY } });
     const value = row?.value as unknown;
     return value && typeof value === 'object' && !Array.isArray(value)
@@ -147,11 +149,17 @@ export class PaymentGatewaysService {
         return {
           id: `evt_${pi.id.slice(0, 8)}`,
           provider,
-          eventType: pi.status === 'completed' ? 'charge.success' : pi.status === 'failed' ? 'charge.failed' : 'payment.pending',
+          eventType:
+            pi.status === 'completed'
+              ? 'charge.success'
+              : pi.status === 'failed'
+                ? 'charge.failed'
+                : 'payment.pending',
           reference: (meta?.reference as string) || (meta?.paystackReference as string) || pi.id,
           amount: Number(pi.amount),
           currency: pi.currency,
-          status: pi.status === 'completed' ? 'success' : pi.status === 'failed' ? 'failed' : 'pending',
+          status:
+            pi.status === 'completed' ? 'success' : pi.status === 'failed' ? 'failed' : 'pending',
           metadata: meta || undefined,
           createdAt: pi.createdAt.toISOString(),
         };
@@ -160,4 +168,3 @@ export class PaymentGatewaysService {
     return { items, total: items.length };
   }
 }
-

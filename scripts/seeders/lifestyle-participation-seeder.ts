@@ -287,7 +287,13 @@ async function getClient(): Promise<ParticipationClient> {
     const mod = await import('@prisma/client');
     PrismaClient = mod.PrismaClient;
   }
-  return new (PrismaClient as new () => ParticipationClient)();
+  const dbUrl =
+    process.env.LIFESTYLE_DATABASE_URL ||
+    'postgresql://azeebo:azeebo@localhost:5432/azeebo_lifestyle?schema=public';
+  process.env.DATABASE_URL = dbUrl;
+  return new (PrismaClient as new (opts?: unknown) => ParticipationClient)({
+    datasources: { db: { url: dbUrl } },
+  });
 }
 
 function daysFromNow(days: number): Date {

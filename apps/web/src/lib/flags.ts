@@ -49,9 +49,35 @@ interface CacheEntry {
 const cacheKey = (userId?: string, visitorId?: string): string =>
   `${CACHE_PREFIX}_${userId || `anon_${visitorId || 'unknown'}`}`;
 
+let ephemeralVisitorId: string | null = null;
+
+function hasAnalyticsConsent(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem('azeebo_cookie_consent');
+    if (!raw) return false;
+    const consent = JSON.parse(raw);
+    return Boolean(consent?.analytics);
+  } catch {
+    return false;
+  }
+}
+
 /** Stable per-browser visitor id for anonymous rollout bucketing. */
 export function getOrCreateVisitorId(): string {
   if (typeof window === 'undefined') return 'ssr';
+
+  // AUD-20: Prior to explicit analytics consent, do not persist identifiers into localStorage
+  if (!hasAnalyticsConsent()) {
+    if (!ephemeralVisitorId) {
+      ephemeralVisitorId =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+    return ephemeralVisitorId;
+  }
+
   let id = localStorage.getItem(VISITOR_KEY);
   if (!id) {
     id =

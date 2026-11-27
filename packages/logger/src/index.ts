@@ -1,5 +1,14 @@
 import { LoggerService, LogLevel } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
+// Light subpath import: the security barrel would pull @nestjs/core into
+// every logger consumer (and logger's own unit tests).
+import { LogRedactionService } from '@azeebo/security/log-redaction';
+
+// Shared instance — LogRedactionService is stateless. Every message and
+// context object written through StructuredLogger passes redaction before
+// emission so plaintext emails/phones/tokens never reach the log pipeline.
+const redaction = new LogRedactionService();
+
 export { LoggingInterceptor } from './logging.interceptor';
 export { ResponseWrapperInterceptor } from './response-wrapper.interceptor';
 export {
@@ -85,10 +94,10 @@ export class StructuredLogger implements LoggerService {
     const entry: StructuredLogEntry = {
       timestamp: new Date().toISOString(),
       level,
-      message,
+      message: redaction.redactString(message),
       service: this.serviceName,
       ...traceContext,
-      ...context,
+      ...(context ? (redaction.redactObject(context) as LogContext) : undefined),
     };
 
     let output: string;

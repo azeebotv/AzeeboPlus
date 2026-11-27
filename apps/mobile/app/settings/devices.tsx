@@ -15,6 +15,7 @@ import { authApi, type Device } from '@azeebo/react-data';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function DeviceManagementScreen() {
   const router = useRouter();
@@ -116,7 +117,7 @@ export default function DeviceManagementScreen() {
           </View>
         </View>
         {!item.isCurrent && (
-          <TouchableOpacity style={styles.revokeButton} onPress={() => revokeDevice(item.id)}>
+          <TouchableOpacity accessibilityRole="button" style={styles.revokeButton} onPress={() => revokeDevice(item.id)}>
             <Text style={styles.revokeButtonText}>Revoke</Text>
           </TouchableOpacity>
         )}
@@ -126,7 +127,7 @@ export default function DeviceManagementScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView accessibilityLabel="Devices Screen" style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={styles.loadingText}>Loading devices...</Text>
       </SafeAreaView>
@@ -166,8 +167,8 @@ export default function DeviceManagementScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            colors={['#E8420A']}
-            tintColor="#E8420A"
+            colors={[brand.flame]}
+            tintColor={brand.flame}
           />
         }
         ListEmptyComponent={

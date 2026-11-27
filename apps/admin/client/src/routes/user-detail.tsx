@@ -37,6 +37,13 @@ export default function UserDetailPage() {
   const [revokeReason, setRevokeReason] = useState('');
   const [showRole, setShowRole] = useState(false);
   const [newRole, setNewRole] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    displayName: '',
+    email: '',
+    role: 'user',
+    isVerified: false,
+  });
 
   const fetchUser = useCallback(async () => {
     try {
@@ -299,6 +306,29 @@ export default function UserDetailPage() {
           )}
           <button
             onClick={() => {
+              setEditForm({
+                displayName: user.displayName || '',
+                email: user.email,
+                role: user.role,
+                isVerified: Boolean(user.isVerified),
+              });
+              setShowEditModal(true);
+            }}
+            disabled={busy}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--admin-primary)',
+              color: 'white',
+              fontWeight: 600,
+              cursor: busy ? 'wait' : 'pointer',
+            }}
+          >
+            Edit Profile
+          </button>
+          <button
+            onClick={() => {
               setShowRole(!showRole);
               setNewRole(user.role);
             }}
@@ -472,6 +502,156 @@ export default function UserDetailPage() {
             >
               Yes, delete
             </button>
+          </div>
+        )}
+
+        {showEditModal && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.75)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+            onClick={() => setShowEditModal(false)}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--admin-dark)',
+                border: '1px solid var(--admin-card)',
+                borderRadius: 16,
+                padding: 24,
+                width: '90%',
+                maxWidth: 480,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Edit User Profile</h3>
+              <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+                Update personal details, role, and verification status for this user.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.displayName}
+                    onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-surface)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-surface)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                    Role
+                  </label>
+                  <select
+                    value={editForm.role}
+                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--admin-surface)',
+                      backgroundColor: 'var(--admin-surface)',
+                      color: 'var(--admin-text)',
+                      fontSize: 13,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginTop: 4 }}>
+                  <input
+                    type="checkbox"
+                    checked={editForm.isVerified}
+                    onChange={(e) => setEditForm({ ...editForm, isVerified: e.target.checked })}
+                  />
+                  <span>Verified Account badge</span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-card)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--admin-text-muted)',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    void runAction(
+                      () => adminApi.updateUser(user.id, editForm),
+                      'User profile updated successfully'
+                    );
+                  }}
+                  disabled={busy || !editForm.displayName.trim() || !editForm.email.trim()}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    backgroundColor: 'var(--admin-primary)',
+                    color: 'white',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

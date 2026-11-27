@@ -52,32 +52,29 @@ export default function MusicTrackList({
     <>
       {/* Now Playing Bar */}
       {playingId && current && (
-        <div
-          className="sticky top-0 z-40 py-3 px-4"
-          style={{
-            backgroundColor: 'rgba(26,10,10,0.95)',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
+        <div className="sticky top-0 z-40 border-b border-az-ink/10 bg-az-surface-root/95 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center animate-pulse"
-              style={{ backgroundColor: 'rgba(232,66,10,0.2)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#E8420A">
+            <div className="flex h-10 w-10 animate-pulse items-center justify-center rounded-full bg-az-scarlet/20">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="text-az-flame"
+              >
                 <path d="M9 18V5l12-2v13" />
                 <circle cx="6" cy="18" r="3" />
                 <circle cx="18" cy="16" r="3" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{current.title}</p>
-              <p className="text-xs text-white/50 truncate">{current.artist}</p>
+              <p className="text-sm font-semibold text-az-ink truncate">{current.title}</p>
+              <p className="text-xs text-az-ink/50 truncate">{current.artist}</p>
             </div>
             <button
               type="button"
               onClick={() => setPlayingId(null)}
-              className="text-white/40 hover:text-white"
+              className="text-az-ink/40 hover:text-az-ink"
             >
               <svg
                 width="18"
@@ -97,7 +94,7 @@ export default function MusicTrackList({
       {/* Tracks List */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-az-ink mb-6 sm:mb-8">
             Trending Tracks
           </h2>
         </ScrollReveal>
@@ -129,12 +126,19 @@ export default function MusicTrackList({
               >
                 <div
                   className="az-glass p-3 flex items-center gap-3 sm:gap-4 cursor-pointer transition-all hover:scale-[1.01]"
+                  /* Shared-layer gap: `.az-glass` owns `border`, and globals.css is
+                     unlayered, so a `border-az-scarlet/30` utility could never win —
+                     the selected hairline stays inline on the token. A
+                     `.az-glass--selected` modifier would remove the need. */
                   style={{
-                    border: playingId === track.id ? '1px solid rgba(232,66,10,0.3)' : undefined,
+                    borderColor:
+                      playingId === track.id
+                        ? 'color-mix(in srgb, var(--color-az-scarlet) 30%, transparent)'
+                        : undefined,
                   }}
                   onClick={() => togglePlay(track.id)}
                 >
-                  <span className="text-sm text-white/30 w-6 text-center">{index + 1}</span>
+                  <span className="text-sm text-az-ink/30 w-6 text-center">{index + 1}</span>
                   <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
                     <OptimizedImage
                       src={track.thumbnail}
@@ -158,33 +162,21 @@ export default function MusicTrackList({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-white truncate">{track.title}</p>
+                      <p className="text-sm font-semibold text-az-ink truncate">{track.title}</p>
                       {track.isExplicit && (
-                        <span
-                          className="px-1 py-0.5 rounded text-[8px] font-bold"
-                          style={{
-                            backgroundColor: 'rgba(255,255,255,0.15)',
-                            color: 'rgba(255,255,255,0.5)',
-                          }}
-                        >
+                        <span className="rounded bg-az-ink/15 px-1 py-0.5 text-[8px] font-bold text-az-ink/50">
                           E
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-white/50 truncate">{track.artist}</p>
+                    <p className="text-xs text-az-ink/50 truncate">{track.artist}</p>
                   </div>
                   {track.genre && (
-                    <span
-                      className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        color: 'rgba(255,255,255,0.5)',
-                      }}
-                    >
+                    <span className="hidden sm:inline-block rounded-full bg-az-ink/8 px-2 py-0.5 text-[10px] font-medium text-az-ink/50">
                       {track.genre}
                     </span>
                   )}
-                  <span className="text-xs text-white/40">
+                  <span className="text-xs text-az-ink/40">
                     {track.duration
                       ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}`
                       : ''}
@@ -194,7 +186,7 @@ export default function MusicTrackList({
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className="text-white/30 hover:text-[var(--brand-orange)] transition-colors"
+                    className="text-az-ink/30 transition-colors hover:text-az-flame"
                   >
                     <svg
                       width="16"
@@ -213,7 +205,7 @@ export default function MusicTrackList({
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg text-white/50">No music available</p>
+            <p className="text-lg text-az-ink/50">No music available</p>
           </div>
         )}
       </section>

@@ -3,19 +3,33 @@ import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+/* Tip tiers are reward ranks, not statuses, so they keep the categorical
+   metallic ramp (see `src/app/rankings`) instead of the semantic colour set.
+   A tone is a pair of token CLASSES — the tint is `bg-az-accent-gold/15`,
+   Tailwind emits the color-mix for us. */
 const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; min: number }> = {
-  bronze: { label: 'Bronze', color: 'var(--brand-copper)', bg: 'rgba(205,127,50,0.15)', min: 1000 },
+  bronze: {
+    label: 'Bronze',
+    color: 'text-[var(--color-az-accent-bronze)]',
+    bg: 'bg-[var(--color-az-accent-bronze)]/15',
+    min: 1000,
+  },
   silver: {
     label: 'Silver',
-    color: 'var(--brand-silver)',
-    bg: 'rgba(192,192,192,0.15)',
+    color: 'text-[var(--color-az-accent-silver)]',
+    bg: 'bg-[var(--color-az-accent-silver)]/15',
     min: 10000,
   },
-  gold: { label: 'Gold', color: 'var(--brand-gold)', bg: 'rgba(255,215,0,0.15)', min: 50000 },
+  gold: {
+    label: 'Gold',
+    color: 'text-az-accent-gold',
+    bg: 'bg-az-accent-gold/15',
+    min: 50000,
+  },
   platinum: {
     label: 'Platinum',
-    color: 'var(--brand-silver)',
-    bg: 'rgba(229,228,226,0.15)',
+    color: 'text-[var(--color-az-accent-silver)]',
+    bg: 'bg-az-ink/15',
     min: 100000,
   },
 };
@@ -38,7 +52,10 @@ export default function TippingPanel({
     queryKey: ['tip-stats', creatorId],
     queryFn: async () => {
       const res = await api.creator.getTipStats(creatorId);
-      return res.success && res.data ? res.data : null;
+      if (!res.success || !res.data) {
+        throw new Error(res.message || 'Failed to load tip stats');
+      }
+      return res.data;
     },
   });
 
@@ -46,14 +63,21 @@ export default function TippingPanel({
     queryKey: ['tip-leaderboard', creatorId],
     queryFn: async () => {
       const res = await api.creator.getTipLeaderboard(creatorId);
-      return res.success && res.data ? res.data.entries : [];
+      if (!res.success || !res.data) {
+        throw new Error(res.message || 'Failed to load tip leaderboard');
+      }
+      return res.data.entries || [];
     },
   });
 
   const tipMutation = useMutation({
     mutationFn: async () => {
       const finalAmount = useCustom ? Number(customAmount) : amount;
-      return api.creator.sendTip(creatorId, finalAmount, message || undefined);
+      const res = await api.creator.sendTip(creatorId, finalAmount, message || undefined);
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to send tip');
+      }
+      return res;
     },
   });
 
@@ -63,23 +87,12 @@ export default function TippingPanel({
   const tierConfig = topTier ? TIER_CONFIG[topTier] : null;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: 12,
-        padding: 20,
-        border: '1px solid var(--border-default)',
-      }}
-    >
-      <h3 style={{ color: 'var(--brand-white)', fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
-        Support {creatorName}
-      </h3>
-      <p style={{ color: 'var(--text-muted, #9A8A7A)', fontSize: 13, marginBottom: 16 }}>
-        Send a tip and earn tier badges
-      </p>
+    <div className="az-glass p-5">
+      <h3 className="az-subtitle mb-1 text-az-ink">Support {creatorName}</h3>
+      <p className="az-caption mb-4 text-az-ink-muted">Send a tip and earn tier badges</p>
 
       {tierConfig && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className="mb-4 flex flex-wrap gap-2">
           {Object.entries(TIER_CONFIG).map(([key, cfg]) => {
             const unlocked =
               topTier &&
@@ -87,15 +100,9 @@ export default function TippingPanel({
             return (
               <div
                 key={key}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 20,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  backgroundColor: unlocked ? cfg.bg : 'rgba(255,255,255,0.05)',
-                  color: unlocked ? cfg.color : 'var(--brand-grey)',
-                  opacity: unlocked ? 1 : 0.4,
-                }}
+                className={`rounded-az-pill px-2.5 py-1 text-[11px] font-semibold ${
+                  unlocked ? `${cfg.bg} ${cfg.color}` : 'bg-az-ink/5 text-az-ink-muted opacity-40'
+                }`}
               >
                 {unlocked ? 'Check ' : ''}
                 {cfg.label}
@@ -105,7 +112,7 @@ export default function TippingPanel({
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+      <div className="mb-3 flex flex-wrap gap-2">
         {PRESET_AMOUNTS.map((preset) => (
           <button
             key={preset}
@@ -115,24 +122,11 @@ export default function TippingPanel({
               setAmount(preset);
               setUseCustom(false);
             }}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: '1px solid',
-              borderColor:
-                !useCustom && amount === preset
-                  ? 'var(--brand-orange, #E8420A)'
-                  : 'var(--bg-surface, #18151e)',
-              backgroundColor:
-                !useCustom && amount === preset ? 'rgba(232,66,10,0.15)' : 'transparent',
-              color:
-                !useCustom && amount === preset
-                  ? 'var(--brand-orange, #E8420A)'
-                  : 'var(--text-primary, #F5F0EB)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className={`cursor-pointer rounded-az-control border px-4 py-2 az-body-strong transition-colors ${
+              !useCustom && amount === preset
+                ? 'border-az-flame bg-az-scarlet/15 text-az-flame'
+                : 'border-az-glass-border-hover text-az-ink hover:bg-az-glass-fill-hover'
+            }`}
           >
             ₦{preset.toLocaleString()}
           </button>
@@ -141,17 +135,11 @@ export default function TippingPanel({
           type="button"
           aria-label="Enter custom tip amount"
           onClick={() => setUseCustom(true)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 8,
-            border: '1px solid',
-            borderColor: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--bg-surface, #18151e)',
-            backgroundColor: useCustom ? 'rgba(232,66,10,0.15)' : 'transparent',
-            color: useCustom ? 'var(--brand-orange, #E8420A)' : 'var(--text-primary, #F5F0EB)',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          className={`cursor-pointer rounded-az-control border px-4 py-2 az-body-strong transition-colors ${
+            useCustom
+              ? 'border-az-flame bg-az-scarlet/15 text-az-flame'
+              : 'border-az-glass-border-hover text-az-ink hover:bg-az-glass-fill-hover'
+          }`}
         >
           Custom
         </button>
@@ -166,16 +154,7 @@ export default function TippingPanel({
           onChange={(e) => setCustomAmount(e.target.value)}
           min={50}
           max={100000}
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: '1px solid var(--border-default)',
-            background: 'var(--bg-tertiary)',
-            color: 'var(--text-primary, #F5F0EB)',
-            fontSize: 14,
-            marginBottom: 12,
-          }}
+          className="mb-3 az-input"
         />
       )}
 
@@ -186,16 +165,7 @@ export default function TippingPanel({
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         maxLength={500}
-        style={{
-          width: '100%',
-          padding: '10px 14px',
-          borderRadius: 8,
-          border: '1px solid var(--border-default)',
-          background: 'var(--bg-tertiary)',
-          color: 'var(--text-primary, #F5F0EB)',
-          fontSize: 14,
-          marginBottom: 16,
-        }}
+        className="mb-4 az-input"
       />
 
       <button
@@ -209,21 +179,7 @@ export default function TippingPanel({
         }
         onClick={() => tipMutation.mutate()}
         disabled={tipMutation.isPending || selectedAmount < 50}
-        style={{
-          width: '100%',
-          padding: '12px',
-          borderRadius: 10,
-          border: 'none',
-          backgroundColor: tipMutation.isPending
-            ? 'var(--brand-grey)'
-            : 'var(--brand-orange, #E8420A)',
-          color: 'var(--brand-white)',
-          fontSize: 15,
-          fontWeight: 600,
-          cursor: 'pointer',
-          opacity: selectedAmount < 50 ? 0.5 : 1,
-          marginBottom: 16,
-        }}
+        className="mb-4 az-btn-primary"
       >
         {tipMutation.isPending
           ? 'Sending...'
@@ -233,62 +189,34 @@ export default function TippingPanel({
       </button>
 
       {tipMutation.isError && (
-        <p
-          style={{
-            color: 'var(--color-error-500)',
-            fontSize: 13,
-            textAlign: 'center',
-            marginBottom: 12,
-          }}
-        >
+        <p className="az-caption mb-3 text-center text-az-error-500">
           {tipMutation.error instanceof Error ? tipMutation.error.message : 'Failed to send tip'}
         </p>
       )}
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-        <p
-          style={{
-            color: 'var(--text-muted, #9A8A7A)',
-            fontSize: 13,
-            fontWeight: 600,
-            marginBottom: 8,
-          }}
-        >
-          Top Supporters
-        </p>
+      <div className="border-t border-az-ink/8 pt-4">
+        <p className="az-label">Top Supporters</p>
         {leaderboardQuery.isLoading ? (
-          <p style={{ color: 'var(--brand-grey)', fontSize: 12 }}>Loading...</p>
+          <p className="az-caption text-az-ink-muted">Loading...</p>
+        ) : leaderboardQuery.isError ? (
+          <p className="az-caption text-az-error-500">Failed to load leaderboard</p>
         ) : leaderboardQuery.data && leaderboardQuery.data.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="flex flex-col gap-1.5">
             {leaderboardQuery.data.slice(0, 5).map((entry, i) => {
               const tier = TIER_CONFIG[entry.tier as string];
               return (
-                <div
-                  key={entry.userId}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: 'var(--brand-grey)', fontSize: 12, width: 16 }}>
-                      #{i + 1}
-                    </span>
+                <div key={entry.userId} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="az-caption w-4 text-az-ink-muted">#{i + 1}</span>
                     {tier && (
                       <span
-                        style={{
-                          padding: '2px 6px',
-                          borderRadius: 10,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          backgroundColor: tier.bg,
-                          color: tier.color,
-                        }}
+                        className={`az-micro-label rounded-az-pill px-1.5 py-0.5 ${tier.bg} ${tier.color}`}
                       >
                         {tier.label}
                       </span>
                     )}
                   </div>
-                  <span
-                    style={{ color: 'var(--text-primary, #F5F0EB)', fontSize: 12, fontWeight: 600 }}
-                  >
+                  <span className="text-xs font-semibold text-az-ink">
                     ₦{Number(entry.totalAmount).toLocaleString()}
                   </span>
                 </div>
@@ -296,7 +224,7 @@ export default function TippingPanel({
             })}
           </div>
         ) : (
-          <p style={{ color: 'var(--brand-grey)', fontSize: 12 }}>Be the first to tip!</p>
+          <p className="az-caption text-az-ink-muted">Be the first to tip!</p>
         )}
       </div>
     </div>

@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { createLogger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const logger = createLogger('AddFunds');
 
@@ -47,9 +48,8 @@ export default function AddFundsScreen() {
   const handleAddFunds = async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.post<{ success: boolean }>('/api/v1/wallet/add', {
+      const res = await apiClient.post<{ success: boolean }>('/api/v1/wallet/fund', {
         amount,
-        method: 'card',
       });
       if (res.success) {
         Alert.alert('Success', 'Funds added to your wallet!');
@@ -66,9 +66,9 @@ export default function AddFundsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Add Funds Screen" style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Add Funds</Text>
@@ -180,10 +180,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
   },
-  quickButtonSelected: { backgroundColor: '#E8420A' },
+  quickButtonSelected: { backgroundColor: brand.flame },
   quickButtonText: { color: '#fff', fontSize: 14 },
   addButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

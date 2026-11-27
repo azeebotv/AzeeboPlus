@@ -18,6 +18,7 @@ import { userApi } from '@azeebo/react-data/api/user';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -105,7 +106,7 @@ export default function ProfileSetupScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Profile Setup Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -161,7 +162,7 @@ export default function ProfileSetupScreen() {
                 Choose at least 3 to get personalized recommendations
               </Text>
               {isLoadingInterests ? (
-                <ActivityIndicator color="#E8420A" />
+                <ActivityIndicator color={brand.flame} />
               ) : interestsError ? (
                 <ErrorState description={interestsError} onRetry={fetchInterests} />
               ) : (
@@ -198,7 +199,7 @@ export default function ProfileSetupScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <TouchableOpacity accessibilityRole="button" style={styles.skipButton} onPress={handleSkip}>
               <Text style={styles.skipButtonText}>Skip for now</Text>
             </TouchableOpacity>
           </View>
@@ -295,8 +296,8 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   interestChipSelected: {
-    backgroundColor: '#E8420A',
-    borderColor: '#E8420A',
+    backgroundColor: brand.flame,
+    borderColor: brand.flame,
   },
   interestText: {
     color: colors.light[100],
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   completeButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

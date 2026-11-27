@@ -4,6 +4,7 @@ import { mapAndThrow } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service.js';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { FeatureFlagService, searchFlags } from '@azeebo/feature-flags';
+import { UNIVERSE_SLUGS, universeEnabledKey } from '@azeebo/shared-types';
 import { MetricsService } from '../metrics/metrics.service.js';
 import axios from 'axios';
 // Prisma client types available via PrismaService
@@ -158,7 +159,7 @@ export class SearchService implements OnModuleInit {
   ) {
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
     this.suggestionsAiUrl = this.configService.get<string>('SEARCH_SUGGESTIONS_AI_URL');
   }
@@ -375,6 +376,85 @@ export class SearchService implements OnModuleInit {
     };
   }
 
+  /** Universe visibility gating (`universe.<slug>.enabled` sentinels, the
+   * admin toggle). Presence-based semantics: a universe is hidden only when
+   * its sentinel is STORED with enabled === false; an absent flag keeps the
+   * default-visible contract (unknown keys evaluate to false here, so
+   * evaluateMany must not be used). Memoized for 60s so hot search paths do
+   * not hammer Redis beyond the flag cache; any failure (Redis, DB) returns
+   * the last known set, or empty on first load — a blip must not blank the
+   * whole search surface. */
+  private disabledUniversesCache: { ids: string[]; names: string[]; expiresAt: number } | null =
+    null;
+  private static readonly DISABLED_UNIVERSES_MEMO_MS = 60_000;
+
+  private async getDisabledUniverses(): Promise<{ ids: string[]; names: string[] }> {
+    const now = Date.now();
+    if (this.disabledUniversesCache && this.disabledUniversesCache.expiresAt > now) {
+      return this.disabledUniversesCache;
+    }
+    let resolved: { ids: string[]; names: string[]; expiresAt: number };
+    try {
+      const keys = UNIVERSE_SLUGS.map(universeEnabledKey);
+      const flags = await this.featureFlagService.getFlags(keys);
+      const hiddenNames = UNIVERSE_SLUGS.filter((slug) => {
+        const flag = flags.get(universeEnabledKey(slug));
+        return flag !== undefined && flag.enabled === false;
+      });
+      const rows = hiddenNames.length
+        ? await this.prisma.universe.findMany({
+            where: { name: { in: hiddenNames } },
+            select: { id: true },
+          })
+        : [];
+      resolved = { ids: rows.map((r) => r.id), names: hiddenNames, expiresAt: now + 60_000 };
+    } catch (error) {
+      this.logger.warn(
+        `Universe visibility lookup failed — reusing last known state: ${(error as Error).message}`
+      );
+      resolved = {
+        ids: this.disabledUniversesCache?.ids ?? [],
+        names: this.disabledUniversesCache?.names ?? [],
+        expiresAt: now + SearchService.DISABLED_UNIVERSES_MEMO_MS,
+      };
+    }
+    this.disabledUniversesCache = resolved;
+    return resolved;
+  }
+
+  /** Prisma `where` fragment excluding content of disabled universes. The
+   * `universe` column on content_items stores the universe NAME (denormalized
+   * slug); `universeId` is the FK — both representations are filtered. */
+  private hiddenUniverseContentFilter(disabled: {
+    ids: string[];
+    names: string[];
+  }): Record<string, unknown> {
+    const and: Array<Record<string, unknown>> = [];
+    if (disabled.names.length > 0) {
+      and.push({ universe: { notIn: disabled.names } });
+    }
+    if (disabled.ids.length > 0) {
+      and.push({ universeId: { notIn: disabled.ids } });
+    }
+    return and.length > 0 ? { AND: and } : {};
+  }
+
+  /** Prisma `where` fragment excluding disabled universe rows (the `universes`
+   * table itself, keyed by name). */
+  private hiddenUniverseRowFilter(disabled: {
+    ids: string[];
+    names: string[];
+  }): Record<string, unknown> {
+    const and: Array<Record<string, unknown>> = [];
+    if (disabled.names.length > 0) {
+      and.push({ name: { notIn: disabled.names } });
+    }
+    if (disabled.ids.length > 0) {
+      and.push({ id: { notIn: disabled.ids } });
+    }
+    return and.length > 0 ? { AND: and } : {};
+  }
+
   /** True when a fuzzy-path failure is the missing-extension signature rather
    * than a transient DB error (which should still surface as a 400). */
   private isMissingPgTrgmError(error: unknown): boolean {
@@ -426,9 +506,11 @@ export class SearchService implements OnModuleInit {
     const skip = (page - 1) * limit;
 
     const escapedQuery = this.escapeRegex(query);
+    const disabled = await this.getDisabledUniverses();
 
     const whereCondition: Record<string, unknown> = {
       ...this.baseFilters(filters),
+      ...this.hiddenUniverseContentFilter(disabled),
       OR: [
         { title: { contains: escapedQuery, mode: 'insensitive' } },
         { description: { contains: escapedQuery, mode: 'insensitive' } },
@@ -491,9 +573,14 @@ export class SearchService implements OnModuleInit {
           }),
           this.prisma.universe.findMany({
             where: {
-              OR: [
-                { name: { contains: escapedQuery, mode: 'insensitive' } },
-                { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: escapedQuery, mode: 'insensitive' } },
+                    { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+                  ],
+                },
+                this.hiddenUniverseRowFilter(disabled),
               ],
             },
             skip: universesSkip,
@@ -501,9 +588,14 @@ export class SearchService implements OnModuleInit {
           }),
           this.prisma.universe.count({
             where: {
-              OR: [
-                { name: { contains: escapedQuery, mode: 'insensitive' } },
-                { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+              AND: [
+                {
+                  OR: [
+                    { name: { contains: escapedQuery, mode: 'insensitive' } },
+                    { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+                  ],
+                },
+                this.hiddenUniverseRowFilter(disabled),
               ],
             },
           }),
@@ -638,6 +730,7 @@ export class SearchService implements OnModuleInit {
       // Runtime-tunable blend weight (search_fuzzy_trigram_weight) — fetched
       // once per search so ops can rebalance fuzzy vs trigram without a deploy.
       const trigramWeight = await this.fuzzyTrigramWeight();
+      const disabled = await this.getDisabledUniverses();
 
       // Candidate pool (index-backed, LIMIT is only a safety cap) plus an
       // exact SQL count over the SAME trigram predicate — pagination total
@@ -651,7 +744,7 @@ export class SearchService implements OnModuleInit {
               similarity(coalesce(ci.description, ''), ${query}) AS "descSim"
             FROM content_items ci
             WHERE ci."status" = 'published'
-              ${this.fuzzyContentFiltersSql(filters)}
+              ${this.fuzzyContentFiltersSql(filters, disabled)}
               AND ${this.trigramOr(Prisma.sql`ci.title`, Prisma.sql`ci.description`, query)}
             ORDER BY
               GREATEST(similarity(ci.title, ${query}), similarity(coalesce(ci.description, ''), ${query})) DESC,
@@ -662,13 +755,13 @@ export class SearchService implements OnModuleInit {
             SELECT count(*)::int AS count
             FROM content_items ci
             WHERE ci."status" = 'published'
-              ${this.fuzzyContentFiltersSql(filters)}
+              ${this.fuzzyContentFiltersSql(filters, disabled)}
               AND ${this.trigramOr(Prisma.sql`ci.title`, Prisma.sql`ci.description`, query)}
           `),
           this.fuzzyCreators(query, trigramWeight),
           this.fuzzyCreatorsCount(query),
-          this.fuzzyUniverses(query, trigramWeight),
-          this.fuzzyUniversesCount(query),
+          this.fuzzyUniverses(query, trigramWeight, disabled),
+          this.fuzzyUniversesCount(query, disabled),
         ]);
 
       // Exact, uncapped match count from the retrieval predicate (the 0.5
@@ -933,7 +1026,8 @@ export class SearchService implements OnModuleInit {
 
   private async fuzzyUniverses(
     query: string,
-    trigramWeight: number
+    trigramWeight: number,
+    disabled: { ids: string[]; names: string[] }
   ): Promise<Array<{ uni: FuzzyUniverseRow; score: number; fuzzy: number; trigram: number }>> {
     const candidates = await this.prisma.$queryRaw<FuzzyUniverseRow[]>(Prisma.sql`
       SELECT u.id, u.name, u."displayName",
@@ -941,6 +1035,7 @@ export class SearchService implements OnModuleInit {
         similarity(u."displayName", ${query}) AS "displayNameSim"
       FROM universes u
       WHERE ${this.trigramOr(Prisma.sql`u.name`, Prisma.sql`u."displayName"`, query)}
+        ${this.hiddenUniverseSql(disabled, 'u.name', 'u.id')}
       ORDER BY
         GREATEST(similarity(u.name, ${query}), similarity(u."displayName", ${query})) DESC
       LIMIT ${SearchService.FUZZY_PERSON_POOL}
@@ -970,20 +1065,38 @@ export class SearchService implements OnModuleInit {
 
   /** Exact, uncapped universe count over the SAME trigram predicate as the
    * universe pool. */
-  private async fuzzyUniversesCount(query: string): Promise<Array<{ count: number }>> {
+  private async fuzzyUniversesCount(
+    query: string,
+    disabled: { ids: string[]; names: string[] }
+  ): Promise<Array<{ count: number }>> {
     return this.prisma.$queryRaw<Array<{ count: number }>>(Prisma.sql`
       SELECT count(*)::int AS count
       FROM universes u
       WHERE ${this.trigramOr(Prisma.sql`u.name`, Prisma.sql`u."displayName"`, query)}
+        ${this.hiddenUniverseSql(disabled, 'u.name', 'u.id')}
     `);
   }
 
   /** Extra WHERE clauses for the fuzzy content pool: direct-column filters
    * (status is always applied; universe + date range are optional). */
-  private fuzzyContentFiltersSql(filters: FacetedFilters | undefined): Prisma.Sql {
+  private fuzzyContentFiltersSql(
+    filters: FacetedFilters | undefined,
+    disabled: { ids: string[]; names: string[] }
+  ): Prisma.Sql {
     const conds: Prisma.Sql[] = [];
     if (filters?.universe) {
+      // Explicit filter on a disabled universe → guaranteed empty result,
+      // matching the exact path's `in: []` behavior.
+      if (disabled.ids.includes(filters.universe)) {
+        return Prisma.sql` AND FALSE`;
+      }
       conds.push(Prisma.sql`ci."universeId" = ${filters.universe}`);
+    }
+    if (disabled.names.length > 0) {
+      conds.push(Prisma.sql`ci.universe NOT IN (${Prisma.join(disabled.names)})`);
+    }
+    if (disabled.ids.length > 0) {
+      conds.push(Prisma.sql`ci."universeId" NOT IN (${Prisma.join(disabled.ids)})`);
     }
     if (filters?.dateRange?.start) {
       conds.push(Prisma.sql`ci."createdAt" >= ${new Date(filters.dateRange.start)}`);
@@ -992,6 +1105,23 @@ export class SearchService implements OnModuleInit {
       conds.push(Prisma.sql`ci."createdAt" <= ${new Date(filters.dateRange.end)}`);
     }
     return conds.length ? Prisma.sql` AND ${Prisma.join(conds, ' AND ')}` : Prisma.empty;
+  }
+
+  /** Raw-SQL counterpart of the Prisma universe-visibility fragments: empty
+   * set → no clause (never `IN ()`, which Postgres rejects). */
+  private hiddenUniverseSql(
+    disabled: { ids: string[]; names: string[] },
+    nameCol: string,
+    idCol: string
+  ): Prisma.Sql {
+    const conds: Prisma.Sql[] = [];
+    if (disabled.names.length > 0) {
+      conds.push(Prisma.sql`${Prisma.raw(nameCol)} NOT IN (${Prisma.join(disabled.names)})`);
+    }
+    if (disabled.ids.length > 0) {
+      conds.push(Prisma.sql`${Prisma.raw(idCol)} NOT IN (${Prisma.join(disabled.ids)})`);
+    }
+    return conds.length ? Prisma.sql`AND ${Prisma.join(conds, ' AND ')}` : Prisma.empty;
   }
 
   /** Trigram match condition over two columns: similarity() above the SQL
@@ -1017,6 +1147,12 @@ export class SearchService implements OnModuleInit {
     }
 
     const escapedQuery = this.escapeRegex(query);
+    const disabled = await this.getDisabledUniverses();
+    // Explicit facet filter on a disabled universe → empty content page,
+    // matching the fuzzy path's FALSE predicate.
+    const requestedUniverseHidden = !!(
+      filters?.universe && disabled.ids.includes(filters.universe)
+    );
 
     const baseCondition: Record<string, unknown> = {
       OR: [
@@ -1024,25 +1160,28 @@ export class SearchService implements OnModuleInit {
         { description: { contains: escapedQuery, mode: 'insensitive' } },
       ],
       status: 'published',
+      ...this.hiddenUniverseContentFilter(disabled),
     };
 
     try {
       const [contentItems, facets] = await Promise.all([
         this.prisma.contentItem.findMany({
-          where: {
-            ...baseCondition,
-            ...(filters?.universe ? { universeId: filters.universe } : {}),
-            ...(filters?.categories && filters.categories.length > 0
-              ? {
-                  categories: { hasSome: filters.categories },
-                }
-              : {}),
-            ...(filters?.tags && filters.tags.length > 0
-              ? {
-                  tags: { some: { id: { in: filters.tags } } },
-                }
-              : {}),
-          },
+          where: requestedUniverseHidden
+            ? { AND: [{ universeId: { in: [] } }, baseCondition] }
+            : {
+                ...baseCondition,
+                ...(filters?.universe ? { universeId: filters.universe } : {}),
+                ...(filters?.categories && filters.categories.length > 0
+                  ? {
+                      categories: { hasSome: filters.categories },
+                    }
+                  : {}),
+                ...(filters?.tags && filters.tags.length > 0
+                  ? {
+                      tags: { some: { id: { in: filters.tags } } },
+                    }
+                  : {}),
+              },
           take: 50,
           orderBy: { createdAt: 'desc' },
         }),
@@ -1056,9 +1195,14 @@ export class SearchService implements OnModuleInit {
 
       const universes = await this.prisma.universe.findMany({
         where: {
-          OR: [
-            { name: { contains: escapedQuery, mode: 'insensitive' } },
-            { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+          AND: [
+            {
+              OR: [
+                { name: { contains: escapedQuery, mode: 'insensitive' } },
+                { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+              ],
+            },
+            this.hiddenUniverseRowFilter(disabled),
           ],
         },
         take: 10,
@@ -1114,6 +1258,7 @@ export class SearchService implements OnModuleInit {
         { description: { contains: escapedQuery, mode: 'insensitive' } },
       ],
       status: 'published',
+      ...this.hiddenUniverseContentFilter(await this.getDisabledUniverses()),
     };
 
     const [universeCounts, contentTypeCounts, dateCounts] = await Promise.all([
@@ -1272,9 +1417,15 @@ export class SearchService implements OnModuleInit {
 
   async getFacets(_query?: string, _universe?: string): Promise<SearchResponse> {
     try {
+      // Facet universe list honors the sentinel visibility set in addition to
+      // the local isEnabled column (admin DB is the truth; this column is the
+      // search index's own copy and can lag).
+      const disabled = await this.getDisabledUniverses();
       const universes = await this.prisma.universe.findMany({
         select: { id: true, name: true, displayName: true },
-        where: { isEnabled: true },
+        where: {
+          AND: [{ isEnabled: true }, this.hiddenUniverseRowFilter(disabled)],
+        },
       });
 
       // Get real content counts per universe
@@ -1466,18 +1617,25 @@ export class SearchService implements OnModuleInit {
     // /v1/admin/* duplicate of this route — the gateway maps /admin to the
     // admin-backend). Return the union of both stats contracts; the legacy
     // keys stay so existing consumers keep working.
-    const [totalQueries, todayQueries, weekQueries, avgResultCount, totalSearchesToday, uniqueSearchers, fuzzy] =
-      await Promise.all([
-        this.prisma.searchQueryLog.count(),
-        this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
-        this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
-        this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
-        this.prisma.userSearch.count({ where: { createdAt: { gte: today } } }),
-        this.prisma.userSearch
-          .groupBy({ by: ['userId'], where: { createdAt: { gte: today } } })
-          .then((groups) => groups.length),
-        this.getFuzzyStatus(),
-      ]);
+    const [
+      totalQueries,
+      todayQueries,
+      weekQueries,
+      avgResultCount,
+      totalSearchesToday,
+      uniqueSearchers,
+      fuzzy,
+    ] = await Promise.all([
+      this.prisma.searchQueryLog.count(),
+      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.searchQueryLog.count({ where: { createdAt: { gte: weekAgo } } }),
+      this.prisma.searchQueryLog.aggregate({ _avg: { resultCount: true } }),
+      this.prisma.userSearch.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.userSearch
+        .groupBy({ by: ['userId'], where: { createdAt: { gte: today } } })
+        .then((groups) => groups.length),
+      this.getFuzzyStatus(),
+    ]);
 
     const topQueries = await this.prisma.searchQueryLog.groupBy({
       by: ['query'],

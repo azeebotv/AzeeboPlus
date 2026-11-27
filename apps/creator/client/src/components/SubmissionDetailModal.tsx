@@ -3,6 +3,7 @@ import { creatorApi } from '@/lib/api/creator';
 import { statusColor, statusText } from '@/components/ChallengeLeaderboard';
 import type { SubmissionDetail, SubmissionReviewEvent } from '@/lib/creator-types';
 import { formatNgn, errorTextStyle } from '@/lib/ui';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /** Human label per review status. */
 function statusLabel(status: string): string {
@@ -183,7 +184,7 @@ export default function SubmissionDetailModal({
       const res = await creatorApi.getChallengeSubmissionDetail(submissionId);
       return creatorApi.assertSuccess<SubmissionDetail>(res);
     },
-    refetchInterval: 15_000, // review transitions land while the modal is open
+    refetchInterval: pollingIntervals.standard, // review transitions land while the modal is open
   });
 
   return (

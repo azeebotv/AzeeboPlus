@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { api } from '@/lib/api';
 import { useUniversesQuery } from '@/hooks/useUniverses';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import analytics from '@/lib/analytics';
 
@@ -37,97 +37,48 @@ export default function RealityShowsPage(): React.JSX.Element {
   const shows = showsQuery.data || [];
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Reality" />
-      <main style={{ padding: '100px 24px 60px', maxWidth: 1200, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Reality Shows</h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
-          {showsQuery.isLoading ? 'Loading...' : `${shows.length} shows`}
-        </p>
+    <PageShell activeNav="Reality">
+      <PageHero
+        eyebrow="Reality Universe"
+        title="Reality Shows"
+        subtitle={showsQuery.isLoading ? 'Loading…' : `${shows.length} shows`}
+      />
 
-        {showsQuery.isLoading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} height="340px" borderRadius="16px" />
-            ))}
-          </div>
-        ) : showsQuery.error ? (
-          <ErrorState title="Failed to load reality shows" />
-        ) : shows.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 40 }}>
-            No shows available yet.
-          </p>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {shows.map((show) => (
-              <Link
-                key={show.id}
-                href={`/reality/shows/${show.id}`}
-                style={{
-                  textDecoration: 'none',
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-default)',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '9/16',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
-                  {show.thumbnail && (
-                    <OptimizedImage src={show.thumbnail} alt="" fill className="object-cover" />
-                  )}
-                </div>
-                <div style={{ padding: 12 }}>
-                  <h3
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 14,
-                      color: 'var(--text-primary)',
-                      margin: 0,
-                    }}
-                  >
-                    {show.title}
-                  </h3>
-                  {show.description && (
-                    <p
-                      style={{
-                        color: 'var(--text-secondary)',
-                        fontSize: 12,
-                        margin: '4px 0 0',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {show.description}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+      {showsQuery.isLoading ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} height="340px" borderRadius="16px" />
+          ))}
+        </div>
+      ) : showsQuery.error ? (
+        <ErrorState title="Failed to load reality shows" />
+      ) : shows.length === 0 ? (
+        <div className="az-glass px-6 py-16 text-center">
+          <p className="az-lead text-az-ink">No shows available yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+          {shows.map((show) => (
+            <Link
+              key={show.id}
+              href={`/reality/shows/${show.id}`}
+              className="az-glass block overflow-hidden"
+            >
+              <div className="relative aspect-[9/16] bg-az-surface-raised">
+                {show.thumbnail && (
+                  <OptimizedImage src={show.thumbnail} alt="" fill className="object-cover" />
+                )}
+              </div>
+              <div className="p-3">
+                <h3 className="az-body-strong text-az-ink">{show.title}</h3>
+                {show.description && (
+                  <p className="az-caption text-az-ink-muted mt-1 truncate">{show.description}</p>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </PageShell>
   );
 }

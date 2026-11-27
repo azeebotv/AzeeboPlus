@@ -177,8 +177,8 @@ export function checkBuildChain(root, dockerfilePath) {
         internalDeps(pkg).filter((d) => {
           const dep = workspaces.get(d);
           return dep && exportsDist(dep.pkg);
-        }),
-      ),
+        })
+      )
     );
   }
 
@@ -243,7 +243,10 @@ export function checkBuildChain(root, dockerfilePath) {
 // Per-service Dockerfile wiring
 // ---------------------------------------------------------------------------
 
-const SERVICE_FILTER_BUILD_RE = /pnpm\s+--filter\s+(@azeebo\/[A-Za-z0-9-]+)\s+run\s+build/g;
+// Both filter spellings pnpm accepts and the tree uses: the package name
+// (`@azeebo/x`) and the workspace path (`./services/core/x`, `packages/ui`).
+const SERVICE_FILTER_BUILD_RE =
+  /pnpm\s+--filter\s+(@azeebo\/[A-Za-z0-9-]+|\.{0,2}\/?[A-Za-z0-9][\w./-]*)\s+run\s+build/g;
 const HAND_ROLLED_BUILD_RE = /^RUN\b[^\n]*\b(nest build|tsc)\b/m;
 
 /**
@@ -293,14 +296,17 @@ export function checkServiceDockerfiles(root) {
       const src = readFileSync(dockerfilePath, 'utf8');
       files.push(path.relative(root, dockerfilePath));
 
-      // The build must route through the workspace's build script: either the
-      // explicit form from /app or the WORKDIR + bare `pnpm run build` form.
+      // The build must route through the workspace's build script: the package
+      // name or the service's own path as a `--filter` target, or the
+      // WORKDIR + bare `pnpm run build` form.
       const filterBuilds = [...src.matchAll(SERVICE_FILTER_BUILD_RE)].map((m) => m[1]);
       const workdirs = [...src.matchAll(/^WORKDIR\s+(\S+)/gm)].map((m) => m[1].replace(/\/+$/, ''));
       const relSvcDir = path.relative(root, svcDir);
+      const routedByFilter =
+        filterBuilds.includes(pkg.name) ||
+        filterBuilds.some((t) => t.replace(/^\.?\/+/, '') === relSvcDir);
       const bareForm =
-        /^RUN\s+pnpm run build\b/m.test(src) &&
-        workdirs.some((w) => w.endsWith(`/${relSvcDir}`));
+        /^RUN\s+pnpm run build\b/m.test(src) && workdirs.some((w) => w.endsWith(`/${relSvcDir}`));
 
       // No hand-rolled compile lines, checked independently of routing: they
       // bypass the runner's contract whether or not a routed step also exists.
@@ -313,10 +319,10 @@ export function checkServiceDockerfiles(root) {
         });
       }
 
-      if (!filterBuilds.includes(pkg.name) && !bareForm) {
+      if (!routedByFilter && !bareForm) {
         problems.push({
           code: 'NO_BUILD_STEP',
-          message: `${rel}/Dockerfile never runs "pnpm --filter ${pkg.name} run build" (or WORKDIR ${relSvcDir} + "pnpm run build") — the image build does not use the workspace build script`,
+          message: `${rel}/Dockerfile never runs "pnpm --filter ${pkg.name} run build" or "pnpm --filter ./${relSvcDir} run build" (or WORKDIR ${relSvcDir} + "pnpm run build") — the image build does not use the workspace build script`,
           fix: `Build with "RUN pnpm --filter ${pkg.name} run build" from /app so the image gets the shared runner's generate + tsc + dist-mirror contract.`,
         });
         continue;

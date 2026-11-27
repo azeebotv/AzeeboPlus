@@ -245,6 +245,26 @@ export class RealityService {
     };
   }
 
+  async listAllContestants(): Promise<RealityResponse> {
+    const contestants = await this.prisma.contestant.findMany({
+      include: {
+        show: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return {
+      success: true,
+      data: { contestants: contestants as unknown },
+    };
+  }
+
   async getLeaderboard(showId: string): Promise<RealityResponse> {
     const contestants = await this.prisma.contestant.findMany({
       where: { showId },

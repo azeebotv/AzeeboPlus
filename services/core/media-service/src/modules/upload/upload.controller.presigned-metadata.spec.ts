@@ -69,7 +69,10 @@ describe('UploadController presigned-URL + metadata routes', () => {
         // Pure decision logic — the real policy, no mocking needed.
         FileAccessPolicyService,
         { provide: PremiumContentService, useValue: {} },
-        { provide: CdnInvalidationQueueService, useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) } },
+        {
+          provide: CdnInvalidationQueueService,
+          useValue: { enqueue: jest.fn().mockResolvedValue({ queued: true }) },
+        },
         { provide: MediaLifecycleService, useValue: {} },
         { provide: BlobReconcileService, useValue: {} },
         { provide: UploadTtlSweeperService, useValue: {} },
@@ -322,18 +325,18 @@ describe('UploadController presigned-URL + metadata routes', () => {
     });
 
     it('rejects a missing key with 400 and never calls the service', async () => {
-      await expect(
-        controller.getFileMetadata({ user: { id: 'user-1' } }, '')
-      ).rejects.toThrow(new BadRequestException('Missing required parameter: key'));
+      await expect(controller.getFileMetadata({ user: { id: 'user-1' } }, '')).rejects.toThrow(
+        new BadRequestException('Missing required parameter: key')
+      );
       expect(mockUploadService.getFileMetadata).not.toHaveBeenCalled();
     });
 
     it.each(['../etc/passwd', 'a/../b', '/absolute'])(
       'rejects traversal-style key %s with "Invalid key format" before any S3 call',
       async (key) => {
-        await expect(
-          controller.getFileMetadata({ user: { id: 'user-1' } }, key)
-        ).rejects.toThrow(new BadRequestException('Invalid key format'));
+        await expect(controller.getFileMetadata({ user: { id: 'user-1' } }, key)).rejects.toThrow(
+          new BadRequestException('Invalid key format')
+        );
         expect(mockUploadService.getFileMetadata).not.toHaveBeenCalled();
       }
     );
@@ -343,9 +346,7 @@ describe('UploadController presigned-URL + metadata routes', () => {
 
       await expect(
         controller.getFileMetadata({ user: { id: 'user-2', role: 'user' } }, 'videos/live.mp4')
-      ).rejects.toThrow(
-        new ForbiddenException('You can only read metadata your own files')
-      );
+      ).rejects.toThrow(new ForbiddenException('You can only read metadata your own files'));
     });
 
     it('allows an admin to read metadata for any object', async () => {

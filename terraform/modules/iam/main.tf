@@ -237,7 +237,13 @@ resource "aws_iam_role" "cicd" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:vmnl/azeebo+:*"
+            # Only protected surfaces may assume this role: pushes to main and
+            # the production environment. Wildcarding the whole repo would let
+            # any branch or fork-side ref mint credentials.
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:vmnl/azeebo+:ref:refs/heads/main",
+              "repo:vmnl/azeebo+:environment:production",
+            ]
           }
         }
       }

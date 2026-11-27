@@ -136,6 +136,15 @@ export class AuthRepository {
     }) as Promise<SocialAccountEntity>;
   }
 
+  async listSocialAccounts(
+    userId: string
+  ): Promise<Array<{ id: string; provider: string; createdAt: Date }>> {
+    return this.prisma.socialAccount.findMany({
+      where: { userId },
+      select: { id: true, provider: true, createdAt: true },
+    }) as Promise<Array<{ id: string; provider: string; createdAt: Date }>>;
+  }
+
   async unlinkSocialAccount(userId: string, provider: string): Promise<number> {
     const result = await this.prisma.socialAccount.deleteMany({
       where: { userId, provider },

@@ -1,6 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Logger } from '@nestjs/common';
+import { pseudonymizeIdentifier } from '@azeebo/security';
 import { EmailService } from '@azeebo/shared-services';
 import { FeatureFlagService, queueFlags } from '@azeebo/feature-flags';
 import { MetricsService } from '../modules/metrics/metrics.service';
@@ -54,11 +55,11 @@ export class EmailProcessor extends WorkerHost {
 
     try {
       await this.sendEmail(to, subject, template, context);
-      this.logger.log(`Email sent to ${to}: ${subject}`);
+      this.logger.log(`Email sent to ${pseudonymizeIdentifier(to)}: ${subject}`);
     } catch (error) {
       this.logger.error(
         `Failed to send email (attempt ${job.attemptsMade + 1}/${EmailProcessor.DEFAULT_MAX_RETRIES}): ${(error as Error).message}`,
-        { jobId: job.id, to, subject, template }
+        { jobId: job.id, to: pseudonymizeIdentifier(to), subject, template }
       );
       throw error;
     }
@@ -70,7 +71,7 @@ export class EmailProcessor extends WorkerHost {
     template: string,
     context: Record<string, string>
   ): Promise<void> {
-    this.logger.log(`Sending email to ${to} using template ${template}`);
+    this.logger.log(`Sending email to ${pseudonymizeIdentifier(to)} using template ${template}`);
     await this.emailService.sendEmail(to, subject, template, context);
   }
 

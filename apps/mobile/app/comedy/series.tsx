@@ -46,7 +46,7 @@ export default function SeriesScreen() {
 
   if (isLoading)
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <SafeAreaView accessibilityLabel="Series Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading series..." />
       </SafeAreaView>
     );
@@ -66,7 +66,7 @@ export default function SeriesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>Series</Text>
@@ -116,7 +116,7 @@ export default function SeriesScreen() {
                 <Text style={styles.nextTime}>{item.nextEpisode}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.watchButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.watchButton}>
               <Text style={styles.watchButtonText}>▶ Watch</Text>
             </TouchableOpacity>
           </TouchableOpacity>

@@ -60,7 +60,7 @@ export function createUserMethods(client: RequestClient) {
       preferences: Record<string, unknown>
     ): Promise<ApiResponse<Record<string, unknown>>> => {
       return client.request<Record<string, unknown>>('/api/v1/users/me/preferences', {
-        method: 'PATCH',
+        method: 'PUT',
         body: JSON.stringify(preferences),
       });
     },
@@ -75,6 +75,23 @@ export function createUserMethods(client: RequestClient) {
       return client.request<Record<string, unknown>>('/api/v1/users/me/privacy-settings', {
         method: 'PUT',
         body: JSON.stringify(settings),
+      });
+    },
+
+    exportUserData: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me/export');
+    },
+
+    getDeletionStatus: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me/deletion-status');
+    },
+
+    requestAccountDeletion: async (
+      reason?: string
+    ): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me', {
+        method: 'DELETE',
+        ...(reason ? { body: JSON.stringify({ reason }) } : {}),
       });
     },
 

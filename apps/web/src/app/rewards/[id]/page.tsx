@@ -59,7 +59,7 @@ function RewardDetailContent() {
     return (
       <PageShell activeNav="Rewards">
         <div className="max-w-4xl mx-auto px-4 py-16">
-          <div className="az-glass p-8 rounded-3xl border border-white/10">
+          <div className="az-glass p-8 border border-az-glass-border">
             <Skeleton height="360px" borderRadius="20px" />
           </div>
         </div>
@@ -70,7 +70,11 @@ function RewardDetailContent() {
     return (
       <PageShell activeNav="Rewards">
         <div className="max-w-4xl mx-auto px-4 py-16">
-          <ErrorState title="Reward not found" buttonText="Return to Rewards" onButtonPress={() => window.location.assign('/rewards')} />
+          <ErrorState
+            title="Reward not found"
+            buttonText="Return to Rewards"
+            onButtonPress={() => window.location.assign('/rewards')}
+          />
         </div>
       </PageShell>
     );
@@ -83,7 +87,7 @@ function RewardDetailContent() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
         <Link
           href="/rewards"
-          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-xs font-bold text-az-ink/50 hover:text-az-ink transition-colors mb-6 group"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Back to Rewards Center</span>
@@ -94,53 +98,63 @@ function RewardDetailContent() {
         badge={`Perk Tier: ${reward.type}`}
         title={reward.title}
         subtitle={reward.description}
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       />
 
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="az-glass p-8 sm:p-10 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden"
+          className="az-glass p-8 sm:p-10 border border-az-glass-border relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-az-flame/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-4 border border-orange-500/30 shadow-lg shadow-orange-500/10">
+            <div className="w-20 h-20 rounded-2xl bg-az-flame/10 text-az-flame flex items-center justify-center mx-auto mb-4 border border-az-flame/30 shadow-lg shadow-az-flame/10">
               <Gift size={38} />
             </div>
-            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-orange-500/15 text-orange-400 border border-orange-500/30">
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-az-flame/15 text-az-flame border border-az-flame/30">
               {reward.type} Reward
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="az-glass p-4 rounded-2xl text-center border border-white/5">
-              <p className="text-2xl font-black text-orange-400">₦{reward.pointsCost.toLocaleString()}</p>
-              <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider mt-1">Points Required</p>
+            <div className="az-glass p-4 text-center border">
+              <p className="text-2xl font-black text-az-flame">
+                ₦{reward.pointsCost.toLocaleString()}
+              </p>
+              <p className="text-[11px] font-bold text-az-ink/40 uppercase tracking-wider mt-1">
+                Points Required
+              </p>
             </div>
-            <div className="az-glass p-4 rounded-2xl text-center border border-white/5">
-              <p className="text-2xl font-black text-white">{reward.userPoints.toLocaleString()}</p>
-              <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider mt-1">Your Points</p>
+            <div className="az-glass p-4 text-center border">
+              <p className="text-2xl font-black text-az-ink">
+                {reward.userPoints.toLocaleString()}
+              </p>
+              <p className="text-[11px] font-bold text-az-ink/40 uppercase tracking-wider mt-1">
+                Your Points
+              </p>
             </div>
-            <div className="az-glass p-4 rounded-2xl text-center border border-white/5">
-              <p className="text-2xl font-black text-emerald-400">
+            <div className="az-glass p-4 text-center border">
+              <p className="text-2xl font-black text-az-success-400">
                 {reward.available}/{reward.totalSupply}
               </p>
-              <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider mt-1">Remaining Supply</p>
+              <p className="text-[11px] font-bold text-az-ink/40 uppercase tracking-wider mt-1">
+                Remaining Supply
+              </p>
             </div>
           </div>
 
           {reward.requirements && reward.requirements.length > 0 && (
-            <div className="mb-8 p-5 rounded-2xl bg-white/[0.03] border border-white/5">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Sparkles size={14} className="text-orange-400" />
+            <div className="mb-8 p-5 rounded-2xl bg-az-ink/[0.03] border border-az-ink/5">
+              <h3 className="text-xs font-bold text-az-ink uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Sparkles size={14} className="text-az-flame" />
                 <span>Unlock Criteria</span>
               </h3>
               <ul className="space-y-2">
                 {reward.requirements.map((r, i) => (
-                  <li key={i} className="text-sm text-white/60 flex items-start gap-2.5">
-                    <span className="text-orange-400 mt-1">•</span>
+                  <li key={i} className="text-sm text-az-ink/60 flex items-start gap-2.5">
+                    <span className="text-az-flame mt-1">•</span>
                     <span>{r}</span>
                   </li>
                 ))}
@@ -149,7 +163,7 @@ function RewardDetailContent() {
           )}
 
           {reward.expiresAt && (
-            <p className="text-xs text-white/40 text-center mb-6 flex items-center justify-center gap-1.5">
+            <p className="text-xs text-az-ink/40 text-center mb-6 flex items-center justify-center gap-1.5">
               <Clock size={13} />
               <span>
                 Offer expires on{' '}
@@ -163,21 +177,22 @@ function RewardDetailContent() {
           )}
 
           {claimed || reward.claimed ? (
-            <div className="w-full text-center py-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30">
-              <p className="text-emerald-400 font-bold inline-flex items-center gap-2">
+            <div className="w-full text-center py-4 rounded-2xl bg-az-success-500/10 border border-az-success-500/30">
+              <p className="text-az-success-400 font-bold inline-flex items-center gap-2">
                 <CheckCircle2 size={18} />
                 <span>Perk Claimed Successfully!</span>
               </p>
             </div>
           ) : !canAfford ? (
-            <div className="w-full text-center py-4 rounded-2xl bg-red-500/10 border border-red-500/30">
-              <p className="text-red-400 font-semibold text-sm">
-                Insufficient points — you need {(reward.pointsCost - reward.userPoints).toLocaleString()} more PTS
+            <div className="w-full text-center py-4 rounded-2xl bg-az-error-500/10 border border-az-error-500/30">
+              <p className="text-az-error-400 font-semibold text-sm">
+                Insufficient points — you need{' '}
+                {(reward.pointsCost - reward.userPoints).toLocaleString()} more PTS
               </p>
             </div>
           ) : !inStock ? (
-            <div className="w-full text-center py-4 rounded-2xl bg-white/5 border border-white/10">
-              <p className="text-white/50 font-semibold text-sm">Out of stock for this cycle</p>
+            <div className="w-full text-center py-4 rounded-2xl bg-az-glass-fill border border-az-glass-border">
+              <p className="text-az-ink/50 font-semibold text-sm">Out of stock for this cycle</p>
             </div>
           ) : (
             <motion.button
@@ -185,7 +200,7 @@ function RewardDetailContent() {
               whileTap={{ scale: 0.99 }}
               onClick={() => claimMutation.mutate()}
               disabled={claimMutation.isPending}
-              className="w-full az-btn-primary text-base font-bold py-4 inline-flex items-center justify-center gap-2 shadow-xl shadow-orange-600/25"
+              className="az-btn-primary inline-flex items-center justify-center gap-2 shadow-xl shadow-az-flame/25"
             >
               <Gift size={20} />
               <span>{claimMutation.isPending ? 'Redeeming Perk...' : 'Claim Reward'}</span>
@@ -202,8 +217,8 @@ export default function RewardDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#0b090e]">
-          <p className="text-white/50 text-sm">Loading perk details...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+          <p className="text-az-ink/50 text-sm">Loading perk details...</p>
         </div>
       }
     >
@@ -211,4 +226,3 @@ export default function RewardDetailPage() {
     </Suspense>
   );
 }
-

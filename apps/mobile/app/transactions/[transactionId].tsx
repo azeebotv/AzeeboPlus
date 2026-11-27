@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { walletApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface TransactionDetail {
   id: string;
@@ -88,8 +89,8 @@ export default function TransactionDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Screen Screen" style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading transaction...</Text>
       </SafeAreaView>
     );
@@ -100,7 +101,7 @@ export default function TransactionDetailScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorText}>Transaction not found</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Go Back</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -111,7 +112,7 @@ export default function TransactionDetailScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backNav}>
+          <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backNav}>
             <Text style={styles.backNavText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Transaction Details</Text>
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   },
   backNavText: {
     fontSize: 24,
-    color: '#E8420A',
+    color: brand.flame,
   },
   title: {
     fontSize: 20,

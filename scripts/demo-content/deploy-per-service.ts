@@ -85,9 +85,6 @@ const CR = {
   gamer: 'a0000001-0000-0000-0000-000000000012',
 };
 
-const PS = (seed: string) => `https://picsum.photos/seed/${seed}/800/450`;
-const VD = (name: string) => `https://azeebo-media-dev.s3.us-east-1.amazonaws.com/videos/${name}.mp4`;
-
 async function main(): Promise<void> {
   const dbs = [
     'azeebo_auth', 'azeebo_content', 'azeebo_wallet', 'azeebo_user',

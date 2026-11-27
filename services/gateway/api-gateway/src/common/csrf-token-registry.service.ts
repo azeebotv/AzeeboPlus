@@ -24,8 +24,11 @@ import type Redis from 'ioredis';
  * Availability posture: CSRF is a defense-in-depth layer behind cookie
  * auth, so when Redis is unreachable the registry fails OPEN — validation
  * degrades to the plain cookie==header double-submit check rather than
- * locking out every SPA. This mirrors the AuthThrottlerGuard posture
- * (fail-open by default, RATE_LIMIT_FAIL_CLOSED for hardened deploys).
+ * locking out every SPA. This deliberately DIVERGES from the
+ * AuthThrottlerGuard, which now fails CLOSED by default for auth endpoints
+ * (AUD-20) — those endpoints are the credential-stuffing surface, while this
+ * registry sits behind already-issued cookies and degrades to a real
+ * (if weaker) double-submit check rather than to nothing.
  *
  * Key design: one key per token (`csrf:token:<sha256>`) rather than a set —
  * SETEX gives per-token expiry without cleanup sweeps, and EXISTS is O(1).

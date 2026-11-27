@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { Spinner, ErrorState } from '@azeebo/ui/web';
 import { EmptyState } from '@/components/ui/EmptyState';
 import Link from 'next/link';
@@ -121,220 +121,136 @@ export default function ReferralHistoryPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--brand-near-black)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
+    <PageShell maxWidth="md">
+      <Link
+        href="/referral"
+        className="az-body mb-6 inline-block text-az-ink-muted no-underline transition-colors hover:text-az-ink"
       >
-        <div style={{ marginBottom: 24 }}>
-          <Link
-            href="/referral"
-            style={{ color: 'var(--text-secondary)', fontSize: 14, textDecoration: 'none' }}
-          >
-            &larr; Back to Referral
-          </Link>
+        &larr; Back to Referral
+      </Link>
+
+      <PageHero
+        eyebrow="Refer & Earn"
+        title="Referral History"
+        subtitle="Track your referrals and earnings"
+      />
+
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" color="#EC691F" />
         </div>
-
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Referral History</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Track your referrals and earnings
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <Spinner size="lg" color="#E8420A" />
-          </div>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load referral history"
-            description={error}
-            buttonText="Retry"
-            onButtonPress={() => {
-              statsQuery.refetch();
-              referralsQuery.refetch();
-            }}
-          />
-        ) : (
-          <>
-            {/* Stats summary */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 16,
-                marginBottom: 24,
-              }}
-            >
-              {[
-                {
-                  label: 'Total Referrals',
-                  value: String(totalReferrals),
-                  color: 'var(--brand-orange)',
-                },
-                {
-                  label: 'Total Earned',
-                  value: `₦${totalEarned.toLocaleString()}`,
-                  color: 'var(--color-success-500)',
-                },
-                {
-                  label: 'Pending',
-                  value: String(statsData.pendingReferrals ?? statsData.pending ?? 0),
-                  color: 'var(--color-warning-500)',
-                },
-              ].map((stat, i) => (
-                <div
-                  key={i}
-                  className="az-glass"
-                  style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}
-                >
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                    {stat.label}
-                  </p>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Share code */}
-            <div
-              className="az-glass"
-              style={{
-                padding: 24,
-                borderRadius: 20,
-                textAlign: 'center',
-                marginBottom: 24,
-              }}
-            >
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 8 }}>
-                Share your referral code
-              </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button
-                  onClick={copyToClipboard}
-                  style={{
-                    padding: '10px 28px',
-                    borderRadius: 999,
-                    border: 'none',
-                    background:
-                      'linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-red) 100%)',
-                    color: 'var(--brand-white)',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {copied ? 'Check Copied!' : 'Copy Link'}
-                </button>
-                <button
-                  onClick={() => {
-                    if (navigator.share)
-                      navigator.share({ title: 'Join Azeebo+', url: referralLink });
-                  }}
-                  style={{
-                    padding: '10px 28px',
-                    borderRadius: 999,
-                    border: '1px solid var(--border-default)',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Share
-                </button>
+      ) : error ? (
+        <ErrorState
+          title="Failed to load referral history"
+          description={error}
+          buttonText="Retry"
+          onButtonPress={() => {
+            statsQuery.refetch();
+            referralsQuery.refetch();
+          }}
+        />
+      ) : (
+        <>
+          {/* Stats summary */}
+          <div className="mb-6 grid grid-cols-3 gap-4">
+            {[
+              { label: 'Total Referrals', value: String(totalReferrals), tint: 'text-az-flame' },
+              {
+                label: 'Total Earned',
+                value: `₦${totalEarned.toLocaleString()}`,
+                tint: 'text-az-success-400',
+              },
+              {
+                label: 'Pending',
+                value: String(statsData.pendingReferrals ?? statsData.pending ?? 0),
+                tint: 'text-az-warning-400',
+              },
+            ].map((stat, i) => (
+              <div key={i} className="az-glass px-5 py-5 text-center">
+                <p className="az-caption text-az-ink-muted mb-2">{stat.label}</p>
+                <p className={`az-subtitle font-bold ${stat.tint}`}>{stat.value}</p>
               </div>
-            </div>
+            ))}
+          </div>
 
-            {/* Referral list */}
-            <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>All Referrals</h2>
-              {referrals.length === 0 ? (
-                <EmptyState
-                  icon="users"
-                  title="No referrals yet"
-                  description="Share your code to start earning"
-                  dark
-                />
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {referrals.map((ref: ReferralEntry, i: number) => (
+          {/* Share code */}
+          <div className="az-glass mb-6 px-6 py-6 text-center">
+            <p className="az-body text-az-ink-muted mb-4">Share your referral code</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={copyToClipboard}
+                className="az-btn-social w-auto cursor-pointer"
+              >
+                {copied ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (navigator.share)
+                    navigator.share({ title: 'Join Azeebo+', url: referralLink });
+                }}
+                className="az-btn-social w-auto cursor-pointer"
+              >
+                Share
+              </button>
+            </div>
+          </div>
+
+          {/* Referral list */}
+          <div className="az-glass p-6">
+            <h2 className="az-subtitle text-az-ink mb-4">All Referrals</h2>
+            {referrals.length === 0 ? (
+              <EmptyState
+                icon="users"
+                title="No referrals yet"
+                description="Share your code to start earning"
+                dark
+              />
+            ) : (
+              <div className="flex flex-col gap-2">
+                {referrals.map((ref: ReferralEntry, i: number) => {
+                  const isPaid = ref.status === 'completed' || ref.status === 'rewarded';
+                  return (
                     <div
                       key={ref.id || i}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '12px 0',
-                        borderBottom: '1px solid #18151e',
-                      }}
+                      className="flex items-center justify-between border-b border-az-glass-border py-3 last:border-b-0"
                     >
                       <div>
-                        <p style={{ fontWeight: 600, fontSize: 14 }}>
+                        <p className="az-body-strong text-az-ink">
                           {ref.displayName || ref.username || ref.email}
                         </p>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+                        <p className="az-caption text-az-ink-muted">
                           Joined{' '}
                           {new Date(ref.joinedAt || ref.createdAt || '').toLocaleDateString()}
                         </p>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
+                      <div className="text-right">
                         <span
-                          style={{
-                            padding: '3px 10px',
-                            borderRadius: 999,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor:
-                              ref.status === 'completed' || ref.status === 'rewarded'
-                                ? 'rgba(34,197,94,0.15)'
-                                : ref.status === 'active'
-                                  ? 'rgba(232,66,10,0.15)'
-                                  : 'rgba(245,158,11,0.15)',
-                            color:
-                              ref.status === 'completed' || ref.status === 'rewarded'
-                                ? 'var(--color-success-500)'
-                                : ref.status === 'active'
-                                  ? 'var(--brand-orange)'
-                                  : 'var(--color-warning-500)',
-                          }}
+                          className={`rounded-az-pill px-2.5 py-1 az-micro-label ${
+                            isPaid
+                              ? 'bg-az-success-400/15 text-az-success-400'
+                              : ref.status === 'active'
+                                ? 'bg-az-scarlet/15 text-az-flame'
+                                : 'bg-az-warning-400/15 text-az-warning-400'
+                          }`}
                         >
                           {ref.status}
                         </span>
                         {(ref.earningsGenerated ?? ref.reward ?? 0) > 0 && (
-                          <p
-                            style={{
-                              color: 'var(--color-success-500)',
-                              fontSize: 12,
-                              marginTop: 4,
-                              fontWeight: 600,
-                            }}
-                          >
+                          <p className="az-caption mt-1 font-semibold text-az-success-400">
                             +₦{(ref.earningsGenerated ?? ref.reward ?? 0).toLocaleString()}
                           </p>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </PageShell>
   );
 }

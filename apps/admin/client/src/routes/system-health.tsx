@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '@/lib/api/base';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -131,7 +132,7 @@ function useServiceHealth() {
         ...(s.transport !== undefined && { transport: s.transport }),
       }));
     },
-    refetchInterval: 15_000,
+    refetchInterval: pollingIntervals.standard,
   });
 }
 
@@ -151,7 +152,7 @@ export default function SystemHealthPage() {
       // /agents/stats 404s — the ':agentId' route shadows it).
       return apiFetch<AgentStats>('/api/v1/analytics/agents/stats/overview');
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const costQuery = useQuery({
@@ -159,7 +160,7 @@ export default function SystemHealthPage() {
     queryFn: async () => {
       return apiFetch<CostSummary>('/api/v1/analytics/cost/summary');
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const tasksQuery = useQuery({
@@ -167,7 +168,7 @@ export default function SystemHealthPage() {
     queryFn: async () => {
       return apiFetch<TaskStats>('/api/v1/analytics/tasks/classifications/stats');
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const riskQuery = useQuery({
@@ -177,7 +178,7 @@ export default function SystemHealthPage() {
       // exist as a separate resource and 500s as 'Failed to reach upstream'.
       return apiFetch<RiskStats>('/api/v1/analytics/risk/stats');
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const capacityQuery = useQuery({
@@ -185,7 +186,7 @@ export default function SystemHealthPage() {
     queryFn: async () => {
       return apiFetch<CapacitySummary>('/api/v1/analytics/capacity/summary/current');
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   // Defaults are field-level, not object-level: a 200 payload missing one

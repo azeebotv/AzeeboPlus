@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
@@ -73,7 +74,7 @@ export default function RegisterPage(): React.JSX.Element {
   return (
     <AuthShell
       headlineLines={['Empowering', "Nigeria's Creative", 'Renaissance']}
-      backgroundFallback="#0b090e"
+      tagline="Create, publish and get paid — from anywhere in Nigeria."
     >
       <motion.form
         className="space-y-5"
@@ -83,10 +84,9 @@ export default function RegisterPage(): React.JSX.Element {
         animate="visible"
       >
         <motion.div variants={fieldVariants}>
-          <h2 className="az-headline text-white text-2xl">Create Your Azeebo+ Account</h2>
+          <h2 className="az-headline text-az-ink text-2xl">Create Your Azeebo+ Account</h2>
           <motion.p
-            className="text-xs font-bold uppercase tracking-widest mt-1"
-            style={{ color: 'var(--brand-orange)' }}
+            className="az-overline mt-1 text-az-flame"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -152,18 +152,17 @@ export default function RegisterPage(): React.JSX.Element {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="az-input"
-              style={{ paddingRight: '3.5rem' }}
+              className="az-input az-input--trailing"
               placeholder="Create a strong password"
             />
             <motion.button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center text-white/50 hover:text-white"
+              className="absolute inset-y-0 right-0 px-3 flex items-center text-az-ink-muted hover:text-az-ink"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               whileTap={{ scale: 0.9 }}
             >
-              {showPassword ? 'Hide' : 'Show'}
+              {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
             </motion.button>
           </div>
         </motion.div>
@@ -173,37 +172,27 @@ export default function RegisterPage(): React.JSX.Element {
             type="checkbox"
             checked={agree}
             onChange={(e) => setAgree(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded"
-            style={{ accentColor: 'var(--brand-red)' }}
+            className="mt-0.5 h-4 w-4 rounded accent-az-scarlet"
           />
-          <span className="text-white/60 text-xs leading-relaxed">
+          <span className="az-caption text-az-ink-muted">
             I agree to the{' '}
-            <a href="/terms" className="text-white hover:text-[var(--brand-orange)] underline">
+            <a href="/terms" className="text-az-ink hover:text-az-flame underline">
               terms of services
             </a>{' '}
             and{' '}
-            <a href="/privacy" className="text-white hover:text-[var(--brand-orange)] underline">
+            <a href="/privacy" className="text-az-ink hover:text-az-flame underline">
               privacy policy
             </a>
           </span>
         </motion.label>
 
         {/* Ambient red glow at bottom of card */}
-        <div
-          className="az-ambient-red az-glow-drift"
-          style={{
-            width: 250,
-            height: 120,
-            bottom: -50,
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}
-        />
+        <div className="az-ambient-red az-glow-drift -bottom-[50px] left-1/2 h-[120px] w-[250px] -translate-x-1/2" />
 
         <motion.div variants={fieldVariants} className="relative z-10">
           <motion.button
             type="submit"
-            className="az-btn-primary w-full"
+            className="az-btn-primary"
             disabled={isLoading}
             whileHover={isLoading ? {} : { scale: 1.02 }}
             whileTap={isLoading ? {} : { scale: 0.98 }}
@@ -219,11 +208,11 @@ export default function RegisterPage(): React.JSX.Element {
           </motion.button>
         </motion.div>
 
-        <motion.p variants={fieldVariants} className="text-center text-white/50 text-sm pt-1">
+        <motion.p variants={fieldVariants} className="az-body pt-1 text-center text-az-ink-muted">
           Already have an account.{' '}
           <a
             href="/auth/login"
-            className="font-bold text-white hover:text-[var(--brand-orange)] transition-colors"
+            className="font-bold text-az-ink hover:text-az-flame transition-colors"
           >
             Sign in.
           </a>

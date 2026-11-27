@@ -107,12 +107,8 @@ export function AvatarUpload({
     <div className="relative inline-block">
       {/* Avatar Display */}
       <div
-        className="relative rounded-full overflow-hidden"
-        style={{
-          width: size,
-          height: size,
-          border: '3px solid var(--brand-orange)',
-        }}
+        className="relative rounded-full overflow-hidden border-[3px] border-az-flame"
+        style={{ width: size, height: size }}
       >
         {currentAvatar ? (
           <OptimizedImage
@@ -123,13 +119,7 @@ export function AvatarUpload({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div
-            className="w-full h-full flex items-center justify-center text-2xl font-bold"
-            style={{
-              background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red, #CC1C1C))',
-              color: 'white',
-            }}
-          >
+          <div className="w-full h-full flex items-center justify-center text-2xl font-bold bg-gradient-to-br from-az-flame to-az-scarlet text-az-ink">
             {displayName.charAt(0).toUpperCase() || '?'}
           </div>
         )}
@@ -137,11 +127,10 @@ export function AvatarUpload({
         {/* Upload overlay */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
+          className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50"
           aria-label="Change avatar"
         >
-          <Camera className="w-6 h-6 text-white" />
+          <Camera className="w-6 h-6 text-az-ink" />
         </button>
       </div>
 
@@ -158,11 +147,10 @@ export function AvatarUpload({
       {currentAvatar && (
         <button
           onClick={handleDelete}
-          className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--color-error-500, #EF4444)' }}
+          className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center bg-az-error-500"
           aria-label="Remove avatar"
         >
-          <X className="w-3 h-3 text-white" />
+          <X className="w-3 h-3 text-az-ink" />
         </button>
       )}
 
@@ -170,14 +158,11 @@ export function AvatarUpload({
       {showCropper && preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="az-glass p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-bold text-white mb-4">Crop Avatar</h3>
+            <h3 className="text-lg font-bold text-az-ink mb-4">Crop Avatar</h3>
 
             {/* Preview */}
-            <div className="relative mx-auto mb-4" style={{ width: 200, height: 200 }}>
-              <div
-                className="w-full h-full rounded-full overflow-hidden"
-                style={{ border: '2px solid var(--brand-orange)' }}
-              >
+            <div className="relative mx-auto mb-4 size-[200px]">
+              <div className="w-full h-full rounded-full overflow-hidden border-2 border-az-flame">
                 <img
                   src={preview}
                   alt="Avatar preview"
@@ -191,7 +176,7 @@ export function AvatarUpload({
 
             {/* Scale slider */}
             <div className="mb-4">
-              <label className="text-xs text-white/60 mb-1 block">Zoom</label>
+              <label className="text-xs text-az-ink/60 mb-1 block">Zoom</label>
               <input
                 type="range"
                 min="1"
@@ -201,7 +186,7 @@ export function AvatarUpload({
                 onChange={(e) =>
                   setCropSettings((prev) => ({ ...prev, scale: parseFloat(e.target.value) }))
                 }
-                className="w-full"
+                className="w-full accent-az-flame"
               />
             </div>
 
@@ -210,8 +195,7 @@ export function AvatarUpload({
               <button
                 onClick={handleUpload}
                 disabled={isUploading}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                style={{ background: 'var(--brand-orange)' }}
+                className="az-btn-primary flex-1 flex items-center justify-center gap-2"
               >
                 {isUploading ? (
                   <Loader className="w-4 h-4 animate-spin" />
@@ -223,8 +207,7 @@ export function AvatarUpload({
               <button
                 onClick={handleCancel}
                 disabled={isUploading}
-                className="flex-1 py-2 px-4 rounded-xl text-sm font-medium text-white/60 border hover:text-white transition-colors"
-                style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                className="flex-1 py-2 px-4 rounded-xl text-sm font-medium text-az-ink/60 border border-az-ink/20 hover:text-az-ink transition-colors"
               >
                 Cancel
               </button>

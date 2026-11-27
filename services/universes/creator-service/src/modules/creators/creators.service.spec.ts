@@ -100,6 +100,7 @@ describe('CreatorsService', () => {
           useValue: {
             creatorProfile: {
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               findMany: jest.fn(),
@@ -173,7 +174,9 @@ describe('CreatorsService', () => {
             },
             exclusiveContent: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
               create: jest.fn(),
+              delete: jest.fn(),
             },
             $transaction: jest.fn(async (callback) => callback(module.get(PrismaService))),
           },
@@ -961,7 +964,11 @@ describe('CreatorsService', () => {
 
       const result = await service.getChallengeLeaderboard(challengeId);
 
-      const entries = result.data!.entries as { position: number; entryId: string; displayName: string }[];
+      const entries = result.data!.entries as {
+        position: number;
+        entryId: string;
+        displayName: string;
+      }[];
       expect(entries[0].entryId).toBe('entry-winner');
       expect(entries[0].position).toBe(1);
       expect(entries[0].displayName).toMatch(/^Participant user-go/);
@@ -1054,10 +1061,10 @@ describe('CreatorsService', () => {
       (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
 
       await expect(
-        service.reviewChallengeEntry(reviewerId, entryId, 'approved' as 'winner'),
+        service.reviewChallengeEntry(reviewerId, entryId, 'approved' as 'winner')
       ).rejects.toThrow(BadRequestException);
       await expect(
-        service.reviewChallengeEntry(reviewerId, entryId, undefined as unknown as 'winner'),
+        service.reviewChallengeEntry(reviewerId, entryId, undefined as unknown as 'winner')
       ).rejects.toThrow(BadRequestException);
       expect(prismaService.challengeEntry.update).not.toHaveBeenCalled();
     });
@@ -1088,7 +1095,7 @@ describe('CreatorsService', () => {
         reviewerId,
         entryId,
         'rejected',
-        'Audio quality does not meet contest standards',
+        'Audio quality does not meet contest standards'
       );
 
       expect(result.data!.reviewNote).toBe('Audio quality does not meet contest standards');
@@ -1111,7 +1118,7 @@ describe('CreatorsService', () => {
         reviewerId,
         entryId,
         'rejected',
-        '<b>Weak hook</b>, re-record the intro',
+        '<b>Weak hook</b>, re-record the intro'
       );
 
       expect(result.data!.reviewNote).toBe('Weak hook, re-record the intro');
@@ -1121,14 +1128,14 @@ describe('CreatorsService', () => {
       (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
 
       await expect(
-        service.reviewChallengeEntry(reviewerId, entryId, 'rejected', 'x'.repeat(1001)),
+        service.reviewChallengeEntry(reviewerId, entryId, 'rejected', 'x'.repeat(1001))
       ).rejects.toThrow(BadRequestException);
       expect(prismaService.challengeEntry.update).not.toHaveBeenCalled();
     });
 
     it('should clear a stale note when a re-review carries no note', async () => {
       (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(
-        mockEntry({ status: 'rejected', reviewNote: 'old reason' }),
+        mockEntry({ status: 'rejected', reviewNote: 'old reason' })
       );
       (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
       mockNotificationPrisma();
@@ -1235,7 +1242,10 @@ describe('CreatorsService', () => {
       (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry());
       (prismaService.challengeEntry.update as jest.Mock).mockResolvedValue({});
       (prismaService.notification.create as jest.Mock).mockResolvedValue({});
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({ email: null, displayName: 'X' });
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
+        email: null,
+        displayName: 'X',
+      });
       mockedAxios.post.mockClear();
 
       await service.reviewChallengeEntry(reviewerId, entryId, 'winner');
@@ -1262,9 +1272,9 @@ describe('CreatorsService', () => {
     it('should throw NotFoundException if entry not found', async () => {
       (prismaService.challengeEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.reviewChallengeEntry(reviewerId, entryId, 'winner')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.reviewChallengeEntry(reviewerId, entryId, 'winner')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -1303,6 +1313,72 @@ describe('CreatorsService', () => {
       (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.sendTip(userId, creatorId, amount)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('exclusiveContent', () => {
+    const mockContent = {
+      id: 'ex-1',
+      creatorId: 'creator-uuid',
+      title: 'Behind the Scenes VIP',
+      description: 'Exclusive rehearsal clip',
+      mediaUrl: 'https://cdn.azeeboplus.com/exclusive/bts.mp4',
+      minTier: 'gold',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should create exclusive content for creator', async () => {
+      (prismaService.creatorProfile.findUnique as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.create as jest.Mock).mockResolvedValue(mockContent);
+
+      const result = await service.createExclusiveContent('creator-user-1', {
+        title: 'Behind the Scenes VIP',
+        mediaUrl: 'https://cdn.azeeboplus.com/exclusive/bts.mp4',
+        minTier: 'gold',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockContent);
+    });
+
+    it('should gate mediaUrl for non-Gold supporters', async () => {
+      (prismaService.creatorProfile.findFirst as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.findMany as jest.Mock).mockResolvedValue([mockContent]);
+      (prismaService.tipLeaderboard.findUnique as jest.Mock).mockResolvedValue({
+        tier: 'silver',
+      });
+
+      const result = await service.getExclusiveContent('creator-uuid', 'fan-user-silver');
+
+      expect(result.success).toBe(true);
+      const data = result.data as { items: Array<{ locked: boolean; mediaUrl: string | null }> };
+      expect(data.items[0].locked).toBe(true);
+      expect(data.items[0].mediaUrl).toBeNull();
+    });
+
+    it('should ungate mediaUrl for Gold+ supporters', async () => {
+      (prismaService.creatorProfile.findFirst as jest.Mock).mockResolvedValue({
+        id: 'creator-uuid',
+        userId: 'creator-user-1',
+      });
+      (prismaService.exclusiveContent.findMany as jest.Mock).mockResolvedValue([mockContent]);
+      (prismaService.tipLeaderboard.findUnique as jest.Mock).mockResolvedValue({
+        tier: 'gold',
+      });
+
+      const result = await service.getExclusiveContent('creator-uuid', 'fan-user-gold');
+
+      expect(result.success).toBe(true);
+      const data = result.data as { items: Array<{ locked: boolean; mediaUrl: string | null }> };
+      expect(data.items[0].locked).toBe(false);
+      expect(data.items[0].mediaUrl).toBe(mockContent.mediaUrl);
     });
   });
 });

@@ -113,6 +113,17 @@ describe('Proxy Controller - API Contract Verification', () => {
     expect(userEndpoints).toContain('/me/saved');
   });
 
+  // The endpoints manifest doubles as the deny-by-default allowlist
+  // (gateway_endpoint_enforcement), so a client call whose method+path pair is
+  // missing here never reaches user-service once that flag is on.
+  it('declares the users data-rights endpoints the web client calls', () => {
+    const usersRoute = SERVICE_CONFIGS.find((r) => r.path === '/users');
+    const pairs = usersRoute?.endpoints?.map((e) => `${e.method} ${e.path}`) || [];
+    expect(pairs).toContain('DELETE /me');
+    expect(pairs).toContain('GET /me/export');
+    expect(pairs).toContain('GET /me/deletion-status');
+  });
+
   it('should have wallet endpoints', () => {
     const walletRoute = SERVICE_CONFIGS.find((r) => r.path === '/wallet');
     const walletEndpoints = walletRoute?.endpoints?.map((e) => e.path) || [];
@@ -205,7 +216,7 @@ describe('Proxy Controller - Admin universe-flag undo routes', () => {
     const route = adminRoute();
     expect(route).toBeDefined();
     expect(route?.envKey).toBe('ADMIN_SERVICE_URL');
-    expect(route?.fallbackUrl).toBe('http://localhost:4016');
+    expect(route?.fallbackUrl).toBe('http://admin-app:4016');
     // apps/admin serves URI-versioned routes (/v1/admin/...), so the gateway
     // must use the default strategy that preserves the version prefix.
     expect(route?.pathStrategy).toBe('default');

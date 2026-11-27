@@ -1,3 +1,5 @@
+const { sharedModuleNameMapper } = require('../../../jest.shared.config.js');
+
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts', 'cjs'],
   rootDir: 'src',
@@ -5,12 +7,14 @@ module.exports = {
   transform: {
     '^.+\.(t|j)s$': 'ts-jest',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!uuid|date-fns)',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!uuid|date-fns)'],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@azeebo/(.*)$': '<rootDir>/../../../../packages/$1/src',
+    // Subpath exports must be mapped explicitly — the generic rule below
+    // would turn '@azeebo/security/log-redaction' into a bogus src path.
+    '^@azeebo/security/log-redaction$':
+      '<rootDir>/../../../../packages/security/src/log-redaction/index.ts',
+    '^@azeebo/security$': '<rootDir>/../../../../packages/security/src',
+    ...sharedModuleNameMapper,
   },
   collectCoverageFrom: [
     '**/*.(t|j)s',

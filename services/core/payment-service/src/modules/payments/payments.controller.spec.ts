@@ -348,7 +348,34 @@ describe('PaymentsController', () => {
       expect(mockPaymentsService.requestRefund).toHaveBeenCalledWith(
         'user-123',
         'pay-abc123',
-        'Product not received as described'
+        'Product not received as described',
+        undefined
+      );
+    });
+
+    it('should forward the optional idempotencyKey to the service', async () => {
+      const dto = {
+        transactionId: 'pay-abc123',
+        reason: 'Product not received as described',
+        idempotencyKey: '9f1c2b3a-4d5e-4f60-8a9b-0c1d2e3f4a5b',
+      };
+      mockPaymentsService.requestRefund.mockResolvedValue({
+        success: true,
+        data: {
+          refundId: 'ref-abc123',
+          amount: 1000,
+          status: 'completed',
+          message: 'Refund processed successfully',
+        },
+      });
+
+      await controller.requestRefund(req, dto);
+
+      expect(mockPaymentsService.requestRefund).toHaveBeenCalledWith(
+        'user-123',
+        'pay-abc123',
+        'Product not received as described',
+        '9f1c2b3a-4d5e-4f60-8a9b-0c1d2e3f4a5b'
       );
     });
 

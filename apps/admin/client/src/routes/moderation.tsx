@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
-import { asArray, asRecord, num } from '@/lib/payload';
+import { asArray, asRecord, requireData, num } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 interface ModReport {
   id: string;
@@ -45,7 +46,7 @@ export default function ModerationPage() {
       const res = await adminApi.getModerationStats();
       return res.success ? (res.data as ModStats) : null;
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const reportsQ = useQuery({
@@ -104,8 +105,7 @@ export default function ModerationPage() {
     queryKey: ['admin', 'moderation', 'safety-actions'],
     queryFn: async () => {
       const res = await adminApi.getSafetyActions(10);
-      if (!res.success) return [];
-      const d = res.data;
+      const d = requireData(res, null);
       // Backend wraps the list as { actions: [...] } — unwrap with the
       // matching key so drift renders empty instead of hiding the history.
       return asArray<{
@@ -117,7 +117,7 @@ export default function ModerationPage() {
         createdAt?: string;
       }>(d, 'actions');
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const safetyMutation = useMutation({

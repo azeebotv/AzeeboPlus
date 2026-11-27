@@ -45,7 +45,8 @@ export class TicketController {
       userId: req.user.id,
       category: dto.category,
       subject: dto.subject,
-      description: dto.description,
+      // Clients split on which name they use; the pipe guarantees one is set.
+      description: dto.description ?? dto.message ?? '',
       priority: dto.priority,
       orderId: dto.orderId,
     });

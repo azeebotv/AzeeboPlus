@@ -143,16 +143,16 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
         <div className="flex items-center justify-center py-20 min-h-[60vh]">
-          <Spinner size="lg" color="#E8420A" />
+          <Spinner size="lg" color="var(--color-az-flame)" />
         </div>
       </PageShell>
     );
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.12)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
       <PageHero
         badge="Checkout & Activation"
         title="Complete Subscription"
@@ -172,39 +172,28 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
             return (
               <div key={label} className="flex items-center gap-2">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                  style={{
-                    backgroundColor: isCompleted
-                      ? 'rgba(34,197,94,0.2)'
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${
+                    isCompleted
+                      ? 'bg-az-success-500/20 text-az-success-400 border-az-success-500/30'
                       : isActive
-                        ? 'var(--brand-orange)'
-                        : 'rgba(255,255,255,0.06)',
-                    color: isCompleted ? '#4ade80' : isActive ? 'white' : 'rgba(255,255,255,0.4)',
-                    border: isCompleted
-                      ? '1px solid rgba(34,197,94,0.3)'
-                      : isActive
-                        ? '1px solid var(--brand-orange)'
-                        : '1px solid rgba(255,255,255,0.1)',
-                  }}
+                        ? 'bg-az-flame text-az-surface-root border-az-flame'
+                        : 'bg-az-ink/5 text-az-ink/40 border-az-ink/10'
+                  }`}
                 >
                   {isCompleted ? <Check className="w-4 h-4" /> : stepNumber}
                 </div>
                 <span
-                  className="text-xs font-semibold hidden sm:block"
-                  style={{
-                    color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
-                  }}
+                  className={`text-xs font-semibold hidden sm:block ${
+                    isActive ? 'text-az-ink' : 'text-az-ink/50'
+                  }`}
                 >
                   {label}
                 </span>
                 {index < 2 && (
                   <div
-                    className="w-8 h-0.5 mx-2"
-                    style={{
-                      backgroundColor: isCompleted
-                        ? 'rgba(34,197,94,0.5)'
-                        : 'rgba(255,255,255,0.1)',
-                    }}
+                    className={`w-8 h-0.5 mx-2 ${
+                      isCompleted ? 'bg-az-success-500/50' : 'bg-az-ink/10'
+                    }`}
                   />
                 )}
               </div>
@@ -218,8 +207,8 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="az-glass p-6 rounded-xl">
-                    <Spinner size="md" color="#E8420A" />
+                  <div key={i} className="az-glass p-6">
+                    <Spinner size="md" color="var(--color-az-flame)" />
                   </div>
                 ))}
               </div>
@@ -236,48 +225,33 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                     key={plan.id}
                     type="button"
                     onClick={() => setSelectedPlanId(plan.id)}
-                    className="text-left p-6 rounded-xl transition-all"
-                    style={{
-                      backgroundColor:
-                        selectedPlanId === plan.id
-                          ? 'rgba(232,66,10,0.1)'
-                          : 'rgba(255,255,255,0.03)',
-                      border: `2px solid ${
-                        selectedPlanId === plan.id
-                          ? 'var(--brand-orange)'
-                          : plan.isPopular
-                            ? 'rgba(232,66,10,0.3)'
-                            : 'rgba(255,255,255,0.06)'
-                      }`,
-                      boxShadow:
-                        selectedPlanId === plan.id ? '0 0 20px rgba(232,66,10,0.15)' : 'none',
-                    }}
+                    className={`text-left p-6 rounded-xl transition-all border-2 ${
+                      selectedPlanId === plan.id
+                        ? 'border-az-flame bg-az-scarlet/10 shadow-az-glow'
+                        : plan.isPopular
+                          ? 'border-az-scarlet/30 bg-az-ink/5'
+                          : 'border-az-ink/5 bg-az-ink/5'
+                    }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     {plan.isPopular && (
-                      <span
-                        className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-3"
-                        style={{
-                          backgroundColor: 'var(--brand-orange)',
-                          color: 'var(--brand-white)',
-                        }}
-                      >
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-3 bg-az-flame text-az-surface-root">
                         Popular
                       </span>
                     )}
-                    <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
-                    <p className="text-2xl font-bold mb-2" style={{ color: 'var(--brand-orange)' }}>
+                    <h3 className="text-lg font-bold text-az-ink mb-1">{plan.name}</h3>
+                    <p className="text-2xl font-bold mb-2 text-az-flame">
                       ₦{plan.price.toLocaleString()}
-                      <span className="text-sm font-normal text-white/50">
+                      <span className="text-sm font-normal text-az-ink/50">
                         /{plan.durationLabel.toLowerCase()}
                       </span>
                     </p>
-                    <p className="text-sm text-white/50 mb-4">{plan.description}</p>
+                    <p className="text-sm text-az-ink/50 mb-4">{plan.description}</p>
                     <ul className="space-y-2">
                       {plan.features.slice(0, 3).map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2 text-xs text-white/60">
-                          <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                        <li key={i} className="flex items-center gap-2 text-xs text-az-ink/60">
+                          <Check className="w-3.5 h-3.5 text-az-success-400 flex-shrink-0" />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -292,7 +266,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 <motion.button
                   type="button"
                   onClick={handleProceedToPayment}
-                  className="az-btn-primary px-12"
+                  className="az-btn-primary az-btn-primary--inline"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -307,65 +281,52 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         {step === 'payment' && selectedPlan && (
           <ScrollReveal>
             <GlowCard universe="movies" className="p-8 mb-8">
-              <h2 className="text-xl font-bold text-white mb-6">Order Summary</h2>
-              <div
-                className="flex justify-between items-center mb-4 pb-4"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                <span className="text-white/50">Plan</span>
-                <span className="text-white font-medium">{selectedPlan.name}</span>
+              <h2 className="text-xl font-bold text-az-ink mb-6">Order Summary</h2>
+              <div className="flex justify-between items-center mb-4 pb-4 border-b border-az-ink/10">
+                <span className="text-az-ink/50">Plan</span>
+                <span className="text-az-ink font-medium">{selectedPlan.name}</span>
               </div>
-              <div
-                className="flex justify-between items-center mb-4 pb-4"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                <span className="text-white/50">Duration</span>
-                <span className="text-white font-medium">{selectedPlan.durationLabel}</span>
+              <div className="flex justify-between items-center mb-4 pb-4 border-b border-az-ink/10">
+                <span className="text-az-ink/50">Duration</span>
+                <span className="text-az-ink font-medium">{selectedPlan.durationLabel}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-white/50">Total</span>
-                <span className="text-2xl font-bold" style={{ color: 'var(--brand-orange)' }}>
+                <span className="text-az-ink/50">Total</span>
+                <span className="az-section-title text-az-flame">
                   ₦{selectedPlan.price.toLocaleString()}
                 </span>
               </div>
             </GlowCard>
 
             <GlowCard universe="movies" className="p-8 mb-8">
-              <h2 className="text-xl font-bold text-white mb-6">Payment Method</h2>
+              <h2 className="text-xl font-bold text-az-ink mb-6">Payment Method</h2>
 
               {/* Wallet Option */}
               <motion.button
                 type="button"
                 onClick={() => setPaymentMethod('wallet')}
-                className="w-full p-4 rounded-xl text-left mb-3 transition-all"
-                style={{
-                  border: `2px solid ${paymentMethod === 'wallet' ? 'var(--color-success-500)' : 'rgba(255,255,255,0.1)'}`,
-                  backgroundColor:
-                    paymentMethod === 'wallet' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
-                }}
+                className={`w-full p-4 rounded-xl text-left mb-3 transition-all border-2 ${
+                  paymentMethod === 'wallet'
+                    ? 'border-az-success-500 bg-az-success-500/10'
+                    : 'border-az-ink/10 bg-az-ink/5'
+                }`}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                      <Wallet className="w-5 h-5 text-emerald-400" />
+                    <div className="w-10 h-10 rounded-xl bg-az-success-500/10 border border-az-success-500/20 flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-az-success-400" />
                     </div>
                     <div>
-                      <p className="text-white font-semibold">Pay from Wallet</p>
-                      <p className="text-xs text-white/40">
+                      <p className="text-az-ink font-semibold">Pay from Wallet</p>
+                      <p className="text-xs text-az-ink/40">
                         Balance: ₦{walletBalance.toLocaleString()}
                       </p>
                     </div>
                   </div>
                   {!canAffordWithWallet && paymentMethod === 'wallet' && (
-                    <span
-                      className="text-xs px-2 py-1 rounded-full"
-                      style={{
-                        backgroundColor: 'rgba(239,68,68,0.15)',
-                        color: 'var(--color-error-500)',
-                      }}
-                    >
+                    <span className="text-xs px-2 py-1 rounded-full bg-az-error-500/15 text-az-error-400">
                       Insufficient
                     </span>
                   )}
@@ -376,22 +337,21 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
               <motion.button
                 type="button"
                 onClick={() => setPaymentMethod('external')}
-                className="w-full p-4 rounded-xl text-left transition-all"
-                style={{
-                  border: `2px solid ${paymentMethod === 'external' ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
-                  backgroundColor:
-                    paymentMethod === 'external' ? 'rgba(232,66,10,0.1)' : 'rgba(255,255,255,0.03)',
-                }}
+                className={`w-full p-4 rounded-xl text-left transition-all border-2 ${
+                  paymentMethod === 'external'
+                    ? 'border-az-flame bg-az-scarlet/10'
+                    : 'border-az-ink/10 bg-az-ink/5'
+                }`}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-[var(--brand-orange)]" />
+                  <div className="w-10 h-10 rounded-xl bg-az-flame/10 border border-az-flame/20 flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-az-flame" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold">Card / Bank Transfer</p>
-                    <p className="text-xs text-white/40">Pay with card or bank transfer</p>
+                    <p className="text-az-ink font-semibold">Card / Bank Transfer</p>
+                    <p className="text-xs text-az-ink/40">Pay with card or bank transfer</p>
                   </div>
                 </div>
               </motion.button>
@@ -401,12 +361,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
               <motion.button
                 type="button"
                 onClick={() => setStep('select')}
-                className="flex-1 py-3 rounded-full font-semibold transition-all"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  color: 'var(--brand-white)',
-                }}
+                className="flex-1 py-3 rounded-full font-semibold transition-all border border-az-ink/20 bg-az-ink/10 text-az-ink"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -416,7 +371,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 type="button"
                 onClick={handleConfirmPayment}
                 disabled={paymentMethod === 'wallet' && !canAffordWithWallet}
-                className="flex-1 py-3 rounded-full font-semibold transition-all az-btn-primary"
+                className="flex-1 transition-all az-btn-primary"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -429,9 +384,9 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         {/* Step 3: Processing */}
         {step === 'processing' && (
           <div className="text-center py-20">
-            <Spinner size="lg" color="#E8420A" />
-            <p className="mt-4 text-white/60 text-lg">Processing your payment...</p>
-            <p className="text-white/40 text-sm mt-2">Please don't close this page</p>
+            <Spinner size="lg" color="var(--color-az-flame)" />
+            <p className="mt-4 text-az-ink/60 text-lg">Processing your payment...</p>
+            <p className="text-az-ink/40 text-sm mt-2">Please don't close this page</p>
           </div>
         )}
 
@@ -443,19 +398,19 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-6"
+                className="w-16 h-16 rounded-full bg-az-success-500/20 border border-az-success-500/40 flex items-center justify-center mx-auto mb-6"
               >
-                <ShieldCheck className="w-8 h-8 text-emerald-400" />
+                <ShieldCheck className="w-8 h-8 text-az-success-400" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-white mb-2">Subscription Active!</h2>
-              <p className="text-white/50 mb-8">
+              <h2 className="text-2xl font-bold text-az-ink mb-2">Subscription Active!</h2>
+              <p className="text-az-ink/50 mb-8">
                 Welcome to {selectedPlan?.name}. Enjoy premium content!
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/wallet/subscription-current">
                   <motion.button
                     type="button"
-                    className="px-8 py-3 rounded-full font-semibold az-btn-primary"
+                    className="az-btn-primary"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -465,12 +420,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 <Link href="/movies">
                   <motion.button
                     type="button"
-                    className="px-8 py-3 rounded-full font-semibold"
-                    style={{
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: 'var(--brand-white)',
-                    }}
+                    className="px-8 py-3 rounded-full font-semibold border border-az-ink/20 bg-az-ink/10 text-az-ink"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -486,16 +436,16 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
         {step === 'error' && (
           <ScrollReveal>
             <div className="text-center py-20">
-              <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mx-auto mb-6">
-                <AlertTriangle className="w-8 h-8 text-red-400" />
+              <div className="w-16 h-16 rounded-full bg-az-error-500/20 border border-az-error-500/40 flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-8 h-8 text-az-error-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Payment Failed</h2>
-              <p className="text-white/50 mb-8">Something went wrong. Please try again.</p>
+              <h2 className="text-2xl font-bold text-az-ink mb-2">Payment Failed</h2>
+              <p className="text-az-ink/50 mb-8">Something went wrong. Please try again.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <motion.button
                   type="button"
                   onClick={() => setStep('payment')}
-                  className="px-8 py-3 rounded-full font-semibold az-btn-primary"
+                  className="az-btn-primary"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -504,12 +454,7 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
                 <Link href="/wallet/subscription-plans">
                   <motion.button
                     type="button"
-                    className="px-8 py-3 rounded-full font-semibold"
-                    style={{
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      color: 'var(--brand-white)',
-                    }}
+                    className="px-8 py-3 rounded-full font-semibold border border-az-ink/20 bg-az-ink/10 text-az-ink"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -524,13 +469,11 @@ function SubscriptionPaymentPageContent(): React.JSX.Element {
 
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
-          style={{
-            backgroundColor:
-              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
-          }}
+          className={`fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all border ${
+            toast.type === 'success'
+              ? 'bg-az-success-500/15 border-az-success-500/30 text-az-success-500'
+              : 'bg-az-error-500/15 border-az-error-500/30 text-az-error-500'
+          }`}
         >
           {toast.message}
         </div>
@@ -547,8 +490,8 @@ export default function SubscriptionPaymentPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-az-surface-root">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

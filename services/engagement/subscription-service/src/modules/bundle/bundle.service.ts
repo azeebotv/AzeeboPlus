@@ -15,6 +15,21 @@ import {
   walletInternalHeaders as buildWalletInternalHeaders,
 } from '../../wallet-payloads.js';
 
+export interface BundleUpgradeQuote {
+  bundleId: string;
+  bundleName: string;
+  bundlePrice: number;
+  proratedCredit: number;
+  effectivePrice: number;
+  activeSubscriptions: Array<{
+    subscriptionId: string;
+    planName: string;
+    daysRemaining: number;
+    totalDays: number;
+    credit: number;
+  }>;
+}
+
 @Injectable()
 export class BundleService {
   private readonly logger = new Logger(BundleService.name);
@@ -35,7 +50,7 @@ export class BundleService {
     );
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
     // Secret for internal wallet-service calls — same resolution order the
     // wallet-service InternalSecretGuard uses to validate it.
@@ -83,6 +98,86 @@ export class BundleService {
     const individualTotal = bundles.reduce((sum, b) => sum + Number(b.originalPrice), 0);
     const bundleSavings = individualTotal - bundles.reduce((sum, b) => sum + Number(b.price), 0);
     return { bundles, individualTotal, bundleSavings };
+  }
+
+  async calculateProratedCredit(
+    userId: string,
+    bundlePrice: number
+  ): Promise<{
+    proratedCredit: number;
+    effectivePrice: number;
+    activeSubscriptions: Array<{
+      subscriptionId: string;
+      planName: string;
+      daysRemaining: number;
+      totalDays: number;
+      credit: number;
+    }>;
+  }> {
+    const now = new Date();
+    const activeSubs = await this.prisma.subscription.findMany({
+      where: {
+        userId,
+        status: 'active',
+        endDate: { gt: now },
+      },
+      include: { plan: true },
+    });
+
+    const activeSubscriptions: Array<{
+      subscriptionId: string;
+      planName: string;
+      daysRemaining: number;
+      totalDays: number;
+      credit: number;
+    }> = [];
+
+    let totalCredit = 0;
+    for (const sub of activeSubs) {
+      const startMs = sub.startDate.getTime();
+      const endMs = sub.endDate.getTime();
+      const nowMs = now.getTime();
+      const totalMs = Math.max(1000 * 60 * 60 * 24, endMs - startMs);
+      const remainingMs = Math.max(0, endMs - nowMs);
+
+      const daysRemaining = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+      const totalDays = Math.max(1, Math.ceil(totalMs / (1000 * 60 * 60 * 24)));
+      const planPrice = Number(sub.plan.price);
+      const credit = Math.round((remainingMs / totalMs) * planPrice * 100) / 100;
+
+      if (credit > 0) {
+        totalCredit += credit;
+        activeSubscriptions.push({
+          subscriptionId: sub.id,
+          planName: sub.plan.name,
+          daysRemaining,
+          totalDays,
+          credit,
+        });
+      }
+    }
+
+    const proratedCredit = Math.min(bundlePrice, Math.round(totalCredit * 100) / 100);
+    const effectivePrice = Math.max(0, Math.round((bundlePrice - proratedCredit) * 100) / 100);
+
+    return {
+      proratedCredit,
+      effectivePrice,
+      activeSubscriptions,
+    };
+  }
+
+  async getUpgradeQuote(userId: string, bundleId: string): Promise<BundleUpgradeQuote> {
+    const bundle = await this.getBundleById(bundleId);
+    const quote = await this.calculateProratedCredit(userId, Number(bundle.price));
+    return {
+      bundleId: bundle.id,
+      bundleName: bundle.name,
+      bundlePrice: Number(bundle.price),
+      proratedCredit: quote.proratedCredit,
+      effectivePrice: quote.effectivePrice,
+      activeSubscriptions: quote.activeSubscriptions,
+    };
   }
 
   async createBundle(dto: CreateBundleDto): Promise<BundlePass> {
@@ -133,10 +228,28 @@ export class BundleService {
       );
     }
 
+    const applyProration = dto.applyProration ?? true;
+    let effectivePrice = Number(bundle.price);
+    let proratedCredit = 0;
+    let creditedSubIds: string[] = [];
+
+    if (applyProration) {
+      const calculation = await this.calculateProratedCredit(userId, effectivePrice);
+      proratedCredit = calculation.proratedCredit;
+      effectivePrice = calculation.effectivePrice;
+      creditedSubIds = calculation.activeSubscriptions.map((s) => s.subscriptionId);
+    }
+
     if (paymentMethod === 'wallet') {
-      await this.debitWallet(userId, Number(bundle.price), `Bundle: ${bundle.name}`);
+      if (effectivePrice > 0) {
+        await this.debitWallet(
+          userId,
+          effectivePrice,
+          `Bundle: ${bundle.name}${proratedCredit > 0 ? ` (Prorated credit ₦${proratedCredit})` : ''}`
+        );
+      }
     } else {
-      await this.verifyExternalPayment(dto.paymentReference!, bundle);
+      await this.verifyExternalPayment(dto.paymentReference!, effectivePrice);
     }
 
     const subscription = await this.prisma.$transaction(async (tx) => {
@@ -152,6 +265,13 @@ export class BundleService {
         await tx.bundleSubscription.update({
           where: { id: existing.id },
           data: { status: 'cancelled' },
+        });
+      }
+
+      if (creditedSubIds.length > 0) {
+        await tx.subscription.updateMany({
+          where: { id: { in: creditedSubIds } },
+          data: { status: 'cancelled', autoRenew: false },
         });
       }
 
@@ -174,7 +294,13 @@ export class BundleService {
     await this.cache.invalidate(`bundle:user:${userId}`);
     await this.cache.invalidate('bundle:passes');
 
-    this.trackAnalyticsEvent('bundle_subscribed', userId, { bundleId, paymentMethod });
+    this.trackAnalyticsEvent('bundle_subscribed', userId, {
+      bundleId,
+      paymentMethod,
+      originalPrice: Number(bundle.price),
+      proratedCredit,
+      effectivePrice,
+    });
     return subscription;
   }
 
@@ -235,7 +361,10 @@ export class BundleService {
     }
   }
 
-  private async verifyExternalPayment(paymentReference: string, bundle: BundlePass): Promise<void> {
+  private async verifyExternalPayment(
+    paymentReference: string,
+    expectedAmount: number
+  ): Promise<void> {
     try {
       const paymentVerification = await axios.get(
         `${this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL')}/v1/payments/${paymentReference}`,
@@ -245,8 +374,10 @@ export class BundleService {
       if (paymentVerification.data?.status !== 'completed') {
         throw new BadRequestException('Payment has not been completed.');
       }
-      if (Number(paymentVerification.data?.amount).toFixed(2) !== Number(bundle.price).toFixed(2)) {
-        throw new BadRequestException('Payment amount does not match bundle price.');
+      if (Math.abs(Number(paymentVerification.data?.amount) - expectedAmount) > 0.01) {
+        throw new BadRequestException(
+          `Payment amount (${paymentVerification.data?.amount}) does not match expected bundle price (${expectedAmount}).`
+        );
       }
     } catch (error) {
       this.logger.error(`Failed to verify payment: ${(error as Error).message}`);

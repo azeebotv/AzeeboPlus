@@ -144,7 +144,7 @@ describe('ContentService Integration', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
-              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3040';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service:3008';
               return defaultValue;
             }),
           },
@@ -194,7 +194,7 @@ describe('ContentService Integration', () => {
       });
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
-        'http://analytics-service:3040/analytics/track',
+        'http://analytics-service:3008/analytics/track',
         expect.objectContaining({
           eventName: 'content_created',
           userId: 'creator-1',

@@ -37,16 +37,26 @@
 4. Verify disk space
 
 ## Rollback Procedure
-```bash
-# Stop current container
-docker stop azeebo-all-in-one
 
-# Start previous version
-docker run -d --name azeebo-all-in-one \
-  -p 3013:3013 -p 4000:4000 -p 4014:4014 -p 4016:4016 \
-  --env-file .env \
-  ghcr.io/azeebotv/azeebo-all-in-one:previous-tag
+One container runs the whole platform, so a rollback is an image-tag change:
+
+```bash
+# Automated: Actions -> Rollback Deployment (verifies the tag in GHCR first)
+gh workflow run rollback.yml -f environment=production -f target_tag=<tag>
+
+# On the deploy host: pulls the tag before touching the live container and
+# restores the previous image if the health check fails
+ENVIRONMENT=production ./scripts/rollback.sh <tag> --dry-run   # preview
+ENVIRONMENT=production ./scripts/rollback.sh <tag>
 ```
+
+The workflow run's summary records a **Rollback verification** block: the tag
+that was restored, the commit `/version` reports, and whether Coolify's
+`IMAGE_TAG` now names that tag. Cite it in the incident timeline instead of
+re-deriving which build is live.
+
+Data is not rolled back by either path — if the reverted release applied
+migrations, confirm schema compatibility separately.
 
 ## Contact
 - DevOps: #devops Slack channel

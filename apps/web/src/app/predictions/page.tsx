@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
-import AppFooter from '../../components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { Skeleton } from '@azeebo/ui/web';
+import { Zap } from 'lucide-react';
 
 interface Prediction {
   id: string;
@@ -24,6 +25,8 @@ interface PredictionHistoryResponse {
   data: Prediction[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
+
+const FILTERS = ['all', 'active', 'resolved'];
 
 export default function PredictionsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -48,174 +51,140 @@ export default function PredictionsPage() {
 
   const filtered = filter === 'all' ? predictions : predictions.filter((p) => p.status === filter);
 
+  const filterChips = FILTERS.map((f) => {
+    const selected = filter === f;
+    return (
+      <button
+        key={f}
+        type="button"
+        aria-pressed={selected}
+        onClick={() => {
+          setFilter(f);
+          setPage(1);
+        }}
+        className={`az-body-strong rounded-az-pill border px-4 py-2 transition-colors ${
+          selected
+            ? 'border-az-flame bg-az-scarlet/20 text-az-ink'
+            : 'border-az-glass-border bg-az-glass-fill text-az-ink-muted hover:border-az-glass-border-hover'
+        }`}
+      >
+        {f.charAt(0).toUpperCase() + f.slice(1)}
+      </button>
+    );
+  });
+
   if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <main className="max-w-4xl mx-auto px-4 py-12">
-          <div className="az-glass p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Sign in to view predictions</h2>
-            <p className="text-white/50">Track your prediction history and accuracy</p>
-          </div>
-        </main>
-        <AppFooter />
-      </div>
+      <PageShell maxWidth="lg">
+        <PageHero
+          eyebrow="Predictions"
+          title="My Predictions"
+          subtitle="Track your prediction history and accuracy"
+        />
+        <div className="az-glass p-8 text-center">
+          <h2 className="az-title mb-2 text-az-ink">Sign in to view predictions</h2>
+          <p className="az-body text-az-ink-muted">
+            Track your prediction history and accuracy once you are signed in
+          </p>
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader />
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">My Predictions</h1>
-            <p className="text-white/50 text-sm mt-1">{pagination.total} total predictions</p>
+    <PageShell maxWidth="lg">
+      <PageHero
+        eyebrow="Predictions"
+        title="My Predictions"
+        subtitle={`${pagination.total} total predictions`}
+        actions={
+          <div role="group" aria-label="Prediction filters" className="flex gap-2">
+            {filterChips}
           </div>
-          <div className="flex gap-2" role="tablist" aria-label="Prediction filters">
-            {['all', 'active', 'resolved'].map((f) => (
-              <button
-                key={f}
-                role="tab"
-                aria-selected={filter === f}
-                onClick={() => {
-                  setFilter(f);
-                  setPage(1);
-                }}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  filter === f ? 'text-white' : 'text-white/50 hover:text-white'
-                }`}
-                style={{
-                  background:
-                    filter === f
-                      ? 'linear-gradient(135deg, #E8420A, #CC1C1C)'
-                      : 'rgba(255,255,255,0.05)',
-                }}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+        }
+      />
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="p-4 rounded-xl"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  backgroundColor: 'var(--bg-tertiary)',
-                }}
-              >
-                <Skeleton width="60%" height="16px" />
-                <Skeleton width="40%" height="12px" className="mt-2" />
-              </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16 az-glass rounded-2xl">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[var(--brand-orange)]">
-              <svg
-                className="w-7 h-7"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.8}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-                />
-              </svg>
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="az-glass p-4">
+              <Skeleton width="60%" height="16px" />
+              <Skeleton width="40%" height="12px" className="mt-2" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">No predictions yet</h3>
-            <p className="text-white/50 text-sm">Start predicting to earn points!</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-3">
-              {filtered.map((pred) => (
-                <div
-                  key={pred.id}
-                  className="p-4 rounded-xl flex items-center justify-between transition-all hover:border-white/20"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    backgroundColor: 'var(--bg-tertiary)',
-                  }}
-                >
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="az-glass py-16 text-center">
+          <span
+            aria-hidden="true"
+            className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full border border-az-glass-border bg-az-scarlet/20 text-az-flame"
+          >
+            <Zap size={28} />
+          </span>
+          <h3 className="az-title mb-2 text-az-ink">No predictions yet</h3>
+          <p className="az-body text-az-ink-muted">Start predicting to earn points!</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {filtered.map((pred) => {
+              const statusLabel =
+                pred.status === 'resolved' ? (pred.isCorrect ? 'Correct' : 'Wrong') : 'Pending';
+              const statusTone =
+                pred.status === 'resolved'
+                  ? pred.isCorrect
+                    ? 'text-az-success-400'
+                    : 'text-az-error-400'
+                  : 'text-az-warning-400';
+              return (
+                <div key={pred.id} className="az-glass flex items-center justify-between gap-4 p-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-white text-sm">{pred.prediction}</span>
+                      <span className="az-body-strong text-az-ink">{pred.prediction}</span>
                       {pred.category && (
-                        <span
-                          className="px-2 py-0.5 rounded text-[10px]"
-                          style={{
-                            background: 'rgba(232,66,10,0.2)',
-                            color: 'var(--brand-orange)',
-                          }}
-                        >
+                        <span className="az-micro-label rounded-az-pill bg-az-scarlet/20 px-2 py-0.5 text-az-flame">
                           {pred.category}
                         </span>
                       )}
                     </div>
-                    <p className="text-white/40 text-xs mt-1">
+                    <p className="az-caption mt-1 text-az-ink-muted">
                       Content: {pred.contentId} · {new Date(pred.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span
-                      className="text-xs font-medium"
-                      style={{
-                        color:
-                          pred.status === 'resolved'
-                            ? pred.isCorrect
-                              ? 'var(--color-success-400)'
-                              : 'var(--color-error-400)'
-                            : 'var(--color-warning-500)',
-                      }}
-                    >
-                      {pred.status === 'resolved'
-                        ? pred.isCorrect
-                          ? 'Correct'
-                          : 'Wrong'
-                        : 'Pending'}
-                    </span>
-                    <span className="text-xs text-white/50">+{pred.points} pts</span>
+                    <span className={`az-caption ${statusTone}`}>{statusLabel}</span>
+                    <span className="az-caption text-az-ink-muted">+{pred.points} pts</span>
                   </div>
                 </div>
-              ))}
+              );
+            })}
+          </div>
+          {pagination.totalPages > 1 && (
+            <div className="mt-6 flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="az-body-strong rounded-az-pill border border-az-glass-border bg-az-glass-fill px-4 py-2 text-az-ink transition-colors hover:border-az-glass-border-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="az-body-strong px-3 py-1 text-az-ink-muted">
+                Page {page} of {pagination.totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
+                disabled={page === pagination.totalPages}
+                className="az-body-strong rounded-az-pill border border-az-glass-border bg-az-glass-fill px-4 py-2 text-az-ink transition-colors hover:border-az-glass-border-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-6">
-                <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className="px-3 py-1 rounded text-sm disabled:opacity-30"
-                  style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 text-sm text-white/50">
-                  Page {page} of {pagination.totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
-                  disabled={page === pagination.totalPages}
-                  className="px-3 py-1 rounded text-sm disabled:opacity-30"
-                  style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </main>
-      <AppFooter />
-    </div>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }

@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { resolveActorId } from '../../common/resolve-actor-id';
+import { RequireDualControl } from '../dual-control/require-dual-control.decorator';
 
 interface AuthRequest extends Request {
   user: { id?: string; sub?: string; email: string; role: string };
@@ -33,6 +34,11 @@ export class WalletManagementController {
   ) {}
 
   @Post(':walletId/adjust')
+  @RequireDualControl({
+    actionType: 'manual_entitlement',
+    thresholdAmount: 1000,
+    description: 'Manual wallet balance adjustment',
+  })
   async adjustWalletBalance(
     @Param('walletId') walletId: string,
     @Req() req: AuthRequest,
@@ -77,6 +83,11 @@ export class WalletManagementController {
   }
 
   @Put('payouts/:id/approve')
+  @RequireDualControl({
+    actionType: 'large_refund',
+    thresholdAmount: 500,
+    description: 'Approval and release of creator payout',
+  })
   async approvePayoutRequest(@Param('id') id: string, @Req() req: AuthRequest) {
     const actorId = resolveActorId(req);
     const result = await this.walletService.approvePayoutRequest(id, actorId);

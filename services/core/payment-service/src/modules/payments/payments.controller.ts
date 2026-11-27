@@ -32,7 +32,7 @@ import {
   VerifyPaymentResponse,
   TransactionHistoryResponse,
 } from './interfaces/payment-response.interface.js';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, IdempotencyGuard } from '@azeebo/security';
 import { FeatureFlagGuard, FeatureFlag, paymentFlags } from '@azeebo/feature-flags';
 
 @ApiTags('Payments')
@@ -42,7 +42,7 @@ export class PaymentsController {
   constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Post('initialize')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(IdempotencyGuard, RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({
     summary: 'Initialize a payment',
@@ -128,7 +128,7 @@ export class PaymentsController {
   }
 
   @Post('intent')
-  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
   @FeatureFlag(paymentFlags.intentsApi)
   @RateLimit(10, 60000)
   @HttpCode(HttpStatus.CREATED)
@@ -148,7 +148,7 @@ export class PaymentsController {
   }
 
   @Post('intent/:id/confirm')
-  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
   @FeatureFlag(paymentFlags.intentsApi)
   @RateLimit(10, 60000)
   @HttpCode(HttpStatus.OK)
@@ -226,7 +226,10 @@ export class PaymentsController {
     @Request() req: { user: { sub: string; id: string } },
     @Body() verifyPaymentDto: VerifyPaymentDto
   ): Promise<VerifyPaymentResponse> {
-    return this.paymentsService.verifyPayment(req.user.id, verifyPaymentDto.transactionId);
+    // The intent id and the provider reference are both valid handles; the
+    // lookup accepts either so a checkout return URL can verify directly.
+    const handle = verifyPaymentDto.transactionId ?? verifyPaymentDto.reference!;
+    return this.paymentsService.verifyPayment(req.user.id, handle);
   }
 
   @Get('history')
@@ -321,7 +324,7 @@ export class PaymentsController {
   }
 
   @Post('refund-request')
-  @UseGuards(FeatureFlagGuard, RateLimitGuard)
+  @UseGuards(FeatureFlagGuard, IdempotencyGuard, RateLimitGuard)
   @FeatureFlag(paymentFlags.selfServiceRefund)
   @RateLimit(5, 3600000)
   @HttpCode(HttpStatus.CREATED)
@@ -335,7 +338,8 @@ export class PaymentsController {
     return this.paymentsService.requestRefund(
       req.user.id,
       requestRefundDto.transactionId,
-      requestRefundDto.reason
+      requestRefundDto.reason,
+      requestRefundDto.idempotencyKey
     );
   }
 }

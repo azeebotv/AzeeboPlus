@@ -1,14 +1,27 @@
-import { Controller, Get, Put, Param, Body, UseGuards, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Inject,
+  Get,
+  Put,
+  Param,
+  Body,
+  UseGuards,
+  NotFoundException,
+} from '@nestjs/common';
 import { PaymentGatewaysService } from './payment-gateways.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { RequireDualControl } from '../dual-control/require-dual-control.decorator';
 
 @Controller('admin/payment-gateways')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'superadmin')
 export class PaymentGatewaysController {
-  constructor(private readonly gatewaysService: PaymentGatewaysService) {}
+  constructor(
+    @Inject(PaymentGatewaysService)
+    private readonly gatewaysService: PaymentGatewaysService
+  ) {}
 
   @Get()
   async getGateways() {
@@ -23,6 +36,10 @@ export class PaymentGatewaysController {
   }
 
   @Put(':id/mode')
+  @RequireDualControl({
+    actionType: 'bulk_operation',
+    description: 'Switching payment gateway live mode',
+  })
   async updateGatewayMode(@Param('id') id: string, @Body('mode') mode: 'live' | 'test') {
     const result = await this.gatewaysService.updateGatewayMode(id, mode);
     if (!result) throw new NotFoundException(`Unknown gateway: ${id}`);

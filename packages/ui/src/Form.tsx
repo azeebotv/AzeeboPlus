@@ -104,10 +104,10 @@ export interface FormFieldProps {
 export function FormField({ label, error, className = '', children }: FormFieldProps) {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {label && <label className="block text-sm font-medium text-text-secondary">{label}</label>}
+      {label && <label className="block text-sm font-medium text-az-ink-dim">{label}</label>}
       {children}
       {error && (
-        <p className="text-sm text-error-400" role="alert">
+        <p className="text-sm text-az-error-400" role="alert">
           {error}
         </p>
       )}
@@ -144,7 +144,7 @@ export function FormErrorMessage({ error, className = '' }: FormErrorMessageProp
   if (!error?.message) return null;
 
   return (
-    <p className={`text-sm text-error-400 ${className}`} role="alert">
+    <p className={`text-sm text-az-error-400 ${className}`} role="alert">
       {error.message}
     </p>
   );
@@ -165,7 +165,7 @@ export function FormErrorMessageList({ errors, className = '' }: FormErrorMessag
   return (
     <ul className={`space-y-1 ${className}`}>
       {errorMessages.map((message, index) => (
-        <li key={index} className="text-sm text-error-400" role="alert">
+        <li key={index} className="text-sm text-az-error-400" role="alert">
           {message}
         </li>
       ))}

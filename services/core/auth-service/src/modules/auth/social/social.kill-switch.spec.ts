@@ -31,6 +31,11 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
       .fn()
       .mockResolvedValue({ email: 'g@example.com', sub: 'g-1', name: 'G User' }),
     verifyAppleToken: jest.fn().mockResolvedValue({ email: 'a@example.com', sub: 'a-1' }),
+    loginWithCredential: jest.fn().mockResolvedValue({
+      accessToken: 'at',
+      refreshToken: 'rt',
+      user: { id: 'u-1', email: 'g@example.com', displayName: 'G User', avatar: null },
+    }),
     socialLogin: jest.fn().mockResolvedValue({
       success: true,
       data: {
@@ -87,27 +92,42 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
     expect(mockSocialAuthService.verifyGoogleToken).not.toHaveBeenCalled();
   });
 
-  it('blocks POST /auth/social/apple with 403 when the flag is off', async () => {
-    await request(baseUrl)
-      .post('/auth/social/apple')
-      .send({ identityToken: 'id-token', email: 'a@example.com' })
-      .expect(403);
-    expect(mockSocialAuthService.verifyAppleToken).not.toHaveBeenCalled();
-  });
-
   it('allows the Google flow when the flag is on', async () => {
     mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
       Promise.resolve(key === authFlags.socialGoogle)
     );
 
+    // A browser navigation now gets a 302 to the provider, not a JSON body.
     await request(baseUrl)
       .get('/auth/social/google/authorize')
+      .expect(302)
+      .expect((res: { headers: Record<string, string> }) => {
+        expect(res.headers.location).toContain('accounts.google.com');
+      });
+    expect(mockSocialAuthService.generateState).toHaveBeenCalledWith('google', undefined);
+  });
+
+  it('still returns the JSON shape for non-browser callers under ?format=json', async () => {
+    mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key === authFlags.socialGoogle)
+    );
+
+    await request(baseUrl)
+      .get('/auth/social/google/authorize?format=json')
       .expect(200)
       .expect((res: { body: { state?: string; authorizeUrl?: string } }) => {
         expect(res.body.state).toBe('state-123');
         expect(res.body.authorizeUrl).toContain('accounts.google.com');
       });
-    expect(mockSocialAuthService.generateState).toHaveBeenCalledWith('google');
+  });
+
+  it('carries the post-login redirect into the state record', async () => {
+    mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key === authFlags.socialGoogle)
+    );
+
+    await request(baseUrl).get('/auth/social/google/authorize?redirect=%2Fwallet').expect(302);
+    expect(mockSocialAuthService.generateState).toHaveBeenCalledWith('google', '/wallet');
   });
 
   it('blocks Apple authorize while Google is enabled (independent kill switches)', async () => {
@@ -116,5 +136,33 @@ describe('SocialAuthController provider kill-switch (auth_social_google/apple)',
     );
 
     await request(baseUrl).get('/auth/social/apple/authorize').expect(403);
+  });
+
+  // The combined legacy route carries the provider in its body, so a single
+  // `@FeatureFlag` cannot gate it; the provider named in the request decides.
+  it('blocks a legacy Apple login when only Google is enabled', async () => {
+    mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key === authFlags.socialGoogle)
+    );
+
+    await request(baseUrl)
+      .post('/auth/social/login')
+      .send({ provider: 'apple', idToken: 'header.payload.signature' })
+      .expect(403);
+
+    expect(mockSocialAuthService.loginWithCredential).not.toHaveBeenCalled();
+  });
+
+  it('blocks a legacy Google login when only Apple is enabled', async () => {
+    mockFeatureFlagService.isEnabled.mockImplementation((key: string) =>
+      Promise.resolve(key === authFlags.socialApple)
+    );
+
+    await request(baseUrl)
+      .post('/auth/social/login')
+      .send({ provider: 'google', accessToken: 'ya29.token' })
+      .expect(403);
+
+    expect(mockSocialAuthService.loginWithCredential).not.toHaveBeenCalled();
   });
 });

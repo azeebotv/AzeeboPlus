@@ -70,6 +70,7 @@ describe('WalletService Integration', () => {
 
   beforeEach(async () => {
     process.env.POINTS_TO_NAIRA_RATE = '100';
+    process.env.WEBHOOK_SECRET = 'test-webhook-secret';
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot()],

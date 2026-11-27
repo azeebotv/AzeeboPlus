@@ -12,8 +12,9 @@ import type { Request } from 'express';
  * stamping when IT proxies; these in-app proxies must too.
  */
 export function buildIdentityHeaders(req: Request): Record<string, string> {
-  const user = (req as Request & { user?: { id?: string; sub?: string; email?: string; role?: string } })
-    .user;
+  const user = (
+    req as Request & { user?: { id?: string; sub?: string; email?: string; role?: string } }
+  ).user;
 
   const headers: Record<string, string> = {};
 

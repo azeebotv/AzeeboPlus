@@ -1,0 +1,16 @@
+/* Storybook had no stylesheet at all: `.storybook/preview.ts` never imported one
+   and `main.ts` registered no CSS pipeline, so every story rendered the raw
+   element tree — `bg-az-surface-raised` was markup with nothing behind it, which
+   is the same silent failure the design system exists to prevent, just in the
+   place a reviewer looks to confirm it did not happen.
+
+   This imports the generated layer rather than a second copy of the values, so a
+   token added to `packages/design-tokens` reaches the stories on the next
+   `pnpm tokens:css` with nothing to remember here. */
+@import 'tailwindcss';
+@import '../../../apps/web/src/styles/design-tokens.css';
+
+/* Tailwind v4 detects sources from the working directory, and `storybook build`
+   runs from this package — declare the library explicitly so a story that
+   renders a class no story uses still compiles. */
+@source '../src';

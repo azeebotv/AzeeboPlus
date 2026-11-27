@@ -15,6 +15,7 @@ import { contentApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface ContentItem {
   id: string;
@@ -193,11 +194,11 @@ export default function ContentManagerScreen() {
           <View style={styles.listActions}>
             <Text style={styles.listStats}>{item.views.toLocaleString()} views</Text>
             {item.status === 'draft' && (
-              <TouchableOpacity style={styles.publishButton} onPress={() => handlePublish(item.id)}>
+              <TouchableOpacity accessibilityRole="button" style={styles.publishButton} onPress={() => handlePublish(item.id)}>
                 <Text style={styles.publishButtonText}>Publish</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
+            <TouchableOpacity accessibilityRole="button" style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
               <Text style={styles.deleteButtonText}>🗑</Text>
             </TouchableOpacity>
           </View>
@@ -208,7 +209,7 @@ export default function ContentManagerScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Content Manager Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading content..." />
       </SafeAreaView>
     );
@@ -225,7 +226,7 @@ export default function ContentManagerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Content Manager</Text>
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   filterButtonText: {
     color: colors.light[100],
@@ -415,7 +416,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   createButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

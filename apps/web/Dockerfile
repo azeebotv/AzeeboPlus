@@ -1,5 +1,5 @@
 # Build stage
-FROM node:22.16.0-alpine AS builder
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS builder
 WORKDIR /app
 
 # Install pnpm
@@ -29,7 +29,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm --filter @azeebo/web run build
 
 # Production stage
-FROM node:22.16.0-alpine AS runner
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
@@ -41,11 +41,11 @@ RUN apk add --no-cache tini && \
     addgroup -g 65532 -S nodejs && \
     adduser -S nodejs -u 65532
 
-COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
-COPY --from=builder /app/apps/web/next.config.js ./apps/web/next.config.js
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY --chown=nodejs:nodejs --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --chown=nodejs:nodejs --from=builder /app/apps/web/package.json ./apps/web/package.json
+COPY --chown=nodejs:nodejs --from=builder /app/apps/web/next.config.js ./apps/web/next.config.js
+COPY --chown=nodejs:nodejs --from=builder /app/node_modules ./node_modules
+COPY --chown=nodejs:nodejs --from=builder /app/package.json ./package.json
 
 # Change ownership
 RUN chown -R nodejs:nodejs /app

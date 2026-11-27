@@ -159,7 +159,7 @@ export function WebVttCaptions({
       {/* Caption display */}
       {currentText && (
         <div
-          className="absolute bottom-16 left-1/2 -translate-x-1/2 max-w-[80%] bg-black/80 text-white px-4 py-2 rounded-lg text-center pointer-events-none z-10"
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 max-w-[80%] bg-az-surface-root/80 text-az-ink px-4 py-2 rounded-az-control text-center pointer-events-none z-10"
           role="region"
           aria-live="polite"
           aria-label="Captions"
@@ -171,8 +171,8 @@ export function WebVttCaptions({
       {/* Captions toggle button */}
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className={`p-2 rounded-lg transition-colors ${
-          activeTrackId ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'
+        className={`p-2 rounded-az-control transition-colors ${
+          activeTrackId ? 'bg-az-glass-fill-active text-az-ink' : 'text-az-ink/60 hover:text-az-ink'
         }`}
         aria-label={activeTrackId ? 'Captions on' : 'Captions off'}
         aria-expanded={showMenu}
@@ -190,14 +190,14 @@ export function WebVttCaptions({
       {/* Track selection menu */}
       {showMenu && (
         <div
-          className="absolute bottom-12 right-0 bg-gray-900 rounded-lg shadow-xl border border-gray-700 min-w-[160px] z-20"
+          className="absolute bottom-12 right-0 bg-az-surface-raised rounded-az-control shadow-az-lifted border border-az-surface-edge min-w-[160px] z-20"
           role="menu"
           aria-label="Caption tracks"
         >
           <button
             onClick={() => handleTrackSelect(null)}
-            className={`w-full px-4 py-2 text-left text-sm rounded-t-lg hover:bg-gray-800 ${
-              !activeTrackId ? 'bg-blue-600 text-white' : 'text-gray-300'
+            className={`w-full px-4 py-2 text-left text-sm rounded-t-az-control hover:bg-az-glass-fill-hover ${
+              !activeTrackId ? 'bg-az-scarlet text-az-ink' : 'text-az-ink-dim'
             }`}
             role="menuitem"
           >
@@ -207,9 +207,9 @@ export function WebVttCaptions({
             <button
               key={track.id}
               onClick={() => handleTrackSelect(track.id)}
-              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-800 ${
-                index === tracks.length - 1 ? 'rounded-b-lg' : ''
-              } ${activeTrackId === track.id ? 'bg-blue-600 text-white' : 'text-gray-300'}`}
+              className={`w-full px-4 py-2 text-left text-sm hover:bg-az-glass-fill-hover ${
+                index === tracks.length - 1 ? 'rounded-b-az-control' : ''
+              } ${activeTrackId === track.id ? 'bg-az-scarlet text-az-ink' : 'text-az-ink-dim'}`}
               role="menuitem"
             >
               {track.label}

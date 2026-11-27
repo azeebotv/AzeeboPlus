@@ -19,6 +19,21 @@ export interface AuthResponse {
   user: User;
 }
 
+/**
+ * `/auth/select-role` answers flat — {success, message, access_token} with no
+ * `data` envelope, unlike login/register. `access_token` is re-minted from the
+ * now-current role so the caller stops presenting a token that claims the old
+ * one; adopt it (see AuthContext.selectRole).
+ */
+export interface SelectRoleResponse {
+  success: boolean;
+  message: string;
+  access_token?: string;
+}
+
+/** `creator` subsumes the viewer role, so there is no third selectable role. */
+export type SelectableRole = 'user' | 'creator';
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -106,8 +121,8 @@ export const authApi = {
     return apiClient.delete<ApiResponse<{ message: string }>>(`/auth/devices/${deviceId}`);
   },
 
-  selectRole: async (role: 'user' | 'creator' | 'both'): Promise<ApiResponse<{ role: string }>> => {
-    return apiClient.post<ApiResponse<{ role: string }>>('/auth/select-role', { role });
+  selectRole: async (role: SelectableRole): Promise<SelectRoleResponse> => {
+    return apiClient.post<SelectRoleResponse>('/auth/select-role', { role });
   },
 
   // ─── Social OAuth ──────────────────────────────────────────────────
@@ -146,13 +161,5 @@ export const authApi = {
     displayName?: string;
   }): Promise<ApiResponse<AuthResponse>> => {
     return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/google', data);
-  },
-
-  appleLogin: async (data: {
-    identityToken: string;
-    email: string;
-    displayName?: string;
-  }): Promise<ApiResponse<AuthResponse>> => {
-    return apiClient.post<ApiResponse<AuthResponse>>('/auth/social/apple', data);
   },
 };

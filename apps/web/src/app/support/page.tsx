@@ -40,41 +40,47 @@ export default function SupportPage(): React.JSX.Element {
         badge="24/7 Concierge Support"
         title="Help & Knowledge Base"
         subtitle="Get instant answers about your subscription, live reality voting, wallet payouts, and offline playback."
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
         {/* Quick Help Category Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-          <div className="az-glass p-6 rounded-3xl border border-white/10 hover:border-orange-500/30 transition-all text-center">
-            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-3 border border-orange-500/20">
+          <div className="az-glass p-6 transition-all text-center">
+            <div className="w-12 h-12 rounded-2xl bg-az-flame/10 text-az-flame flex items-center justify-center mx-auto mb-3 border border-az-flame/20">
               <Sparkles size={22} />
             </div>
-            <h3 className="font-bold text-white text-sm mb-1">Getting Started</h3>
-            <p className="text-xs text-white/50">Subscription passes, playback quality, and account creation</p>
+            <h3 className="font-bold text-az-ink text-sm mb-1">Getting Started</h3>
+            <p className="text-xs text-az-ink-muted">
+              Subscription passes, playback quality, and account creation
+            </p>
           </div>
 
-          <div className="az-glass p-6 rounded-3xl border border-white/10 hover:border-orange-500/30 transition-all text-center">
-            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-3 border border-orange-500/20">
+          <div className="az-glass p-6 transition-all text-center">
+            <div className="w-12 h-12 rounded-2xl bg-az-flame/10 text-az-flame flex items-center justify-center mx-auto mb-3 border border-az-flame/20">
               <ShieldCheck size={22} />
             </div>
-            <h3 className="font-bold text-white text-sm mb-1">Billing & Wallet</h3>
-            <p className="text-xs text-white/50">Azeebo Pay deposits, Nigerian bank withdrawals, and receipts</p>
+            <h3 className="font-bold text-az-ink text-sm mb-1">Billing & Wallet</h3>
+            <p className="text-xs text-az-ink-muted">
+              Azeebo Pay deposits, Nigerian bank withdrawals, and receipts
+            </p>
           </div>
 
-          <div className="az-glass p-6 rounded-3xl border border-white/10 hover:border-orange-500/30 transition-all text-center">
-            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-3 border border-orange-500/20">
+          <div className="az-glass p-6 transition-all text-center">
+            <div className="w-12 h-12 rounded-2xl bg-az-flame/10 text-az-flame flex items-center justify-center mx-auto mb-3 border border-az-flame/20">
               <MessageSquare size={22} />
             </div>
-            <h3 className="font-bold text-white text-sm mb-1">Voting & Rewards</h3>
-            <p className="text-xs text-white/50">Reality show voting, daily streaks, and loyalty store claims</p>
+            <h3 className="font-bold text-az-ink text-sm mb-1">Voting & Rewards</h3>
+            <p className="text-xs text-az-ink-muted">
+              Reality show voting, daily streaks, and loyalty store claims
+            </p>
           </div>
         </div>
 
         {/* FAQ Accordion Section */}
         <div className="mb-14">
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-6 flex items-center gap-2">
-            <HelpCircle size={22} className="text-orange-400" />
+          <h2 className="text-xl sm:text-2xl font-black text-az-ink tracking-tight mb-6 flex items-center gap-2">
+            <HelpCircle size={22} className="text-az-flame" />
             <span>Frequently Asked Questions</span>
           </h2>
 
@@ -85,10 +91,8 @@ export default function SupportPage(): React.JSX.Element {
               return (
                 <div
                   key={i}
-                  className={`az-glass rounded-2xl overflow-hidden border transition-all duration-300 ${
-                    isOpen
-                      ? 'border-orange-500/40 bg-orange-500/[0.03] shadow-lg shadow-orange-500/5'
-                      : 'border-white/10 hover:border-white/20'
+                  className={`az-glass overflow-hidden border transition-all duration-300 ${
+                    isOpen ? '' : 'border-az-glass-border hover:border-az-glass-border'
                   }`}
                 >
                   <button
@@ -97,16 +101,16 @@ export default function SupportPage(): React.JSX.Element {
                     className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
                   >
                     <div className="flex items-center gap-4">
-                      <span className="text-xs font-black text-orange-400 tracking-widest font-mono">
+                      <span className="text-xs font-black text-az-flame tracking-widest font-mono">
                         {formattedIndex}
                       </span>
-                      <span className="font-bold text-white text-sm sm:text-base">{item.q}</span>
+                      <span className="font-bold text-az-ink text-sm sm:text-base">{item.q}</span>
                     </div>
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-300 border ${
                         isOpen
-                          ? 'rotate-180 bg-orange-500 text-white border-orange-500'
-                          : 'bg-white/5 text-white/60 border-white/10'
+                          ? 'rotate-180 bg-az-flame text-az-surface-root border-az-flame'
+                          : 'bg-az-glass-fill text-az-ink-muted border-az-glass-border'
                       }`}
                     >
                       <ChevronDown size={16} />
@@ -114,7 +118,7 @@ export default function SupportPage(): React.JSX.Element {
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 sm:px-6 pb-6 pt-1 text-sm text-white/60 leading-relaxed border-t border-white/5">
+                    <div className="px-5 sm:px-6 pb-6 pt-1 text-sm text-az-ink-muted leading-relaxed border-t border-az-glass-border">
                       <p>{item.a}</p>
                     </div>
                   )}
@@ -125,28 +129,31 @@ export default function SupportPage(): React.JSX.Element {
         </div>
 
         {/* 24/7 Live Support Concierge */}
-        <div className="az-glass p-8 sm:p-10 rounded-3xl border border-white/10 text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-orange-500/15 via-red-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="az-glass p-8 sm:p-10 text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-az-flame/15 via-az-scarlet/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-          <div className="w-14 h-14 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-4 border border-orange-500/30 shadow-lg shadow-orange-500/10">
+          <div className="w-14 h-14 rounded-2xl bg-az-flame/10 text-az-flame flex items-center justify-center mx-auto mb-4 border border-az-flame/30 shadow-lg shadow-az-flame/10">
             <Mail size={26} />
           </div>
-          <h2 className="text-2xl font-black text-white mb-2">Still need personalized assistance?</h2>
-          <p className="text-white/50 text-sm max-w-lg mx-auto mb-6">
-            Our dedicated Lagos & London member support team is available 24/7 to resolve streaming, billing, or voting inquiries.
+          <h2 className="text-2xl font-black text-az-ink mb-2">
+            Still need personalized assistance?
+          </h2>
+          <p className="text-az-ink-muted text-sm max-w-lg mx-auto mb-6">
+            Our dedicated Lagos & London member support team is available 24/7 to resolve streaming,
+            billing, or voting inquiries.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
               href="mailto:support@azeeboplus.com?subject=Azeebo%2B%20Member%20Support%20Request"
-              className="az-btn-primary inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl shadow-orange-600/25"
+              className="az-btn-primary inline-flex items-center gap-2 shadow-xl shadow-az-flame/25"
             >
               <Mail size={16} />
               <span>Email Member Support</span>
             </a>
             <a
               href="mailto:help@azeeboplus.com"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-az-ink-dim hover:text-az-ink bg-az-glass-fill hover:bg-az-glass-card border border-az-glass-border transition-all"
             >
               <MessageSquare size={16} />
               <span>Submit Ticket</span>
@@ -157,4 +164,3 @@ export default function SupportPage(): React.JSX.Element {
     </PageShell>
   );
 }
-

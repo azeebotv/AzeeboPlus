@@ -1,4 +1,4 @@
-import { ImmutableAuditService } from './immutable-audit.service';
+import { ImmutableAuditService, type ImmutableAuditEntry } from './immutable-audit.service';
 
 describe('ImmutableAuditService', () => {
   let service: ImmutableAuditService;
@@ -171,6 +171,56 @@ describe('ImmutableAuditService', () => {
 
       const last = await service.getLastEntry();
       expect(last?.action).toBe('second');
+    });
+  });
+
+  describe('pseudonymizeNetworkMetadata (AUD-48)', () => {
+    let service: ImmutableAuditService;
+
+    beforeEach(() => {
+      ImmutableAuditService.clearStore();
+      service = new ImmutableAuditService();
+    });
+
+    async function writeWithNetworkMetadata(ip: string, ua: string): Promise<ImmutableAuditEntry> {
+      return service.writeEntry({
+        actorId: 'admin-1',
+        actorRole: 'admin',
+        action: 'user.suspend',
+        resourceType: 'user',
+        resourceId: 'u1',
+        ipAddress: ip,
+        userAgent: ua,
+        status: 'success',
+      });
+    }
+
+    it('pseudonymizes stale entries without breaking the hash chain', async () => {
+      const entry = await writeWithNetworkMetadata('203.0.113.7', 'UA-old');
+      const cutoff = new Date(entry.timestamp.getTime() + 1000);
+
+      const { compacted } = await service.pseudonymizeNetworkMetadata(cutoff);
+
+      expect(compacted).toBe(1);
+      expect(entry.ipAddress).toMatch(/^id_[0-9a-f]{12}$/);
+      expect(entry.userAgent).toMatch(/^id_[0-9a-f]{12}$/);
+      // The chain hash never covered ipAddress/userAgent, so it still verifies.
+      expect(entry.hash).toBeDefined();
+      await expect(service.verifyIntegrity()).resolves.toMatchObject({
+        valid: true,
+        totalEntries: 1,
+      });
+    });
+
+    it('leaves entries inside the retention window untouched', async () => {
+      const entry = await writeWithNetworkMetadata('198.51.100.4', 'UA-new');
+
+      // Cutoff equals the entry's timestamp: `timestamp >= olderThan` is skipped.
+      const { compacted } = await service.pseudonymizeNetworkMetadata(new Date(entry.timestamp));
+
+      expect(compacted).toBe(0);
+      expect(entry.ipAddress).toBe('198.51.100.4');
+      expect(entry.userAgent).toBe('UA-new');
     });
   });
 });

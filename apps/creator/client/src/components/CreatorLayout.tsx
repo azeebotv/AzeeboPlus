@@ -105,9 +105,14 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated || !user) {
-      navigate('/login');
+      // /login hands off to the web app, so carry the page the creator actually
+      // wanted; it is restored after the round trip.
+      const intended = `${location.pathname}${location.search}`;
+      navigate(intended === '/login' ? '/login' : `/login?next=${encodeURIComponent(intended)}`, {
+        replace: true,
+      });
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, isAuthenticated, user, navigate, location.pathname, location.search]);
 
   if (isLoading) {
     return (
@@ -170,7 +175,16 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
           </span>
         </a>
         <div style={styles.userBadge}>
-          <span>{user.email}</span>
+          <span
+            style={{
+              maxWidth: isMobile ? 130 : 260,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {user.email}
+          </span>
           <span
             style={{
               padding: '2px 8px',
@@ -179,20 +193,44 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
               color: 'white',
               fontSize: 11,
               fontWeight: 600,
+              flexShrink: 0,
             }}
           >
             {user.role}
           </span>
-          <button onClick={logout} style={styles.logoutBtn}>
+          <button onClick={logout} style={{ ...styles.logoutBtn, flexShrink: 0 }}>
             Logout
           </button>
         </div>
       </header>
 
       {isMobile && (
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={styles.mobileToggle}>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          style={styles.mobileToggle}
+          aria-label={sidebarOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
+          aria-expanded={sidebarOpen}
+        >
           {sidebarOpen ? '✕' : '☰'}
         </button>
+      )}
+
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            top: 64,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 35,
+          }}
+        />
       )}
 
       <div style={styles.layout}>
@@ -245,7 +283,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
           </nav>
         </aside>
 
-        <main style={styles.main}>{children}</main>
+        <main style={{ ...styles.main, padding: isMobile ? '20px 16px' : '32px 24px' }}>{children}</main>
       </div>
     </div>
   );

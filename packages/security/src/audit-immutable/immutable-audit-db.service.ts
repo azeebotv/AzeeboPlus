@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
+import { pseudonymizeIdentifier } from '../log-redaction';
 import type { AuditPrismaClient } from '../types';
 
 // ============================================================================
@@ -258,6 +259,49 @@ export class ImmutableAuditDbService {
    */
   async getEntryCount(): Promise<number> {
     return this.prisma!.auditLog.count();
+  }
+
+  /**
+   * AUD-48: pseudonymize network metadata (IP + user agent) on entries older
+   * than the cutoff (e.g. a 180-day retention window enforced by a job).
+   *
+   * Legal basis: Art. 6(1)(f) GDPR — network metadata supports security
+   * monitoring, incident response and fraud investigation, so audit rows are
+   * exempt from right-to-erasure row deletion (unlike the user-service
+   * application audit log, which erases wholesale). Minimization is by
+   * pseudonymization: after the window elapses, identifying values are
+   * replaced with keyed hashes.
+   *
+   * Chain integrity is preserved by construction: the chain hash covers only
+   * sequenceNumber, actorId, action, resourceType, resourceId, timestamp and
+   * previousHash — ipAddress/userAgent are deliberately excluded from
+   * contentToHash, so this sweep can never invalidate verifyIntegrity().
+   */
+  async pseudonymizeNetworkMetadata(olderThan: Date): Promise<{ compacted: number }> {
+    const stale = (await this.prisma!.auditLog.groupBy({
+      by: ['ipAddress', 'userAgent'],
+      where: {
+        timestamp: { lt: olderThan },
+        OR: [{ ipAddress: { not: null } }, { userAgent: { not: null } }],
+      },
+    })) as { ipAddress: string | null; userAgent: string | null }[];
+
+    let compacted = 0;
+    for (const pair of stale) {
+      const result = await this.prisma!.auditLog.updateMany({
+        where: {
+          timestamp: { lt: olderThan },
+          ipAddress: pair.ipAddress,
+          userAgent: pair.userAgent,
+        },
+        data: {
+          ipAddress: pair.ipAddress ? pseudonymizeIdentifier(pair.ipAddress) : null,
+          userAgent: pair.userAgent ? pseudonymizeIdentifier(pair.userAgent) : null,
+        },
+      });
+      compacted += result.count;
+    }
+    return { compacted };
   }
 
   /**

@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "include": ["files", "exports", "types", "duplicates"],
+  "ignore": ["dist/**", "coverage/**", "prisma/client/**", "**/__mocks__/**", "**/*.d.ts"],
+  "workspaces": {
+    ".": {},
+    "apps/*": {},
+    "apps/admin": {
+      "entry": [
+        "src/main.ts",
+        "client/index.html",
+        "client/src/main.tsx",
+        "client/vite.config.ts",
+        "client/vitest.setup.ts",
+        "client/playwright.config.ts"
+      ]
+    },
+    "apps/creator": {
+      "entry": [
+        "src/main.ts",
+        "client/index.html",
+        "client/src/main.tsx",
+        "client/vite.config.ts",
+        "client/playwright.config.ts"
+      ]
+    },
+    "packages/*": {},
+    "services/*/*": {}
+  }
+}

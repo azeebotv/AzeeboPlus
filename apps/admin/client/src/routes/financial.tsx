@@ -20,7 +20,7 @@ export default function FinancialPage() {
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'financial'],
     queryFn: async () => {
       const [dashRes, revenueRes, walletRes] = await Promise.all([
@@ -28,6 +28,8 @@ export default function FinancialPage() {
         adminApi.getDashboardRevenue(30),
         adminApi.getWalletStats(),
       ]);
+      // Throw so React Query surfaces a real error instead of silently zeroing
+      if (!dashRes.success) throw new Error(dashRes.message || 'Failed to load dashboard');
       const dash: Record<string, unknown> = isRecord(dashRes.data) ? dashRes.data : {};
       const wallet: Record<string, unknown> = isRecord(walletRes.data) ? walletRes.data : {};
       const series = asArray<{ date: string; revenue: number }>(revenueRes.data).map((p) => ({
@@ -46,7 +48,7 @@ export default function FinancialPage() {
     },
   });
 
-  const { data: payoutsData, isLoading: loadingPayouts } = useQuery({
+  const { data: payoutsData, isLoading: loadingPayouts, isError: isPayoutsError, refetch: refetchPayouts } = useQuery({
     queryKey: ['admin', 'payouts', payoutPage, payoutStatus],
     queryFn: async () => {
       const res = await adminApi.getPayoutRequests({
@@ -54,7 +56,7 @@ export default function FinancialPage() {
         limit: 10,
         status: payoutStatus === 'all' ? undefined : payoutStatus,
       });
-      if (!res.success) return { items: [] as PayoutRequest[], total: 0, stats: null };
+      if (!res.success) throw new Error(res.message || 'Failed to load payout requests');
       const d = res.data as { items: PayoutRequest[]; total: number; stats: any };
       return {
         items: d?.items || [],
@@ -120,6 +122,39 @@ export default function FinancialPage() {
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      ) : isError ? (
+        <div
+          style={{
+            padding: 32,
+            borderRadius: 12,
+            border: '1px solid var(--admin-red)',
+            backgroundColor: 'rgba(204,28,28,0.08)',
+            textAlign: 'center',
+            marginBottom: 32,
+          }}
+        >
+          <p style={{ color: 'var(--admin-red)', fontWeight: 600, marginBottom: 8 }}>
+            Failed to load financial data
+          </p>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 16 }}>
+            {error instanceof Error ? error.message : 'An unexpected error occurred. Do not rely on any cached totals.'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: '1px solid var(--admin-red)',
+              backgroundColor: 'transparent',
+              color: 'var(--admin-red)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           <div
@@ -238,6 +273,30 @@ export default function FinancialPage() {
               <p style={{ textAlign: 'center', padding: 32, color: 'var(--admin-text-muted)' }}>
                 Loading payouts...
               </p>
+            ) : isPayoutsError ? (
+              <div style={{ padding: 24, textAlign: 'center' }}>
+                <p style={{ color: 'var(--admin-red)', fontWeight: 600, marginBottom: 8 }}>
+                  Failed to load payout requests
+                </p>
+                <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginBottom: 12 }}>
+                  Do not approve or reject based on stale data. Reload to get the current state.
+                </p>
+                <button
+                  onClick={() => refetchPayouts()}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-red)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--admin-red)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
             ) : (payoutsData?.items?.length ?? 0) === 0 ? (
               <p style={{ textAlign: 'center', padding: 32, color: 'var(--admin-text-muted)' }}>
                 No {payoutStatus} payout requests found.

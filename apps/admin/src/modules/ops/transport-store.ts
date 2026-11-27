@@ -38,6 +38,64 @@ const BASELINE_TTL_S = 7 * 24 * 3600; // 7 days of silence expires the baseline
 const FLIP_TTL_S = 10 * 60; // hold window; kept in sync with ops.service.ts
 
 /**
+ * Dedicated Redis DB index for ops telemetry. The feature-flag cache
+ * (universe-management.service.ts) shares the same Redis and defaults to
+ * DB 0; without an explicit index the transport keys would land there too
+ * — same instance, same logical database — where a flag-side FLUSHDB (or
+ * any DB-wide operation) would silently wipe baselines and hold-window
+ * flips. Bare URLs are rewritten to this index; an explicit index in the
+ * URL always wins (the operator said so), and OPS_REDIS_DB overrides the
+ * default for deployments that already reserved another number.
+ */
+export const OPS_REDIS_DB_DEFAULT = 1;
+
+/**
+ * Normalize the ops-store Redis URL onto the dedicated DB index (pure,
+ * exported for tests).
+ *
+ * - `redis://host:6379`        → `redis://host:6379/<OPS_REDIS_DB ?? 1>`
+ * - `redis://:pass@host:6379`  → auth preserved, index appended
+ * - `rediss://host`            → TLS scheme preserved, index appended
+ * - `.../0`, `.../5`           → UNCHANGED (explicit index wins)
+ * - garbage input              → returned as-is (the store's fail-open
+ *   degrade path owns unreachable/malformed targets; this must never throw)
+ */
+export function opsRedisUrl(
+  raw = process.env.OPS_REDIS_URL ?? process.env.REDIS_URL ?? 'redis://localhost:6379',
+  dbRaw = process.env.OPS_REDIS_DB
+): string {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'redis:' && url.protocol !== 'rediss:') return raw;
+    const hasExplicitDb = url.pathname.length > 1; // '' or '/' = no index given
+    if (hasExplicitDb) return raw;
+    const db = Number(dbRaw);
+    url.pathname = `/${Number.isFinite(db) && db >= 0 ? Math.trunc(db) : OPS_REDIS_DB_DEFAULT}`;
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
+/**
+ * Pure: the DB index actually selected by a resolved Redis URL — the numeric
+ * path suffix, or null when there is none (non-redis scheme, garbage
+ * passthrough, bare URL). Parsed from the string opsRedisUrl() returned so
+ * callers show what the client will really select, explicit indexes and
+ * fallbacks included.
+ */
+export function redisDbFromUrl(raw: string): number | null {
+  try {
+    const url = new URL(raw);
+    if (!url.pathname || url.pathname === '/') return null;
+    const db = Number(url.pathname.slice(1));
+    return Number.isInteger(db) && db >= 0 ? db : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Atomic flip detection + baseline commit. Runs server-side (EVAL) so the
  * read-compare-write is one Redis operation no two replicas can interleave.
  *
@@ -98,6 +156,14 @@ export interface TransportStore {
   /** Degrade signal: true when Redis is unreachable and the fallback is active. */
   readonly degraded: boolean;
 
+  /**
+   * The Redis DB index this store writes to (parsed from the resolved URL),
+   * or null when unknown — injected client, degraded fallback, or an
+   * unparseable URL. Surfaced so the ops chip shows exactly where transport
+   * keys live.
+   */
+  readonly dbIndex: number | null;
+
   /** Test-only: clear all transport state. */
   flushForTests(): Promise<void>;
 
@@ -108,6 +174,7 @@ export interface TransportStore {
 export class RedisTransportStore implements TransportStore {
   private readonly redis: Redis | null;
   private readonly ownsClient: boolean;
+  private readonly _dbIndex: number | null;
   /** In-memory shadow of the store state. Written on EVERY commit (not just
    * degraded ones) so a mid-flight Redis failure degrades seamlessly: the
    * mirror always holds the last-known baseline and hold-window flips, and
@@ -120,16 +187,31 @@ export class RedisTransportStore implements TransportStore {
     if (client) {
       this.redis = client;
       this.ownsClient = false;
+      this._dbIndex = null;
       return;
     }
-    const url = process.env.OPS_REDIS_URL ?? process.env.REDIS_URL ?? 'redis://localhost:6379';
+    // opsRedisUrl rewrites a bare URL onto the dedicated ops DB index (see
+    // its docblock): ops telemetry never shares DB 0 with the feature-flag
+    // cache, and an explicit index in OPS_REDIS_URL still wins.
+    const url = opsRedisUrl();
+    this._dbIndex = redisDbFromUrl(url);
     try {
       this.redis = new Redis(url, {
-        lazyConnect: false,
+        // Lazy: connect on first COMMAND, not on construction — building the
+        // OpsService (or this store) must not open a socket. Matters for
+        // specs that instantiate the service with stubbed Prisma and never
+        // sweep transport (a socket would hang the jest worker, and on CI —
+        // where no Redis exists — it would retry-connect forever). First
+        // command on an unreachable Redis still fails fast into the fallback
+        // via the same maxRetries/timeout knobs below.
+        lazyConnect: true,
         maxRetriesPerRequest: 1,
-        enableOfflineQueue: false,
-        // Transport memory is best-effort: fail fast to the fallback rather
-        // than stalling a health sweep on a down Redis.
+        // Offline queue stays ENABLED (default): with lazy connect, the
+        // first command races the initial handshake — rejecting it (the old
+        // fail-fast setting) would degrade the store's very first sweep and
+        // lose that baseline write. The queue buffers only within the 1s
+        // connect/command bounds below, so an unreachable Redis still
+        // degrades to the fallback quickly.
         connectTimeout: 1_000,
         commandTimeout: 1_000,
       });
@@ -148,6 +230,10 @@ export class RedisTransportStore implements TransportStore {
 
   get degraded(): boolean {
     return this._degraded || this.redis === null;
+  }
+
+  get dbIndex(): number | null {
+    return this._dbIndex;
   }
 
   async commitTransport(

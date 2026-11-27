@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { userApi } from '@azeebo/react-data';
 import { colors } from '../../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView accessibilityLabel="Edit Screen" style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -99,7 +100,7 @@ export default function EditProfileScreen() {
 
           <View style={styles.form}>
             <View style={styles.avatarSection}>
-              <TouchableOpacity style={styles.avatarContainer} onPress={handleChangeAvatar}>
+              <TouchableOpacity accessibilityRole="button" style={styles.avatarContainer} onPress={handleChangeAvatar}>
                 {avatar ? (
                   <Image source={{ uri: avatar }} style={styles.avatar} />
                 ) : (
@@ -168,7 +169,7 @@ export default function EditProfileScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.cancelButton} onPress={() => router.back()}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

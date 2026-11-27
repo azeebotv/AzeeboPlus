@@ -211,7 +211,7 @@ export const ComplexForm: StoryObj<typeof Form> = {
             </FormField>
             <label className="flex items-start gap-3 cursor-pointer">
               <Input {...register('terms')} type="checkbox" />
-              <span className="text-sm text-text-secondary">
+              <span className="text-sm text-az-ink-dim">
                 I agree to the Terms of Service and Privacy Policy
               </span>
             </label>

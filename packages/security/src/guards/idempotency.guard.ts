@@ -6,8 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import { Redis } from 'ioredis';
+import type Redis from 'ioredis';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 const IDEMPOTENCY_PREFIX = 'idempotency:';
@@ -24,16 +23,49 @@ const IDEMPOTENCY_TTL_SECONDS = 86400; // 24 hours
  *   @Post('charge')
  *   async charge(@Body() dto: ChargeDto) { ... }
  *
- * Or globally: register as APP_GUARD (only affects mutating routes).
+ * The Redis client is self-managed (lazily created from REDIS_URL, mirroring
+ * the gateway's AuthThrottlerGuard) so a service can wire the guard without
+ * provider plumbing. Without REDIS_URL — or while Redis is unreachable — the
+ * guard runs fail-open: the header is still required, but dedupe is left to
+ * the service's DB-level idempotency key (data-integrity concern, not a
+ * security boundary).
  */
 @Injectable()
 export class IdempotencyGuard implements CanActivate {
   private readonly logger = new Logger(IdempotencyGuard.name);
+  private readonly redis: Redis | null = null;
 
-  constructor(
-    private readonly reflector: Reflector,
-    @InjectRedis() private readonly redis: Redis
-  ) {}
+  constructor(private readonly reflector: Reflector) {
+    if (!process.env.REDIS_URL) {
+      return;
+    }
+    try {
+      // Lazy `require` so test graphs and Redis-less deployments never
+      // construct a connection.
+      const RedisCtor = require('ioredis');
+      this.redis = new RedisCtor(process.env.REDIS_URL, {
+        maxRetriesPerRequest: 3,
+        enableOfflineQueue: false,
+        lazyConnect: true,
+      });
+      // Keep the client reference on errors: ioredis reconnects on its own
+      // (retryStrategy is event-driven and survives a failed initial
+      // connect()). Health is re-derived at call time.
+      this.redis!.on('error', (err: Error) => {
+        this.logger.error(
+          `Redis idempotency store error — dedupe degraded to fail-open (DB-level idempotency remains). Error: ${err.message}`
+        );
+      });
+      this.redis!.connect().catch((err: Error) => {
+        this.logger.error(
+          `Redis idempotency store connect failed — dedupe degraded to fail-open. Error: ${err.message}`
+        );
+      });
+    } catch {
+      this.logger.warn('ioredis not available — IdempotencyGuard runs fail-open');
+      this.redis = null;
+    }
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -65,39 +97,42 @@ export class IdempotencyGuard implements CanActivate {
       throw new ConflictException('Idempotency-Key must be between 4 and 255 characters.');
     }
 
-    // Check Redis for existing idempotency key
-    const redisKey = `${IDEMPOTENCY_PREFIX}${idempotencyKey}`;
-    try {
-      const existing = await this.redis.get(redisKey);
-      if (existing) {
-        throw new ConflictException(
-          'Request with this Idempotency-Key has already been processed.'
-        );
-      }
+    if (this.redis) {
+      const redisKey = `${IDEMPOTENCY_PREFIX}${idempotencyKey}`;
+      try {
+        const existing = await this.redis.get(redisKey);
+        if (existing) {
+          throw new ConflictException(
+            'Request with this Idempotency-Key has already been processed.'
+          );
+        }
 
-      // Reserve the key atomically; NX prevents race conditions between concurrent requests
-      const reserved = await this.redis.set(
-        redisKey,
-        'processing',
-        'EX',
-        IDEMPOTENCY_TTL_SECONDS,
-        'NX'
-      );
-      if (!reserved) {
-        throw new ConflictException(
-          'Request with this Idempotency-Key has already been processed.'
+        // Reserve the key atomically; NX prevents race conditions between
+        // concurrent requests
+        const reserved = await this.redis.set(
+          redisKey,
+          'processing',
+          'EX',
+          IDEMPOTENCY_TTL_SECONDS,
+          'NX'
         );
+        if (!reserved) {
+          throw new ConflictException(
+            'Request with this Idempotency-Key has already been processed.'
+          );
+        }
+      } catch (error) {
+        if (error instanceof ConflictException) {
+          throw error;
+        }
+        this.logger.error(`Redis idempotency check failed: ${error}`);
+        // Fail open — let downstream service handle deduplication via DB
+        // idempotency key. RATIONALE: Idempotency is a data-integrity concern,
+        // not a security boundary. Failing closed would block legitimate
+        // requests when Redis is down. The payment-service and wallet-service
+        // both have DB-level idempotency checks as a second line of defense.
+        // RateLimiter fails closed because it IS a security boundary.
       }
-    } catch (error) {
-      if (error instanceof ConflictException) {
-        throw error;
-      }
-      this.logger.error(`Redis idempotency check failed: ${error}`);
-      // Fail open — let downstream service handle deduplication via DB idempotency key.
-      // RATIONALE: Idempotency is a data-integrity concern, not a security boundary.
-      // Failing closed would block legitimate requests when Redis is down.
-      // The payment-service and wallet-service both have DB-level idempotency checks
-      // as a second line of defense. RateLimiter fails closed because it IS a security boundary.
     }
 
     // Attach to request for downstream services

@@ -1,6 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthCookieController } from './modules/auth/auth-cookie.controller';
@@ -11,6 +11,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { UniverseManagementModule } from './modules/universe-management/universe-management.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { MenusModule } from './modules/menus/menus.module';
 import { WalletManagementModule } from './modules/wallet-management/wallet-management.module';
 import { ContentReviewModule } from './modules/content-review/content-review.module';
 import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
@@ -26,6 +27,7 @@ import { PaymentGatewaysModule } from './modules/payment-gateways/payment-gatewa
 import { RealityShowsModule } from './modules/reality-shows/reality-shows.module';
 import { SubscriptionAdminModule } from './modules/subscription-admin/subscription-admin.module';
 import { AnalyticsProxyModule } from './modules/analytics-proxy/analytics-proxy.module';
+import { SearchProxyModule } from './modules/search-proxy/search-proxy.module';
 import { CreatorsProxyModule } from './modules/creators-proxy/creators-proxy.module';
 import { LiveEventsProxyModule } from './modules/live-events-proxy/live-events-proxy.module';
 import { SupportAdminModule } from './modules/support-admin/support-admin.module';
@@ -36,6 +38,8 @@ import { ServiceAuthGuard, RateLimiterModule, SecurityModule } from '@azeebo/sec
 import { FeatureFlagModule, queueFlags, adminFlags, authFlags } from '@azeebo/feature-flags';
 import { ResponseWrapperInterceptor } from '@azeebo/logger';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { AdminAuditInterceptor } from './common/interceptors/admin-audit.interceptor';
+import { DualControlInterceptor } from './modules/dual-control/dual-control.interceptor';
 
 @Module({
   imports: [
@@ -73,6 +77,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     RealityShowsModule,
     SubscriptionAdminModule,
     AnalyticsProxyModule,
+    SearchProxyModule,
     CreatorsProxyModule,
     LiveEventsProxyModule,
     SupportAdminModule,
@@ -85,6 +90,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     AuditModule,
     UniverseManagementModule,
     SystemSettingsModule,
+    MenusModule,
     WalletManagementModule,
     ContentReviewModule,
     EngagementAdminModule,
@@ -100,9 +106,18 @@ import { CsrfMiddleware } from './common/csrf.middleware';
   ],
   controllers: [AuthCookieController],
   providers: [
+    Reflector,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AdminAuditInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DualControlInterceptor,
     },
     {
       provide: APP_GUARD,

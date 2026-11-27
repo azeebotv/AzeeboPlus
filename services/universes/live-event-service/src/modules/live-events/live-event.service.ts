@@ -187,6 +187,89 @@ export class LiveEventService {
     });
   }
 
+  async purchaseGroupTickets(eventId: string, buyerUserId: string, recipientUserIds: string[]) {
+    if (!(await this.featureFlagService.isEnabled(liveEventFlags.tickets, buyerUserId))) {
+      throw new ForbiddenException('Ticket sales are currently disabled');
+    }
+
+    const uniqueRecipients = [...new Set(recipientUserIds.filter(Boolean))];
+    if (uniqueRecipients.length === 0) {
+      throw new BadRequestException('At least one recipient user ID is required');
+    }
+
+    const event = await this.prisma.liveEvent.findUnique({
+      where: { id: eventId },
+      include: { _count: { select: { tickets: true } } },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+
+    if (event.status === 'cancelled') {
+      throw new BadRequestException('Event has been cancelled');
+    }
+
+    if (event.status === 'ended') {
+      throw new BadRequestException('Event has already ended');
+    }
+
+    if (event.maxViewers && event._count.tickets + uniqueRecipients.length > event.maxViewers) {
+      throw new ConflictException('Not enough tickets remaining for this group purchase');
+    }
+
+    const existingTickets = await this.prisma.liveEventTicket.findMany({
+      where: {
+        eventId,
+        userId: { in: uniqueRecipients },
+        status: 'purchased',
+      },
+      select: { userId: true },
+    });
+
+    if (existingTickets.length > 0) {
+      const alreadyClaimed = existingTickets.map((t) => t.userId).join(', ');
+      throw new ConflictException(`Users already hold tickets for this event: ${alreadyClaimed}`);
+    }
+
+    const totalAmount = Number(event.ticketPrice) * uniqueRecipients.length;
+
+    if (totalAmount > 0) {
+      try {
+        await axios.post(`${this.walletServiceUrl}/wallet/debit`, {
+          userId: buyerUserId,
+          amount: totalAmount,
+          currency: event.currency,
+          description: `Group purchase of ${uniqueRecipients.length} tickets for ${event.title}`,
+          reference: `group-tickets-${eventId}-${buyerUserId}-${Date.now()}`,
+        });
+      } catch (error) {
+        this.logger.error('Wallet debit for group tickets failed', error);
+        mapAndThrow(error, 'debiting wallet for group event tickets');
+      }
+    }
+
+    const createdTickets = await this.prisma.$transaction(
+      uniqueRecipients.map((recipientId) =>
+        this.prisma.liveEventTicket.create({
+          data: {
+            eventId,
+            userId: recipientId,
+            amount: event.ticketPrice,
+            currency: event.currency,
+            status: 'purchased',
+          },
+        })
+      )
+    );
+
+    return {
+      success: true,
+      eventId,
+      buyerUserId,
+      ticketsIssued: createdTickets.length,
+      recipients: uniqueRecipients,
+      totalAmount,
+    };
+  }
+
   async getUserTickets(userId: string) {
     return this.prisma.liveEventTicket.findMany({
       where: { userId },
@@ -221,10 +304,16 @@ export class LiveEventService {
       }
     }
 
-    if (event.streamUrl) return { streamUrl: event.streamUrl, event };
+    if (event.status === 'ended') {
+      const replayStreamUrl = event.replayUrl || event.streamUrl;
+      if (replayStreamUrl) {
+        return { streamUrl: replayStreamUrl, isReplay: true, event };
+      }
+      throw new NotFoundException('Replay recording not available yet for this event');
+    }
 
-    if (event.replayUrl && event.status === 'ended') {
-      return { streamUrl: event.replayUrl, event };
+    if (event.streamUrl) {
+      return { streamUrl: event.streamUrl, isReplay: false, event };
     }
 
     throw new NotFoundException('Stream not available yet');

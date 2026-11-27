@@ -25,11 +25,17 @@ plugins: {
 
 ## Shipped rules
 
-| Rule | Type | Severity in this repo | Purpose |
-|------|------|----------------------|---------|
-| [`require-map-and-throw`](#require-map-and-throw) | problem | `error` repo-wide (canary ratchet at 0) | Ban fabricated 4xx statuses in catch blocks |
-| [`no-console-log`](#no-console-log) | problem | `error` (off in logger/scripts) | Ban `console.log` in favor of the structured logger |
-| [`no-hex-colors`](#no-hex-colors) | suggestion | `error` repo-wide (token migration complete, baseline canary at 0) | Ban hardcoded hex colors in favor of design tokens |
+| Rule                                                              | Type       | Severity in this repo                                                                          | Purpose                                                                                                                                                |
+| ----------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --- | ----------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`require-map-and-throw`](#require-map-and-throw)                 | problem    | `error` repo-wide (canary ratchet at 0)                                                        | Ban fabricated 4xx statuses in catch blocks                                                                                                            |
+| [`no-console-log`](#no-console-log)                               | problem    | `error` (off in logger/scripts)                                                                | Ban `console.log` in favor of the structured logger                                                                                                    |
+| [`no-hex-colors`](#no-hex-colors)                                 | suggestion | `error` repo-wide (token migration complete, baseline canary at 0)                             | Ban hardcoded hex colors in favor of design tokens                                                                                                     |
+| [`no-arbitrary-hex-class`](#no-arbitrary-hex-class)               | suggestion | `error` repo-wide (baseline canary at 0, no allowList)                                         | Ban raw hex inside Tailwind arbitrary values (`bg-[#0b090e]`)                                                                                          |
+| [`no-dead-class-override`](#no-dead-class-override)               | problem    | `error` repo-wide (canary baseline at 0)                                                       | Ban Tailwind utilities that can never beat an unlayered `.az-*` class; `--fix` drops them                                                              |
+| [`no-retired-brand-alias`](#no-retired-brand-alias)               | suggestion | `error` repo-wide (canary baseline at 0; 238 refs converted in apps/web)                       | Ban the pre-design-system `var(--brand-*)`/`var(--hp-*)` alias layer in favour of `--color-az-*`; `--fix` swaps it                                     |
+| [`no-off-system-color-utility`](#no-off-system-color-utility)     | suggestion | `error` repo-wide (canary baseline at 0; 459 apps/web + 458 packages/ui occurrences converted) | Ban raw Tailwind palette colours (`bg-amber-500`) plus the two vocabulary layers Tailwind v4 generates nothing for (`bg-primary-500`, `bg-bg-primary`) |
+| [`require-shared-route-boundary`](#require-shared-route-boundary) | problem    | `error` repo-wide (canary baseline at 0)                                                       | Require `src/app/**/error.tsx` and `loading.tsx` to render the shared `RouteErrorFallback` / `RouteLoading`                                            |     | [`no-undefined-az-utility`](#no-undefined-az-utility) | problem | `error` repo-wide, apps/web by walk-up and packages/ui by config pin (canary baseline at 0) | Ban `az-*` classes with no generated token or shared rule behind them, which Tailwind compiles to nothing |
+| [`no-low-contrast-pair`](#no-low-contrast-pair)                   | problem    | `error` repo-wide (canary baseline at 0)                                                       | Ban light ink on a solid light fill — one rule, one measured table (`contrast-pairs.json`)                                                             |
 
 ---
 
@@ -82,8 +88,8 @@ Inside any `catch` block:
 'azeebo-custom/require-map-and-throw': ['error', { banPlainErrors: true }]
 ```
 
-| Option | Default | Effect |
-|--------|---------|--------|
+| Option           | Default | Effect                                                                                                                                                                                                                        |
+| ---------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `banPlainErrors` | `false` | Also flag `throw new Error(…)` / `TypeError(…)` inside catch blocks (they yield generic 500s and lose the cause). **Enabled repo-wide** at `error` in the root `eslint.config.js` since the plain-error campaign — see below. |
 
 ### `banPlainErrors` in effect (repo-wide `error`)
@@ -156,7 +162,7 @@ plus one read-only report:
    ratcheted rule from one shared ESLint pass. It enforces nothing; the two
    gates above do the enforcing.
 
-To migrate a *new* rule with this same machinery — warn repo-wide, add a
+To migrate a _new_ rule with this same machinery — warn repo-wide, add a
 config entry with a ratchet path, `--update` once, then flip to `error` and
 empty the baseline when the last site converts — follow the flow documented
 in `scripts/promotion-rules.json`.
@@ -172,8 +178,8 @@ it throws that shape instead of collapsing failures into one status:
 // The fields the mapper reads (all optional, axios-compatible):
 throw Object.assign(new Error(message), {
   response: {
-    status: 404,               // upstream status → drives the HttpException
-    data: { message: '…' },    // client-facing message (data.error also read)
+    status: 404, // upstream status → drives the HttpException
+    data: { message: '…' }, // client-facing message (data.error also read)
   },
   // code: 'ECONNREFUSED',     // network-code path → 503
 });
@@ -181,16 +187,16 @@ throw Object.assign(new Error(message), {
 
 How the mapper classifies (in order):
 
-| Thrown error carries | `mapAndThrow` throws |
-|---|---|
-| Prisma `code` (`P2025`, `P2002`, `P2003`, …) | `NotFoundException` / `ConflictException` / … per the mapper's Prisma table |
-| Infra Prisma codes (`P1001`, `P1002`, `P1008`, `P1017`, `P2024`) | `ServiceUnavailableException` (503) |
-| `response.status` in the mapper's table (400, 401, 403, 404, 409, 422) | the matching 4xx `HttpException`, message from `response.data.message` / `data.error` |
-| any other `response.status` (incl. ≥ 500) | `BadGatewayException` (502) |
-| `code` in the network set (`ECONNREFUSED`, `ECONNABORTED`, `ETIMEDOUT`, `ENOTFOUND`, `EAI_AGAIN`, `ECONNRESET`, `EPIPE`) | `ServiceUnavailableException` (503) |
-| none of the above | `InternalServerErrorException` (500) |
+| Thrown error carries                                                                                                     | `mapAndThrow` throws                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Prisma `code` (`P2025`, `P2002`, `P2003`, …)                                                                             | `NotFoundException` / `ConflictException` / … per the mapper's Prisma table           |
+| Infra Prisma codes (`P1001`, `P1002`, `P1008`, `P1017`, `P2024`)                                                         | `ServiceUnavailableException` (503)                                                   |
+| `response.status` in the mapper's table (400, 401, 403, 404, 409, 422)                                                   | the matching 4xx `HttpException`, message from `response.data.message` / `data.error` |
+| any other `response.status` (incl. ≥ 500)                                                                                | `BadGatewayException` (502)                                                           |
+| `code` in the network set (`ECONNREFUSED`, `ECONNABORTED`, `ETIMEDOUT`, `ENOTFOUND`, `EAI_AGAIN`, `ECONNRESET`, `EPIPE`) | `ServiceUnavailableException` (503)                                                   |
+| none of the above                                                                                                        | `InternalServerErrorException` (500)                                                  |
 
-The wrapper decides the *classification inputs*; the catch block decides
+The wrapper decides the _classification inputs_; the catch block decides
 nothing. Two rules of thumb:
 
 ```ts
@@ -252,20 +258,24 @@ route them through design tokens (`packages/design-tokens`) instead.
   {
     allowList: ['#E8420A', '#1A0A0A' /* … brand palette … */],
     allowTransparent: true,
+    retired: ['#E8420A', '#CC1C1C', '#FF6B35'],
+    retiredExemptPaths: ['/apps/admin/', '/apps/creator/', '/scripts/'],
   },
 ],
 ```
 
-| Option | Default | Effect |
-|--------|---------|--------|
-| `allowList` | `[]` | Hex literals that pass as-is. The current brand palette is allow-listed centrally in `eslint.config.js` — add new brand colors there rather than scattering literals through components. |
-| `allowTransparent` | `true` | Allow the `transparent` keyword. |
+| Option               | Default | Effect                                                                                                                                                                                                                                                                      |
+| -------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allowList`          | `[]`    | Hex literals that pass as-is. The current brand palette is allow-listed centrally in `eslint.config.js` — add new brand colors there rather than scattering literals through components.                                                                                    |
+| `allowTransparent`   | `true`  | Allow the `transparent` keyword.                                                                                                                                                                                                                                            |
+| `retired`            | `[]`    | Superseded brand accents. Checked **before** `allowList`, so a retired hex cannot be re-authorized by leaving it in the palette list.                                                                                                                                       |
+| `retiredExemptPaths` | `[]`    | Substrings of the absolute file path that may still carry a retired accent while it migrates. Matched against `context.filename` (absolute), so the exemption behaves identically from the repo root and from a workspace directory — which is how the ratchet runs ESLint. |
 
 ### What it flags
 
 Hex literals in **style positions** only: values of color-bearing properties
 inside `StyleSheet.create(...)` objects and inline style objects — including
-string values that *contain* hexes, like `background:
+string values that _contain_ hexes, like `background:
 'linear-gradient(#a, #b)'`. Hexes in arbitrary strings, data attributes, or
 non-style object literals are untouched. Each distinct hex reports exactly
 once (a two-hex gradient string is two warnings, never one or three).
@@ -301,6 +311,635 @@ duplicate. The key now uses `node.range[0]`.
 Guidance that outlives the migration: new brand colors go in the central
 `HEX_ALLOW_LIST` (never inline); page surfaces use themed tokens; fixed
 one-off art follows the `--hp-*` pattern in `globals.css`.
+
+### `retired` + `retiredExemptPaths` in effect (the accent campaign)
+
+The Figma files made `#E31E24 → #EC691F` (scarlet → flame) the brand accent and
+retired `#E8420A`/`#CC1C1C`/`#FF6B35`. The retired hexes are still sitting in
+`HEX_ALLOW_LIST` — the internal consoles hardcode them in hundreds of spots — so
+a plain allow-list could never enforce the swap. The `retired` option reports
+them ahead of the allow-list, and `retiredExemptPaths` confines the tolerance to
+the files that have not migrated:
+
+| Exempt path                      | Why                                                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `/apps/admin/`, `/apps/creator/` | Internal consoles, outside the public-page rollout (~46 files still hardcode the pair).                   |
+| `/scripts/`                      | This rule's own unit tests quote the retired hexes as fixtures, and the seeders/mock API still emit them. |
+
+Steady state: `apps/web`, `apps/mobile` and `apps/tv` are fully off the retired
+pair and the ban fires there as a hard `error`; `packages/shared-services`' one
+ops-email CTA was repointed to scarlet, so its exemption was removed rather than
+kept "just in case". Dropping an app from `RETIRED_ACCENT_EXEMPT` is the
+promotion step; adding one back needs the same justification as any other scope
+exception.
+
+A separate blind spot, discovered while writing this: the checker only visits
+style positions, so `apps/web/src/lib/ab-testing.ts` shipped a live experiment
+whose control CTA was `#E8420A` and lint never noticed. That value is now
+`#EC691F`; a config blob that reaches the DOM as a color is not something this
+rule can see, so A/B palettes need a human (or `no-arbitrary-hex-class` when the
+value lands in markup).
+
+---
+
+## `no-arbitrary-hex-class`
+
+> Raw hex '{{color}}' in a Tailwind arbitrary value. Use a generated token
+> utility (bg-az-scarlet, text-az-ink) or var(--color-az-\*) instead.
+
+`no-hex-colors` walks style _objects_, so it is blind to the other half of the
+surface: a Tailwind arbitrary value is just a substring of a `className`
+string. `bg-[#0b090e]` and `hover:text-[#FF6B35]` pass `no-hex-colors`
+untouched, which is how the apps/web token baseline reached 0 while 58 raw
+hexes still shipped in markup. This rule closes that hole.
+
+### What it flags
+
+Both arbitrary-value shapes, in string literals and template quasis:
+
+- utility-shaped — `bg-[#18151e]`, `from-[#e8420a]`, `hover:border-[#cc1c1c]`
+- property-shaped — `[color:#c83a08]`, `[background:#0b090e]`
+
+Non-color bracketed values are untouched (`href="#section"`,
+`aria-label="issue #1234"`, `grid-cols-[#2]`), and each distinct hex reports
+once per site (keyed on `node.range[0]`, the same fix `no-hex-colors` needed).
+
+### No allowList
+
+The rule takes no options in this repo. `HEX_ALLOW_LIST` tolerates semantic
+hexes like `#4ade80` and `#F59E0B` because React Native style positions
+legitimately hardcode them today; in markup those same colors have generated
+utilities, so sharing the list would permit `text-[#4ADE80]` right back in.
+
+### Completed: the apps/web className migration
+
+58 sites across 33 files, each mapped onto the token system:
+
+| Was                                                    | Now                                                                     |
+| ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `from-[#e8420a] to-[#cc1c1c]`                          | `from-az-scarlet to-az-flame` (canonical Figma CTA direction)           |
+| `text-[#4ADE80]` / `text-[#F59E0B]` / `text-[#60A5FA]` | `text-az-success-400` / `text-az-warning-500` / `text-az-secondary-400` |
+| `#0b090e` / `#100e14` / `#18151e` surfaces             | `var(--bg-primary)` / `var(--bg-secondary)` / `var(--bg-tertiary)`      |
+| `shadow-[0_8px_32px_rgba(232,66,10,.35)]` glows        | `shadow-az-glow`                                                        |
+
+Themed surfaces deliberately stay arbitrary `var(…)` references rather than
+generated tokens: `design-tokens.css` emits fixed hexes, and the `--bg-*` trio
+flips per mode under `html:not(.dark)`. `--color-az-secondary-*` is newly
+emitted by the generator — the system's blue ramp existed in
+`packages/design-tokens` but had no CSS variables, which pushed the one
+informational status color toward an inline hex.
+
+Two follow-on passes moved the rest of the markup onto the same tokens (they
+are not hex, so this rule does not police them — `az-chip`/`.az-glass` in
+`globals.css` are the shared layer they land on): every `text-white/…`,
+`bg-white/…` and `border-white/…` in `apps/web` routes to `text-az-ink/…`,
+`bg-az-glass-fill|card` or `border-az-glass-border`, and the retired
+`#e8420a`/`#cc1c1c` accent was erased from both the CSS aliases
+(`--brand-orange`/`--brand-red` now hold the canonical Figma scarlet/flame) and
+233 `rgba(232,66,10,…)` glow literals. New code should reach for the `az-*`
+utilities, not `white` or a raw `rgba()`.
+
+---
+
+## `no-dead-class-override`
+
+> '{{token}}' cannot override '{{owner}}': globals.css is unlayered, so the
+> shared class always wins over the '{{prop}}' utility.
+
+### Why
+
+`apps/web/src/app/globals.css` opens with `@import 'tailwindcss'` and never
+declares a `@layer`. In the CSS cascade, an **unlayered** rule beats a layered
+one regardless of specificity or variant, so every `.az-*` component class in
+that file outranks every Tailwind utility:
+
+```html
+<div class="az-glass rounded-3xl shadow-2xl">
+  ← renders .az-glass's 20px radius and lifted shadow; both utilities are dead code
+</div>
+```
+
+The failure mode is not visual, it is epistemic. The next reader measures the
+card, cannot find 24px anywhere, and edits the wrong file — or an agent
+"restores" the missing rounding by forking the component. Two rules already
+keep colour literals out of markup; this one keeps the shared component layer
+and the utility layer from describing the same element differently.
+
+### What it flags
+
+A utility that claims a property the shared class also declares, anywhere in
+the class list — including inside `cn()`/`clsx()` arguments, ternary branches,
+and template quasis (the whole `className` value is analysed as one set, so
+`cn('az-glass', on && 'rounded-2xl')` is caught):
+
+| Shared class          | Properties it owns                                              | Dead on arrival                                                               |
+| --------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `.az-glass`           | background, border, radius, shadow, backdrop-filter             | `rounded-3xl`, `shadow-2xl`, `border-orange-500/30`, `hover:bg-az-glass-card` |
+| `.az-btn-primary`     | background, color, weight, size, border, radius, width, padding | `w-auto`, `text-sm`, `font-semibold`, `px-4 py-2`                             |
+| `.az-input`           | width, background, border, radius, padding, color, size         | `w-full`, `text-az-ink-muted`, `pl-10`                                        |
+| `.az-input--icon`     | padding-left                                                    | `pl-10`, `px-4`                                                               |
+| `.az-input--trailing` | padding-right                                                   | `pr-12`, `px-4`                                                               |
+| `.az-label`           | display, size, weight, transform, tracking, color               | `text-white`, `text-sm`, `mb-2`                                               |
+| `.az-headline`        | family, weight, line-height, tracking                           | `font-bold`, `tracking-tight`, `leading-tight`                                |
+
+Variant prefixes do not help: `.az-glass` beats `hover:shadow-xl` exactly as
+surely as it beats `shadow-xl`. `text-*` is resolved by keyword, not prefix —
+`text-sm` is a size, `text-center` is alignment, anything else is a colour.
+
+### What it allows
+
+- **A utility that restates the shared class.** `az-glass border
+border-az-glass-border` renders exactly as written, so it is redundant
+  markup rather than a lie; `EQUIVALENT_TOKENS` in the rule lists those per
+  class and keeps them out of the report. (Delete them by hand if you want.)
+- **The sanctioned modifiers.** `.az-btn-primary--inline` (width:auto) and
+  `--sm` (compact padding) exist precisely because a utility cannot express
+  them, so they carry their own equivalents.
+- **`size-*` on a width-owning class.** It sets height too, so removing it
+  would change the render instead of removing dead code.
+- **Elements with no shared class** — `rounded-3xl shadow-2xl` alone is fine.
+
+### Autofix
+
+`meta.fixable: 'code'`. The fix removes the dead token from the string that
+carries it and leaves the rest of the class list intact, preserving the
+spacing that glues a template literal to the `${expression}` beside it:
+
+```bash
+pnpm --filter @azeebo/web exec eslint src --fix --fix-type=problem
+```
+
+When a surface genuinely wants the other look, the fix is the wrong answer —
+drop `.az-glass` and compose the element from utilities
+(`rounded-az-panel border border-az-glass-border bg-az-glass-fill`) so the
+cascade has a single owner.
+
+### Completed: the apps/web unlayered-CSS pass
+
+637 dead overrides across 157 files (`az-glass` radius/shadow/border fights
+were 456 of them, `.az-headline` weight/tracking 121). Removed as a
+value-identical pass: the render never changed, the markup stopped lying. The
+rule went live at `warn` with a `scripts/no-dead-class-override-baseline.json`
+floor of 637, `--fix` took it to 0, and the baseline now sits at total 0 as a
+canary with the rule at `error` — the same steady state as `no-hex-colors`.
+`scripts/check-lint-warning-ratchet.mjs` and
+`scripts/check-rule-promotion.mjs` both enforce it.
+
+---
+
+## `no-retired-brand-alias`
+
+> '{{aliases}}' is a retired alias layer ({{count}} use(s) here). Use the
+> canonical token instead: {{canonical}}.
+
+### Why
+
+The Figma accent is `#E31E24 → #EC691F`, emitted by `packages/design-tokens` as
+`--color-az-scarlet`/`--color-az-flame`. But `apps/web/src/app/globals.css` also
+still defines the older layer the app was built on — `--brand-orange`,
+`--brand-red`, `--brand-near-black`, `--hp-bg`, `--hp-card-bg`, … — because the
+internal consoles read it. Those aliases resolve to the same hues, so a page
+using them looks correct and passes `no-hex-colors`, while stepping entirely
+outside the generated ramp.
+
+That is the specific thing the design system exists to prevent. Changing the
+accent, or the display font, is meant to be a one-line edit in
+`packages/design-tokens`; every `var(--brand-orange)` left in app code is one
+more file that edit has to touch.
+
+```tsx
+<Compass className="w-4 h-4 text-[var(--brand-orange)]" />        // off-system
+<Compass className="w-4 h-4 text-[var(--color-az-flame)]" />      // canonical
+<Compass className="w-4 h-4 text-az-flame" />                     // preferred
+```
+
+### What it flags
+
+Any `var(--alias)` — with or without a fallback, and in any string position:
+inline `style` values, arbitrary-value utilities, template quasis, JSX text, and
+class-name constants. The map is `DEFAULT_ALIASES` in this file, exported and
+referenced by `eslint.config.js` rather than copied there, because the config
+entry is what ESLint actually enforces and a divergent local copy would silently
+change the rule's reach while its own tests kept passing.
+
+### What it deliberately does NOT flag
+
+- `--text-primary`, `--text-secondary`, `--text-tertiary` — these flip per theme
+  in `globals.css`, and the `--color-az-*` ramp is static, so substituting them
+  would silently break light mode.
+- The untokenised art values that stay hand-authored in `globals.css`:
+  `--brand-surface` (#18151e), `--brand-surface-input`, `--brand-mid-brown`,
+  `--music-purple` and the `--hp-*` landing composition. They are one-off marketing
+  art with no registry entry, so the rule would have to name a token that does not
+  exist.
+
+Everything else the layer holds now has a target, including the three cases that
+were exempt while the registry had nothing to offer:
+
+- `--brand-gold` — was #FFD700 sitting beside the registry's `accent.gold` #FBBF24,
+  two golds for one concept. The alias reads the registry value now, which is also
+  what medals, badges and the reward tiers render.
+- `--brand-purple|purple-light|pink|cyan|teal|indigo|sky|crimson|emerald|forest|grey`
+  — `categoryColors` registers these subject hues (genre badges, vertical identity,
+  chart series) and the generator emits `--color-az-category-*`, so each alias is a
+  pointer at that token rather than a second copy of the hex.
+- `--brand-green` (#22c55e) and `--brand-amber` (#f59e0b) — exact copies of
+  `az-success-500`/`az-warning-500`. They stayed out of the map while their only
+  app-code uses were `GENRE_COLORS` on `/music/genres`, where the hex named an
+  identity rather than a status; that palette moved to `--color-az-category-*`, so
+  nothing is left to protect.
+
+What else is in the map: `--brand-copper` (#CD7F32) and `--brand-silver` (#C0C0C0),
+the registry's `accent.bronze`/`accent.silver` retyped, and the `--hp-{bg,bg-alt,
+card-bg,card-border,divider}` surface layer behind the same sweep.
+
+### A composed var() is invisible to this rule
+
+`PageHero` used to take a bare hue word and build the value at render time:
+
+```tsx
+`var(--brand-${accentColor}, ${accentColor})`; // accentColor="orange"
+```
+
+No `var(--brand-orange)` literal ever existed, so the rule could not see the most
+-used alias in the app, and the fallback keyword meant an unmapped word rendered as
+a browser default instead of failing. The composition is gone — `accentColor` is a
+CSS colour now, and every hero states which token it means. When adding a
+token-valued prop, pass the value; do not rebuild the name from a fragment.
+
+### Fixer
+
+Textual only: `var(--brand-orange` → `var(--color-az-flame`, leaving every
+delimiter, quote style and fallback byte-identical. It deliberately does not
+shorten `text-[var(--color-az-flame)]` to `text-az-flame` — that mapping is
+value-preserving today but is a design decision, not a mechanical one.
+
+### Completed: the apps/web pass
+
+238 references. Ran the campaign the documented way: `warn` repo-wide with a
+`scripts/no-retired-brand-alias-baseline.json` floor of 238, `--fix` took it to
+0, the baseline now sits at total 0 as a canary and the rule is live at `error`.
+
+The follow-up pass added the aliases the first one could not name: the metals and
+the two retyped status hues (26 more references, all `--fix`ed), and the composed
+`var(--brand-${...})` in `PageHero`, which no textual rule could ever have caught.
+
+---
+
+## `no-off-system-color-utility`
+
+> '{{token}}' is a raw Tailwind palette colour, which sits outside the design
+> system and does not move with the brand. Map '{{hue}}' onto a generated ramp.
+
+### Why
+
+`packages/design-tokens` emits five semantic ramps —
+`--color-az-{error,success,warning,primary,secondary}` at 50–900 — plus the eight
+`--color-az-universe-*` branding hues. Tailwind ships its own palette alongside
+them, and several of those ramps are _the same hexes_: `az-warning-500` is
+`#f59e0b` (amber-500), `az-error-500` is `#ef4444` (red-500), `az-secondary-500`
+is `#3b82f6` (blue-500), `az-success-500` is `#22c55e` (green-500).
+
+So `bg-amber-500` renders correctly and passes `no-hex-colors`, while being
+impossible to look up, immune to a brand change, and indistinguishable from a
+free choice. It is the last colour route after the two hex rules.
+
+### What it flags
+
+Three layers of vocabulary, because the repo has all three and only the first one
+renders:
+
+1. **The raw Tailwind palette** — any class token of the shape
+   `<colour-utility>-<hue>-<step>` in a string, template quasi or class constant,
+   including variants (`group-hover:`), the important marker (`!`), an opacity
+   step (`bg-red-500/20`) and an axis infix (`border-t-red-500`). Detection is a
+   segment scan, not one regex, precisely because those four decorations can sit
+   around the hue name. A token containing `az`, `brand` or `hp` is already
+   on-system and skipped.
+2. **The legacy `:root` ramps** (`bg-primary-500`, `text-error-400`,
+   `bg-dark-800`) — `apps/web/src/app/globals.css` still declares
+   `--color-{primary,secondary,success,warning,error,danger,light,dark}-*`, but
+   Tailwind v4 generates a utility only for a property declared inside `@theme`,
+   and that block lives in the generated `src/styles/design-tokens.css`. So these
+   classes compile to nothing. They are reported under a distinct message because
+   the fix differs: the az ramps carry the identical hexes, so the rewrite is
+   mechanical.
+3. **The console layer** (`bg-bg-primary`, `text-text-secondary`,
+   `border-border-default`) — names from the admin/creator token scheme that no
+   web stylesheet defines at all. Same silent-failure mode, mapped to the
+   `az-surface-*` / `az-ink-*` / `az-glass-border` roles they mean.
+
+### What it deliberately does NOT flag
+
+- `white`, `black` — `bg-black/60` scrims over photography are sanctioned, and
+  `text-white` is a contrast question, not a hue question.
+- Anything in the generated `az-*` vocabulary — including the `az-category-*`
+  and `az-surface-auth-*` tokens the campaign added while writing this rule.
+
+The violet family (`purple`, `violet`, `pink`, `fuchsia`) _is_ banned now. It was
+left out while no Figma frame defined a premium purple and the eight
+`--color-az-universe-*` hues were branding rather than a ramp: the only way to
+satisfy the rule would have been to invent a token, which puts an unmeasured
+colour on screen. `categoryColors` in the registry registers the hexes the
+product already shipped (`#8b5cf6` and its light step, `#ec4899`), so the
+guidance now names real targets.
+
+### No fixer
+
+`amber` -> `warning` is mechanical, but `orange` is either the brand flame or a
+warning status depending on what the element means. A rule that guesses produces
+markup that reads wrong even when it renders right, so the mapping lives in the
+message and the call stays with the author.
+
+### Campaign posture
+
+Migrated through the ratchet and now fully gated. The floor started at 459
+warnings, all in `@azeebo/web`, and six cluster campaigns emptied it — wallet 62,
+creator 85, lifestyle+aou 62, system+commerce+downloads 81, account+ops 98,
+participation+rewards 71 — each mapping its hues onto the hex-identical ramp step
+(`amber|yellow` -> `warning`, `red|rose` -> `error`, `emerald` -> `success`,
+`blue` -> `secondary`) and deciding `orange` element by element between `az-flame`
+and `az-warning`. The base entry is now `error` repo-wide with
+`scripts/no-off-system-color-utility-baseline.json` at 0 as the canary, so the
+temporary `services/*/*/src` block the migration needed is gone.
+
+The second half of the campaign was not in apps/web at all: `packages/ui` — the
+shared component library every public page consumes — had no `lint` script, so it
+was invisible to workspace discovery and no gate ever ran ESLint over it. It had
+filled itself with layers 2 and 3 above (458 tokens across 17 files: `bg-bg-primary`,
+`text-text-secondary`, `bg-primary-500`, `border-t-bg-tertiary`), all of which
+compile to nothing. Because nothing rendered, no swap could change a pixel, so the
+migration was mechanical and hex-aware: numeric ramps onto the identical `az-*`
+step, the console roles onto the surface/ink/glass tokens, and the few hand-picked
+sites decided on contrast rather than name (`text-dark-900` on a warning fill is
+`text-az-surface-root`, `bg-dark-300` for an offline dot is `bg-az-ink-muted`
+because it has to read against the panel). The package now ships a
+`"lint": "eslint src"` script, so it is discovered by the ratchet, the promotion
+gate and `pnpm -r lint` like every other workspace.
+
+What remains outside the two rules is the residue that has no generated counterpart
+rather than a gap in the registry: `black`/`white` contrast uses, the fixed
+marketing art under `--hp-*` in `globals.css`, and shadow geometries that name no
+colour. The items this file used to record as open registry gaps — the premium
+purples, the `--brand-purple`/`--brand-pink` tints, the `/music/genres` identity
+hues, `--brand-gold` at #FFD700 against the registry's #FBBF24, and the hand-typed
+glows — are closed: `categoryColors` and `glows` in the registry own those values,
+`no-off-system-color-utility` bans the raw-palette route onto them, and
+`no-retired-brand-alias` owns the alias half.
+
+---
+
+## `require-shared-route-boundary`
+
+> `loading.tsx` must render the shared boundary state
+> (`@/components/ui/RouteLoading`). Every route's error and pending state is one
+> design-system surface, not a per-folder drawing.
+
+### Why
+
+`error.tsx` and `loading.tsx` are the two states a visitor sees before the page
+they came for exists — so they are the most-seen surfaces in the app, and the
+least-reviewed. They were generated per folder: 219 hand-drawn error cards and
+217 hand-drawn spinners, three variants of the same wheel, and one retired accent
+alias (`border-[var(--brand-orange)]`) that reached ~200 files purely because
+each scaffold copied the last scaffold.
+
+They now all import `RouteErrorFallback` / `RouteLoading`. This rule keeps that
+true for the _next_ route rather than relying on its author having read the
+migration note: a new boundary either uses the shared component or carries an
+explicit escape comment, so a real exception is a visible, reviewable decision
+instead of silent divergence.
+
+### What it flags
+
+In the App Router tree only (`rootFragment`, default `/src/app/`), any file whose
+basename is a key of the `boundaries` option (default `error.tsx` and
+`loading.tsx`) that has no import whose specifier ends with the shared
+component's basename. Reported at line 1, since the missing thing is the import.
+
+### What it deliberately does NOT flag
+
+- `global-error.tsx` — exempt by name (`exemptFileNames`). Next.js bypasses the
+  root layout there, so the file must render its own `<html>`/`<body>`; borrowing
+  the shared fallback would break the one thing it has to do.
+- Any file outside `/src/app/` — `src/components/ui/error.tsx` is a component.
+- A file carrying `// design-system:custom-boundary <reason>`. The TV surface is
+  the case this exists for: a fullscreen, remote-first pending state is a
+  genuine exception, and the marker makes it one auditable line rather than a
+  fork.
+- `not-found.tsx`, `layout.tsx` and friends are simply not in the table. The map
+  is an option (`boundaries`), so adding a surface is config, not a new rule.
+
+### No fixer
+
+The correct import depends on which boundary the file is, and the alternative to
+importing it is the escape comment plus a reason. Either half of that is a human
+decision; rewriting 217 files was a one-time codemod, and keeping them rewritten
+only needs the report.
+
+### Campaign posture
+
+Migrated first, gated second: the conversion was verified at 219/219 and 217/217
+before the rule went live, so it ships at `error` with a
+`scripts/require-shared-route-boundary-baseline.json` canary at 0 — the
+fully-gated posture, same as `no-retired-brand-alias`. There is no warn block and
+no ratchet to climb; the lint failure _is_ the migration.
+
+---
+
+## `no-undefined-az-utility`
+
+> 'bg-az-surface' has no '--surface' entry in the bg namespace of the generated
+> theme, so Tailwind emits no rule for it and the element renders unstyled.
+
+### Why
+
+Tailwind v4 generates a utility only when the `@theme` block declares the matching
+custom property. A name that is not declared does not fail the build, does not
+fall back, and does not warn — it produces no CSS, so the element renders
+unstyled while the markup reads as if it were themed.
+
+This happened for real. `packages/design-tokens` declares
+`colors.accent = { gold, bronze, silver }`, but `scripts/generate-design-tokens.ts`
+flattens its colour groups by hand and never listed `accent`, so `--color-az-accent-*`
+was absent from the stylesheet. Reward pages writing `bg-az-accent-gold` got
+nothing, and the code reached for `bg-slate-300` to draw a silver medal. The
+generator now refuses to emit a stylesheet with an unflattened registry group, and
+this rule closes the other direction: the page may not name a token that does not
+exist.
+
+### What it flags
+
+Two shapes, because the design system uses both.
+
+- A prefixed utility (`bg-az-flame`, `rounded-az-pill`, `shadow-az-glow`,
+  `text-az-heading`) whose name is in none of the @theme namespaces that prefix
+  can read. `shadow-az-*` and `text-az-*` are deliberately allowed two namespaces
+  each — Tailwind resolves `shadow-az-glow` from the shadow scale and
+  `shadow-az-flame` from the colour ramp.
+- A bare shared class (`az-glass`, `az-btn-primary--sm`) with no `.az-*` rule or
+  `@utility az-*` block in globals.css or the generated theme.
+
+Variants, the important marker, an opacity step and Tailwind's axis infix
+(`border-t-az-flame`) are stripped before the lookup, so a decorated name is
+checked under the same token as a plain one.
+
+### What it deliberately does NOT flag
+
+- Anything outside a workspace that owns the generated stylesheet. The rule walks
+  up from the linted file looking for `src/styles/design-tokens.css`; a service or
+  a package has no vocabulary to be outside of, and reporting there would be
+  noise about a stylesheet it never imports. The one exception is `packages/ui`,
+  which does consume the web theme but cannot find it by walking up — the config
+  pins `apps/web`'s stylesheet for that subtree instead. Without the pin, the
+  library that styles every public page is the one place an undefined `az-*` class
+  could still ship silently.
+- `var(--color-az-flame)` — a custom property reference is not a utility, and the
+  alias rule already owns that surface.
+
+### Reading the stylesheet
+
+A lint rule that consults a build artifact is unusual, and it is the point: the
+only contract that matters is what the generator actually emitted, not what the
+registry intends. The vocabulary is read once per process and cached, and the
+paths are options (`themeStylesheet`, `sharedStylesheet`), so the unit tests pin a
+stub stylesheet instead of asserting against the live token list.
+
+### Campaign posture
+
+Shipped at `error` with a total-0 canary baseline
+(`scripts/no-undefined-az-utility-baseline.json`), because the tree was already
+clean when the rule was written — verified by measuring the whole of `apps/web`
+before wiring it. There is nothing to ratchet; the rule exists to keep the next
+`bg-az-accent-gold` from being invisible.
+
+The packages/ui migration put 458 new `az-*` classes into the shared library, and
+they are only "new" in the sense that anything renders now: every one of them is
+measured against the committed theme by `scripts/__tests__/no-undefined-az-utility.test.mjs`,
+which reads the pin out of `eslint.config.js` rather than trusting that it is
+still there.
+
+That closed the vocabulary half of the problem and exposed the other half: a token
+that exists still emits no CSS if the compiler never opens the file using it, and
+Tailwind v4's automatic source detection starts inside apps/web. The `@source`
+entry in `apps/web/src/app/globals.css` plus
+`scripts/__tests__/tailwind-source-scope.test.mjs` own that, because this rule
+structurally cannot see it — it checks names against the theme, not against a
+build's scan scope.
+
+---
+
+## `no-low-contrast-pair`
+
+> '{{ink}}' on '{{surface}}' measures {{ratio}}:1, below WCAG AA's {{floor}}:1
+> floor. Use '{{alternative}}' ({{alternativeRatio}}:1) on this fill, or move
+> the label to a darker surface / large text.
+
+### Why
+
+The platform's light fills are light: `--color-az-flame` (`#EC691F`) measures
+**3.18:1** under white, `--color-az-warning-500` (`#f59e0b`) **2.15:1**, the
+reward metals **1.67–3.14:1**. All of them clear AA under the deep surface ink
+(`--color-az-surface-root`, `#0F0F0F`) at **6.03–11.48:1**.
+
+Every other gate passes these pairings: both classes are real tokens, the CSS
+compiles, `no-off-system-color-utility` and `no-undefined-az-utility` have
+nothing to say, and code review sees one correct-looking chip. It only fails
+where a browser measures it — which is how the 2026-11-10 visual sweep found
+white-on-flame on 152 of 177 pages (selected tabs, filter chips, tier badges,
+compact CTAs), and why `bg-az-warning-500 text-az-ink` survived on a dual-control
+step marker while its flame sibling was being fixed. The rendered audit
+(`scripts/visual-audit.mjs`) catches what ships; this rule catches the markup
+before it gets there.
+
+### The table is the rule
+
+Which fill is measured, how it measures, and which ink fixes it live in
+[`packages/eslint-rules/contrast-pairs.json`](contrast-pairs.json) — one entry
+per design token:
+
+```json
+{ "token": "warning-500", "color": "#f59e0b" }
+```
+
+The rule derives both spellings a page can write (`bg-az-warning-500`,
+`bg-[var(--color-az-warning-500)]`), computes the WCAG ratio from the two hex
+values, and reports the first deep ink in the table that clears the floor. So:
+
+- **a new light fill is one entry, not a new rule** — the flame-only rule this
+  replaced could not see the amber step marker, the tier swatches or the
+  destructive buttons beside it;
+- **no ratio is hand-typed**, so a palette change cannot leave a stale number in
+  a message;
+- the test re-reads every hex from
+  `apps/web/src/styles/design-tokens.css` and fails when the table and the
+  shipped theme disagree, and asserts the invariant the rule relies on (every
+  enforced fill has a deep ink that clears the floor);
+- fills where white _does_ pass (`bg-az-scarlet` 4.69:1, `bg-az-primary-500`
+  4.69:1, `bg-az-error-600` 4.83:1) are listed too, so a reviewer can see the
+  pass is deliberate rather than wonder what the rule missed.
+
+### What it flags
+
+A class list that pairs a white ink with a **solid** light fill:
+
+```html
+<button class="bg-az-flame text-az-ink">Register</button>
+<!--           ^^^^^^^^^^^^        ^^^^^^^^^^^ 3.18:1 -->
+<span class="bg-az-warning-500 text-az-ink">step 2</span>
+<!--                                        ^^^^^^^^^^ 2.15:1 -->
+<div class="text-az-ink hover:bg-az-accent-gold">…</div>
+```
+
+Branches are analysed separately, not merged: an active tab that is
+`bg-az-flame text-az-ink` and an idle tab that is `text-az-ink/60` produces one
+report, and the idle branch — painted on the dark glass panel — is left alone.
+The report lands on the string that carries the ink.
+
+### What it deliberately does NOT flag
+
+- **Translucent fills** (`bg-az-flame/10`, `bg-az-accent-gold/15`). They sit on
+  the dark canvas, where the light ink is correct — the reward-tier badges are
+  exactly this shape.
+- **Gradients** (`from-az-flame to-az-scarlet` with `text-az-ink`). Whether a
+  label passes depends on the stop under each glyph and on its computed size and
+  weight, neither of which a class list resolves. The rendered audit measures the
+  actual stops.
+- **Large-text roles** (`az-heading`, `az-title`, `text-4xl`, …). At 24px, or
+  18.66px bold, AA's floor is 3:1, so the rule uses the table's `largeText`
+  threshold for them; a fill that fails even 3:1 (`bg-az-accent-gold`, 1.67:1) is
+  still reported. The audit verifies the real font size rather than trusting the
+  role name.
+- **Lists that also name a deep ink** (`text-az-surface-root`, `text-black`).
+  The author has already paired the fill with the dark ink; if both inks are
+  present that is a cascade question (`no-dead-class-override`), not a legibility
+  one.
+- **Pseudo-element fills** (`file:bg-az-flame`) paired with base ink: the picker
+  button's fill is not behind the input's own text. `file:text-az-ink` on the
+  same variant is flagged.
+
+### Options
+
+| Option            | Default | Meaning                                                                 |
+| ----------------- | ------- | ----------------------------------------------------------------------- |
+| `tablePath`       | —       | Read a different contrast table (used by the rule's tests).             |
+| `ignoreLargeText` | `true`  | `false` enforces the body-text floor at every size, ignoring text roles |
+
+### Campaign posture
+
+Shipped at `error` with a total-0 canary baseline
+(`scripts/no-low-contrast-pair-baseline.json`). The flame-only predecessor
+corrected the 25 flame sites across 22 files (creator analytics tabs, lifestyle
+CTAs, quiz option markers, the streak calendar, both confirm dialogs, the
+file-picker button). Generalising to the table then found 23 more in 14 files —
+white on `bg-az-success-500` step markers and "Watch Now" buttons (2.28:1),
+white on `bg-az-accent-silver`/`gold` (1.82:1 / 1.67:1), white on
+`bg-az-warning-500` tier swatches (2.15:1), and destructive buttons on
+`bg-az-error-500` (3.76:1) whose hover step was also too light. All 23 were
+corrected before the rule went live: light fills took `text-az-surface-root`, and
+the destructive buttons that keep white ink moved to `bg-az-error-600`
+(4.83:1) with an `error-700` hover. Both `check-lint-warning-ratchet.mjs` and
+`check-rule-promotion.mjs` cover it.
 
 ---
 
@@ -351,6 +990,23 @@ backgroundColor: '#F5F0EB',
 If a disable comment appears more than twice for the same reason, extend the
 central `allowList` (colors) or fix the architecture (logging) instead.
 
+### Dead suppressions are errors
+
+A suppression that suppresses nothing is drift too, and both halves are gated:
+
+- **`eslint-disable` directives.** `eslint.config.js` sets
+  `linterOptions.reportUnusedDisableDirectives: 'error'`, so a directive whose
+  rule was renamed, removed, or never fired at that site fails `pnpm lint`.
+  Flat config defaults this to a warning, which `eslint src` prints while still
+  exiting 0 — that is the state this setting replaces. Nothing to remember:
+  delete the comment.
+- **Ignore files.** `scripts/check-dead-suppressions.mjs` fails when a
+  _literal_ un-ignore (`!scripts/build.sh`) names a path that no longer exists,
+  because the build then silently stops receiving that file. Unmatched globs
+  and guards (`*.log`, `!*.tfvars.example`) are advisory — they exist to catch
+  artifacts that do not exist yet — and `--strict` lists them as failures for a
+  one-off cleanup.
+
 ---
 
 ## Testing the rules
@@ -365,6 +1021,9 @@ node --test scripts/__tests__/require-map-and-throw.test.mjs
 
 ## Adding a new rule
 
+0. If the rule would only say "this ink may not sit on that fill", do not write
+   it: add the fill to `contrast-pairs.json` and `no-low-contrast-pair` measures
+   it, computes the ratio and reports the ink to use instead.
 1. Create `packages/eslint-rules/<rule-name>.js` (CommonJS) with
    `meta` (`type`, `docs.description`, `schema`, `messages`) and
    `create(context)`; use `meta.messages` ids rather than raw strings.

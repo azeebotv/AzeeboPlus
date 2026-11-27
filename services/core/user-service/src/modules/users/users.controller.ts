@@ -109,7 +109,10 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Request() req: AuthenticatedRequest) {
-    return this.usersService.getProfile(this.getUserId(req));
+    return this.usersService.getProfile(this.getUserId(req), {
+      email: req.user?.email,
+      role: req.user?.role,
+    });
   }
 
   @Patch('me')
@@ -226,6 +229,22 @@ export class UsersController {
   ): Promise<unknown> {
     const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
     return this.usersService.getWatchHistory(this.getUserId(req), Number(page), safeLimit);
+  }
+
+  @Post('me/history')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Record a watch-history entry (upsert)' })
+  @ApiResponse({ status: 200, description: 'Watch history updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async addToWatchHistory(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { contentId: string; contentType?: string; universe?: string }
+  ): Promise<unknown> {
+    if (!body?.contentId) {
+      return { success: false, message: 'contentId is required' };
+    }
+    await this.usersService.addWatchHistoryEntry(this.getUserId(req), body);
+    return { success: true, message: 'Watch history updated' };
   }
 
   @Get('me/saved')
@@ -357,5 +376,33 @@ export class UsersController {
   ) {
     const result = await this.usersService.updatePrivacySettings(this.getUserId(req), settings);
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request account erasure (NDPA / GDPR Right to Erasure)' })
+  @ApiResponse({ status: 200, description: 'Account scheduled for deletion' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteAccount(@Request() req: AuthenticatedRequest, @Body('reason') reason?: string) {
+    const result = await this.usersService.scheduleDataDeletion(this.getUserId(req), reason);
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('me/export')
+  @ApiOperation({ summary: 'Export user data archive (Data Portability)' })
+  @ApiResponse({ status: 200, description: 'User data archive package' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async exportUserData(@Request() req: AuthenticatedRequest) {
+    const result = await this.usersService.exportUserData(this.getUserId(req));
+    return ApiResponseWrapper.success(result);
+  }
+
+  @Get('me/deletion-status')
+  @ApiOperation({ summary: 'Get status of scheduled account deletion' })
+  @ApiResponse({ status: 200, description: 'Deletion status' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getDeletionStatus(@Request() req: AuthenticatedRequest) {
+    const result = await this.usersService.getDeletionStatus(this.getUserId(req));
+    return ApiResponseWrapper.success(result);
   }
 }

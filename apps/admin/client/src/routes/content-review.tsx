@@ -2,37 +2,51 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { ContentReviewItem } from '@/lib/admin-types';
+import { assertSuccess, requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import QueryErrorBanner from '@/components/QueryErrorBanner';
 
 export default function ContentReviewPage() {
   const queryClient = useQueryClient();
   const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({});
   const [activeRejectId, setActiveRejectId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
 
-  const { data: queue = [], isLoading } = useQuery({
+  const {
+    data: queue = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['admin', 'content-review'],
     queryFn: async () => {
       const res = await adminApi.getContentReviewQueue();
-      if (res.success && res.data) {
-        const d = res.data as ContentReviewItem[] | { items?: ContentReviewItem[] };
-        return Array.isArray(d) ? d : d.items || [];
-      }
-      return [];
+      // "All caught up!" is the most damaging possible lie on this page: a
+      // failed read used to render it, so moderators stopped reviewing.
+      return unwrapList<ContentReviewItem>(requireData(res, null)).items;
     },
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: string) => adminApi.approveContent(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'content-review'] }),
+    mutationFn: async (id: string) => assertSuccess(await adminApi.approveContent(id)),
+    onSuccess: () => {
+      setActionError('');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content-review'] });
+    },
+    onError: (e: Error) => setActionError(e.message || 'Failed to approve item'),
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      adminApi.rejectContent(id, reason),
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) =>
+      assertSuccess(await adminApi.rejectContent(id, reason)),
     onSuccess: () => {
+      setActionError('');
       queryClient.invalidateQueries({ queryKey: ['admin', 'content-review'] });
       setActiveRejectId(null);
     },
+    onError: (e: Error) => setActionError(e.message || 'Failed to reject item'),
   });
 
   return (
@@ -42,11 +56,38 @@ export default function ContentReviewPage() {
           <Icon name="checkCircle" size={28} color="var(--admin-orange)" />
           <span>Content Review Queue</span>
         </h1>
-        <p style={{ color: 'var(--admin-text-muted)' }}>{queue.length} items pending review</p>
+        <p style={{ color: 'var(--admin-text-muted)' }}>
+          {isError ? 'Review queue unavailable' : `${queue.length} items pending review`}
+        </p>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          style={{
+            padding: '10px 14px',
+            marginBottom: 16,
+            borderRadius: 10,
+            border: '1px solid rgba(204,28,28,0.4)',
+            backgroundColor: 'rgba(204,28,28,0.1)',
+            color: 'var(--admin-red)',
+            fontSize: 13,
+          }}
+        >
+          {actionError}
+        </div>
+      )}
 
       {isLoading ? (
         <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+      ) : isError ? (
+        <QueryErrorBanner
+          title="Review queue unavailable."
+          body="Nothing here is confirmed reviewed — approve and reject actions are unreliable until the queue loads again."
+          detail={error?.message}
+          onRetry={() => void refetch()}
+          retrying={isFetching}
+        />
       ) : queue.length === 0 ? (
         <div
           style={{

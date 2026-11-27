@@ -16,6 +16,7 @@ import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { apiClient } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Badge {
   id: string;
@@ -87,8 +88,8 @@ export default function BadgesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Badges Screen" style={styles.container}>
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={styles.loadingText}>Loading badges...</Text>
       </SafeAreaView>
     );
@@ -99,10 +100,10 @@ export default function BadgesScreen() {
       <ScrollView
         style={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#E8420A" />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={brand.flame} />
         }
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     overflow: 'hidden',
   },
-  miniProgressFill: { height: '100%', borderRadius: 1.5, backgroundColor: '#E8420A' },
+  miniProgressFill: { height: '100%', borderRadius: 1.5, backgroundColor: brand.flame },
   badgeProgressText: { fontSize: 9, color: '#6B7280' },
   emptyContainer: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
@@ -331,7 +332,7 @@ const styles = StyleSheet.create({
   modalStats: { flexDirection: 'row', gap: 32, marginBottom: 20 },
   modalStat: { alignItems: 'center' },
   modalStatLabel: { fontSize: 12, color: colors.light[400], marginBottom: 4 },
-  modalStatValue: { fontSize: 18, fontWeight: '700', color: '#E8420A' },
+  modalStatValue: { fontSize: 18, fontWeight: '700', color: brand.flame },
   modalCloseButton: {
     paddingHorizontal: 32,
     paddingVertical: 10,

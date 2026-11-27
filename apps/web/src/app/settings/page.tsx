@@ -10,7 +10,21 @@ import PageHero from '@/components/layout/PageHero';
 import { Skeleton, ErrorState, Spinner } from '@azeebo/ui/web';
 import ThemeToggle from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { Settings, Play, Bell, Database, Tv, Globe, Download, User, Shield, Smartphone, CreditCard, ChevronRight, CheckCircle2 } from 'lucide-react';
+import {
+  Settings,
+  Play,
+  Bell,
+  Database,
+  Tv,
+  Globe,
+  Download,
+  User,
+  Shield,
+  Smartphone,
+  CreditCard,
+  ChevronRight,
+  CheckCircle2,
+} from 'lucide-react';
 
 interface UserSettings {
   language: string;
@@ -89,10 +103,30 @@ export default function SettingsPage(): React.JSX.Element {
   ];
 
   const accountLinks = [
-    { href: '/profile/edit', label: 'Edit Profile & Avatar', desc: 'Update display name, bio, and portrait', icon: User },
-    { href: '/profile/privacy-security', label: 'Privacy & Security', desc: 'Password, two-factor auth, and data privacy', icon: Shield },
-    { href: '/settings/devices', label: 'Registered Devices', desc: 'Manage active TVs, tablets, and phones', icon: Smartphone },
-    { href: '/wallet/subscription-plans', label: 'Universe Passes & Plans', desc: 'Manage VIP subscriptions and passes', icon: CreditCard },
+    {
+      href: '/profile/edit',
+      label: 'Edit Profile & Avatar',
+      desc: 'Update display name, bio, and portrait',
+      icon: User,
+    },
+    {
+      href: '/profile/privacy-security',
+      label: 'Privacy & Security',
+      desc: 'Password, two-factor auth, and data privacy',
+      icon: Shield,
+    },
+    {
+      href: '/settings/devices',
+      label: 'Registered Devices',
+      desc: 'Manage active TVs, tablets, and phones',
+      icon: Smartphone,
+    },
+    {
+      href: '/wallet/subscription-plans',
+      label: 'Universe Passes & Plans',
+      desc: 'Manage VIP subscriptions and passes',
+      icon: CreditCard,
+    },
   ];
 
   return (
@@ -101,14 +135,14 @@ export default function SettingsPage(): React.JSX.Element {
         badge="Account Configuration"
         title="Settings & Preferences"
         subtitle="Fine-tune your streaming playback, notifications, and device permissions."
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-20 space-y-6">
         {/* Playback & Streaming Preferences */}
-        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-5 flex items-center gap-2">
-            <Settings size={16} className="text-orange-400" />
+        <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+          <h2 className="text-sm font-bold text-az-ink uppercase tracking-wider mb-5 flex items-center gap-2">
+            <Settings size={16} className="text-az-flame" />
             <span>Playback & Behavior</span>
           </h2>
           <div className="space-y-4">
@@ -138,15 +172,15 @@ export default function SettingsPage(): React.JSX.Element {
                 return (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between py-3 border-b border-white/5 last:border-0"
+                    className="flex items-center justify-between py-3 border-b border-az-ink/5 last:border-0"
                   >
                     <div className="flex items-start gap-3.5 pr-4">
-                      <div className="w-9 h-9 rounded-xl bg-white/5 text-white/70 flex items-center justify-center flex-shrink-0 mt-0.5 border border-white/10">
+                      <div className="w-9 h-9 rounded-xl bg-az-glass-fill text-az-ink/70 flex items-center justify-center flex-shrink-0 mt-0.5 border border-az-glass-border">
                         <Icon size={16} />
                       </div>
                       <div>
-                        <p className="font-semibold text-white text-sm">{item.label}</p>
-                        <p className="text-xs text-white/50 mt-0.5 leading-relaxed">{item.desc}</p>
+                        <p className="font-semibold text-az-ink text-sm">{item.label}</p>
+                        <p className="text-xs text-az-ink/50 mt-0.5 leading-relaxed">{item.desc}</p>
                       </div>
                     </div>
                     <button
@@ -161,11 +195,11 @@ export default function SettingsPage(): React.JSX.Element {
                         setLocalSettings(updated);
                       }}
                       className={`w-12 h-7 rounded-full transition-colors relative flex-shrink-0 focus:outline-none ${
-                        isChecked ? 'bg-orange-500' : 'bg-white/15'
+                        isChecked ? 'bg-az-flame' : 'bg-az-ink/15'
                       }`}
                     >
                       <span
-                        className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-md ${
+                        className={`absolute top-1 w-5 h-5 rounded-full bg-az-ink transition-all shadow-md ${
                           isChecked ? 'left-6' : 'left-1'
                         }`}
                       />
@@ -178,12 +212,12 @@ export default function SettingsPage(): React.JSX.Element {
         </div>
 
         {/* Download Quality */}
-        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
-            <Download size={16} className="text-orange-400" />
+        <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+          <h2 className="text-sm font-bold text-az-ink uppercase tracking-wider mb-2 flex items-center gap-2">
+            <Download size={16} className="text-az-flame" />
             <span>Download & Offline Quality</span>
           </h2>
-          <p className="text-xs text-white/50 mb-5">
+          <p className="text-xs text-az-ink/50 mb-5">
             Select resolution for videos saved to your device for offline viewing
           </p>
           <div className="grid grid-cols-3 gap-3">
@@ -198,14 +232,18 @@ export default function SettingsPage(): React.JSX.Element {
                   key={q.id}
                   type="button"
                   onClick={() => setLocalSettings({ ...settings, downloadQuality: q.id })}
-                  className={`p-3.5 rounded-2xl text-center transition-all border ${
+                  className={`text-center transition-all ${
+                    // 12px label: the compact primary treatment is solid flame
+                    // with deep ink; the gradient cannot carry white this small.
                     isSelected
-                      ? 'az-btn-primary shadow-lg shadow-orange-600/20 border-transparent text-white'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
+                      ? 'az-btn-primary az-btn-primary--sm shadow-lg shadow-az-flame/20'
+                      : ''
                   }`}
                 >
                   <p className="font-bold text-xs uppercase tracking-wider">{q.label}</p>
-                  <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-white/40'}`}>
+                  <p
+                    className={`text-[10px] mt-0.5 ${isSelected ? 'text-az-surface-root' : 'text-az-ink/40'}`}
+                  >
                     {q.sub}
                   </p>
                 </button>
@@ -215,56 +253,59 @@ export default function SettingsPage(): React.JSX.Element {
         </div>
 
         {/* Appearance & Theme */}
-        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-2">
-            <Tv size={16} className="text-orange-400" />
+        <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+          <h2 className="text-sm font-bold text-az-ink uppercase tracking-wider mb-1 flex items-center gap-2">
+            <Tv size={16} className="text-az-flame" />
             <span>Appearance & Theme</span>
           </h2>
-          <p className="text-xs text-white/50 mb-4">
+          <p className="text-xs text-az-ink/50 mb-4">
             Toggle between Luxury Dark Cinema Mode and Ambient Adaptive Light
           </p>
           <ThemeToggle />
         </div>
 
         {/* Language Selection */}
-        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-2">
-            <Globe size={16} className="text-orange-400" />
+        <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+          <h2 className="text-sm font-bold text-az-ink uppercase tracking-wider mb-1 flex items-center gap-2">
+            <Globe size={16} className="text-az-flame" />
             <span>Display Language</span>
           </h2>
-          <p className="text-xs text-white/50 mb-4">
+          <p className="text-xs text-az-ink/50 mb-4">
             Azeebo supports English, Pidgin, Yoruba, Hausa, and Igbo
           </p>
           <LanguageSelector />
         </div>
 
         {/* Account Quick Navigation */}
-        <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-            <User size={16} className="text-orange-400" />
+        <div className="az-glass p-6 sm:p-8 border border-az-glass-border">
+          <h2 className="text-sm font-bold text-az-ink uppercase tracking-wider mb-4 flex items-center gap-2">
+            <User size={16} className="text-az-flame" />
             <span>Account Management</span>
           </h2>
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-az-ink/5">
             {accountLinks.map((link) => {
               const Icon = link.icon;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center justify-between py-3.5 hover:bg-white/[0.02] -mx-2 px-2 rounded-xl transition-colors group"
+                  className="flex items-center justify-between py-3.5 hover:bg-az-ink/[0.02] -mx-2 px-2 rounded-xl transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white/5 text-white/60 flex items-center justify-center border border-white/10 group-hover:text-orange-400 group-hover:border-orange-500/30 transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-az-glass-fill text-az-ink/60 flex items-center justify-center border border-az-glass-border group-hover:text-az-flame group-hover:border-az-flame/30 transition-colors">
                       <Icon size={16} />
                     </div>
                     <div>
-                      <p className="font-semibold text-white text-sm group-hover:text-orange-400 transition-colors">
+                      <p className="font-semibold text-az-ink text-sm group-hover:text-az-flame transition-colors">
                         {link.label}
                       </p>
-                      <p className="text-xs text-white/40">{link.desc}</p>
+                      <p className="text-xs text-az-ink/40">{link.desc}</p>
                     </div>
                   </div>
-                  <ChevronRight size={16} className="text-white/30 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
+                  <ChevronRight
+                    size={16}
+                    className="text-az-ink/30 group-hover:translate-x-0.5 group-hover:text-az-ink transition-all"
+                  />
                 </Link>
               );
             })}
@@ -272,7 +313,7 @@ export default function SettingsPage(): React.JSX.Element {
         </div>
 
         {saveMutation.isSuccess && (
-          <div className="px-4 py-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-center text-xs font-bold flex items-center justify-center gap-2">
+          <div className="px-4 py-3 rounded-2xl bg-az-success-500/15 border border-az-success-500/30 text-az-success-400 text-center text-xs font-bold flex items-center justify-center gap-2">
             <CheckCircle2 size={16} />
             <span>Preferences saved successfully!</span>
           </div>
@@ -281,7 +322,7 @@ export default function SettingsPage(): React.JSX.Element {
         <button
           onClick={() => saveMutation.mutate(settings)}
           disabled={saveMutation.isPending}
-          className="w-full py-4 rounded-full font-bold text-base transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-orange-600/25 flex items-center justify-center gap-2"
+          className="transition-all az-btn-primary shadow-xl shadow-az-flame/25 flex items-center justify-center gap-2"
         >
           {saveMutation.isPending ? (
             <span className="flex items-center justify-center gap-2">
@@ -296,4 +337,3 @@ export default function SettingsPage(): React.JSX.Element {
     </PageShell>
   );
 }
-

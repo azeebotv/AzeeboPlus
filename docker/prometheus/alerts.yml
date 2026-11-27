@@ -3,7 +3,7 @@ groups:
     rules:
       # Service Down
       - alert: ServiceDown
-        expr: up{job=~"azeebo-.*"} == 0
+        expr: up{job!~"redis|postgresql"} == 0
         for: 1m
         labels:
           severity: critical

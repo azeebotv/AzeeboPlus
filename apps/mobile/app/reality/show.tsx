@@ -17,6 +17,7 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 import { votePackages as defaultVotePackages } from '../../src/config/prices';
 import type { Contestant, RealityShow } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const VOTE_PACKAGES = defaultVotePackages.reality;
 
@@ -125,9 +126,9 @@ export default function RealityShowPage() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+    <View accessibilityLabel="Show Screen" style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -137,7 +138,7 @@ export default function RealityShowPage() {
             <Text style={styles.liveText}>LIVE</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity accessibilityRole="button" style={styles.shareButton}>
           <Text style={styles.shareIcon}>📤</Text>
         </TouchableOpacity>
       </View>
@@ -250,7 +251,7 @@ export default function RealityShowPage() {
               value={chatMessage}
               onChangeText={setChatMessage}
             />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+            <TouchableOpacity accessibilityRole="button" style={styles.sendButton} onPress={handleSendMessage}>
               <Text style={styles.sendIcon}>➤</Text>
             </TouchableOpacity>
           </View>
@@ -264,7 +265,7 @@ export default function RealityShowPage() {
               <Text style={[styles.votingTitle, { color: isDark ? '#fff' : '#000' }]}>
                 Vote for {selectedContestant?.name}
               </Text>
-              <TouchableOpacity onPress={() => setShowVoting(false)}>
+              <TouchableOpacity accessibilityRole="button" onPress={() => setShowVoting(false)}>
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -462,7 +463,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
@@ -499,7 +500,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -539,7 +540,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 12,
     borderRadius: 10,
     gap: 8,
@@ -610,7 +611,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -669,7 +670,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   packageVotes: {
     color: '#fff',
@@ -677,7 +678,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   packagePrice: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -735,7 +736,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   voteNowButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',

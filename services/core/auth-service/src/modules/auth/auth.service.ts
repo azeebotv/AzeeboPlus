@@ -89,13 +89,13 @@ export class AuthService {
     @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(FeatureFlagService) private readonly featureFlagService: FeatureFlagService
   ) {
-    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 12);
     this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');
     this.refreshTokenExpiryDays = this.configService.get<number>('REFRESH_TOKEN_EXPIRY_DAYS', 7);
     this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 5);
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -113,7 +113,7 @@ export class AuthService {
           metadata,
           timestamp: new Date().toISOString(),
         },
-        { timeout: 10000 }
+        { timeout: 1000 } // AUD-22: prevent socket exhaustion under brownouts
       );
     } catch (error) {
       this.logger.warn(`Failed to track analytics event: ${eventName}`);
@@ -202,6 +202,19 @@ export class AuthService {
     });
   }
 
+  private async rehashPasswordIfStale(
+    user: { id: string; password: string },
+    plaintext: string
+  ): Promise<void> {
+    const rounds = Number(user.password.split('$')[2]);
+    if (!Number.isFinite(rounds) || rounds >= this.saltRounds) return;
+    const upgraded = await bcrypt.hash(plaintext, this.saltRounds);
+    await this.authRepository.updatePassword(user.id, upgraded);
+    this.logger.log(
+      `Upgraded password hash cost for user ${user.id}: ${rounds} -> ${this.saltRounds}`
+    );
+  }
+
   async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     const user = await this.findUserByEmailCached(loginDto.email);
     if (!user) {
@@ -243,6 +256,11 @@ export class AuthService {
     }
 
     await this.resetFailedLoginAttempts(loginDto.email);
+
+    // Rehash-on-login: transparently upgrade hashes created with a lower
+    // cost factor (e.g. the pre-2026 default of 10) to the current
+    // SALT_ROUNDS — the plaintext is only ever available at login time.
+    await this.rehashPasswordIfStale(user, loginDto.password);
 
     // auth_email_verification_required: unverified users cannot sign in — they
     // must verify via the emailed link first (registration issues no tokens).
@@ -624,6 +642,20 @@ export class AuthService {
       this.logger.error(
         `Failed to send password reset email: ${error instanceof Error ? error.message : String(error)}`
       );
+      // AUD-08: Persist outbox item in Redis so notification failure doesn't silently strand users
+      const outboxKey = `notification_outbox:password_reset:${resetToken}`;
+      await this.redisService.set(
+        outboxKey,
+        JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          resetToken,
+          attempts: 1,
+          lastAttemptAt: new Date().toISOString(),
+        }),
+        86400
+      );
     }
 
     return { success: true, message: 'If the email exists, a reset link has been sent' };
@@ -914,7 +946,7 @@ export class AuthService {
     selectRoleDto: SelectRoleDto,
     ipAddress?: string,
     userAgent?: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; access_token?: string }> {
     const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new BadRequestException('User not found');
@@ -927,7 +959,7 @@ export class AuthService {
       );
     }
 
-    await this.authRepository.updateRole(userId, selectRoleDto.role);
+    const updated = await this.authRepository.updateRole(userId, selectRoleDto.role);
 
     this.auditLogService.log({
       actor: userId,
@@ -945,7 +977,16 @@ export class AuthService {
       role: selectRoleDto.role,
     });
 
-    return { success: true, message: 'Role selected successfully' };
+    // Hand back a freshly minted access token: the one the caller is presenting
+    // still claims the previous role, and the panels gate on /auth/me, which
+    // echoes the claim. Without this a user who just chose 'creator' is told they
+    // are not a creator until their old token expires. Deliberately not a session
+    // rotation — that would invalidate the refresh token on their other devices.
+    return {
+      success: true,
+      message: 'Role selected successfully',
+      access_token: this.signAccessToken(updated),
+    };
   }
 
   async requestOtp(requestOtpDto: RequestOtpDto): Promise<{ success: boolean; message: string }> {
@@ -1149,16 +1190,16 @@ export class AuthService {
     });
   }
 
-  async generateTokens(user: UserEntity): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: string;
-  }> {
+  /**
+   * Mint an access token from the caller's *current* record rather than from
+   * claims already inside a token. `role` is a JWT claim that nothing re-reads
+   * per request, so anything that changes it has to re-mint or the subject keeps
+   * acting under the old role until the token expires.
+   */
+  private signAccessToken(user: UserEntity): string {
     const jwtAccessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
-    const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
-    const now = Math.floor(Date.now() / 1000);
-    const accessToken = this.jwtService.sign(
+    return this.jwtService.sign(
       {
         iss: this.configService.get<string>('JWT_ISSUER', 'azeebo-auth'),
         aud: this.configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
@@ -1167,13 +1208,24 @@ export class AuthService {
         email: user.email,
         role: user.role,
         type: 'access',
-        iat: now,
+        iat: Math.floor(Date.now() / 1000),
       } as Record<string, unknown>,
       {
         expiresIn: this.accessTokenExpiry as StringValue,
         secret: jwtAccessSecret,
       }
     );
+  }
+
+  async generateTokens(user: UserEntity): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string;
+  }> {
+    const jwtRefreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+
+    const now = Math.floor(Date.now() / 1000);
+    const accessToken = this.signAccessToken(user);
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + this.refreshTokenExpiryDays);

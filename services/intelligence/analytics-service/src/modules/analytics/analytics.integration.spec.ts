@@ -11,6 +11,7 @@ jest.mock('../database/prisma.service');
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service.js';
+import { PIIMinimizationService } from './pii-minimization.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '@azeebo/shared-services';
@@ -39,6 +40,7 @@ describe('AnalyticsService Integration', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalyticsService,
+        PIIMinimizationService,
         {
           provide: PrismaService,
           useValue: {
@@ -112,7 +114,7 @@ describe('AnalyticsService Integration', () => {
         },
       ];
 
-      const result = await service.ingestEvents(events);
+      const result = await service.ingestEvents(events, { analytics: true, marketing: false });
 
       expect(result.success).toBe(true);
     });

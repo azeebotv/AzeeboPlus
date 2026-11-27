@@ -253,7 +253,11 @@ describe('WalletService', () => {
 
   describe('withdraw', () => {
     it('should withdraw funds successfully', async () => {
-      const withdrawDto = { amount: 500, bankAccountId: 'bank-account-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-test-key',
+        amount: 500,
+        bankAccountId: 'bank-account-123',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
       (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue({
@@ -263,9 +267,7 @@ describe('WalletService', () => {
         description: 'Withdrawal to bank account',
       });
       (prismaService.wallet.update as jest.Mock).mockResolvedValue({ ...mockWallet, balance: 500 });
-      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
-        { id: 'wallet-123', balance: 1000 },
-      ]);
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: 1000 }]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
       const result = await service.withdraw('user-123', withdrawDto);
@@ -274,7 +276,11 @@ describe('WalletService', () => {
     });
 
     it('should fail with insufficient balance', async () => {
-      const withdrawDto = { amount: 5000, bankAccountId: 'bank-account-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-test-key',
+        amount: 5000,
+        bankAccountId: 'bank-account-123',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
@@ -283,18 +289,55 @@ describe('WalletService', () => {
     });
 
     it('should fail if wallet not found', async () => {
-      const withdrawDto = { amount: 500, bankAccountId: 'bank-account-123' };
+      const withdrawDto = {
+        idempotencyKey: 'wd-test-key',
+        amount: 500,
+        bankAccountId: 'bank-account-123',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await service.withdraw('user-123', withdrawDto);
       expect(result.success).toBe(false);
     });
+
+    it('replays the existing transaction for a duplicate idempotency key instead of debiting again', async () => {
+      const withdrawDto = {
+        idempotencyKey: 'wd-duplicate-key',
+        amount: 500,
+        bankAccountId: 'bank-account-123',
+      };
+      const existing = {
+        ...mockTransaction,
+        type: 'debit' as const,
+        status: 'processing' as const,
+        reference: 'WD-existing',
+        description: 'Withdrawal to bank account',
+      };
+
+      (prismaService.$queryRaw as jest.Mock).mockResolvedValue([{ ...mockWallet, balance: 1000 }]);
+      (prismaService.walletTransaction.findUnique as jest.Mock).mockResolvedValue(existing);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
+
+      const result = await service.withdraw('user-123', withdrawDto);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(
+        expect.objectContaining({ transactionId: 'WD-existing', status: 'processing' })
+      );
+      expect(prismaService.walletTransaction.create).not.toHaveBeenCalled();
+      expect(prismaService.wallet.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('transfer', () => {
     it('should transfer funds to another user successfully', async () => {
-      const transferDto = { recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
       const recipientWallet = { ...mockWallet, id: 'wallet-456', userId: 'user-456' };
 
       (prismaService.wallet.findUnique as jest.Mock)
@@ -306,8 +349,8 @@ describe('WalletService', () => {
         .mockResolvedValueOnce({ ...recipientWallet, balance: 1200 });
       (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue(mockTransaction);
       (prismaService.$queryRaw as jest.Mock).mockResolvedValue([
-        { id: 'wallet-123', balance: 1000 },
-        { id: 'wallet-456', balance: 1000 },
+        { ...mockWallet, balance: 1000 },
+        { ...recipientWallet, balance: 1000 },
       ]);
       (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
@@ -317,7 +360,12 @@ describe('WalletService', () => {
     });
 
     it('should fail with insufficient balance', async () => {
-      const transferDto = { recipientId: 'user-456', amount: 5000, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 5000,
+        note: 'Payment',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
@@ -326,7 +374,12 @@ describe('WalletService', () => {
     });
 
     it('should fail if sender wallet not found', async () => {
-      const transferDto = { recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(null);
 
@@ -335,7 +388,12 @@ describe('WalletService', () => {
     });
 
     it('should fail if recipient wallet not found', async () => {
-      const transferDto = { recipientId: 'user-456', amount: 200, note: 'Payment' };
+      const transferDto = {
+        idempotencyKey: 'trf-test-key',
+        recipientId: 'user-456',
+        amount: 200,
+        note: 'Payment',
+      };
 
       (prismaService.wallet.findUnique as jest.Mock)
         .mockResolvedValueOnce(mockWallet)
@@ -580,6 +638,7 @@ describe('WalletService', () => {
 
       await expect(
         service.withdraw('user-123', {
+          idempotencyKey: 'wd-fraud-key',
           amount: 100,
           bankAccountId: 'bank-1',
         })
@@ -601,6 +660,7 @@ describe('WalletService', () => {
 
       await expect(
         service.withdraw('user-123', {
+          idempotencyKey: 'wd-fraud-key',
           amount: 1000,
           bankAccountId: 'bank-1',
         })
@@ -618,6 +678,7 @@ describe('WalletService', () => {
       );
 
       const result = await service.withdraw('user-123', {
+        idempotencyKey: 'wd-fraud-key',
         amount: 100,
         bankAccountId: 'bank-1',
       });

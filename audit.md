@@ -1,0 +1,1 @@
+docs/audits/2026-10-05-FULL-STACK-AUDIT.md

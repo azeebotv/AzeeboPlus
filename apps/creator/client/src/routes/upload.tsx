@@ -31,9 +31,9 @@ const statusText: Record<string, string> = {
 // virus scan pass? 'pending' means the file is only registered (media-service
 // was unavailable or rejected it) — the creator must re-upload.
 const storageLabel: Record<string, string> = {
-  stored: 'Stored in blob storage',
-  pending: 'Registered only — not stored, re-upload needed',
-  unknown: 'Storage status unknown (legacy upload)',
+  stored: 'Uploaded & Ready to Publish',
+  pending: 'Upload Incomplete — Please Re-upload File',
+  unknown: 'Archived File',
 };
 const storageColor: Record<string, string> = {
   stored: 'var(--creator-green)',
@@ -43,24 +43,30 @@ const storageColor: Record<string, string> = {
 
 export default function UploadPage() {
   const queryClient = useQueryClient();
-  const { isEnabled: isFlagEnabled } = useCreatorFlags();
+  const { isEnabled: isFlagEnabled, universeOptions } = useCreatorFlags();
   const uploadV2 = isFlagEnabled(CREATOR_FLAG_KEYS.uploadV2);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('video');
   const [universe, setUniverse] = useState('');
+  const [minTier, setMinTier] = useState('none');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   // Real upload progress, driven by XHR upload.onprogress events.
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [activeUpload, setActiveUpload] = useState<{ name: string; size: number } | null>(null);
 
-  const { data: uploads, isLoading } = useQuery({
+  const {
+    data: uploads,
+    isLoading,
+    isError: uploadsFailed,
+    error: uploadsError,
+  } = useQuery({
     queryKey: ['creator', 'uploads'],
     queryFn: async () => {
       const res = await creatorApi.getUploads();
-      return res.success ? (res.data as UploadProgress[]) : [];
+      return creatorApi.assertSuccess<UploadProgress[]>(res);
     },
   });
 
@@ -72,6 +78,9 @@ export default function UploadPage() {
       formData.append('description', description);
       formData.append('type', type);
       formData.append('universe', universe);
+      if (minTier !== 'none') {
+        formData.append('minTier', minTier);
+      }
       setActiveUpload({ name: file.name, size: file.size });
       setUploadPct(0);
       const res = await creatorApi.uploadContentWithProgress(formData, setUploadPct);
@@ -121,7 +130,14 @@ export default function UploadPage() {
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>New Upload</h3>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Title
               </label>
               <input
@@ -132,7 +148,14 @@ export default function UploadPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Description
               </label>
               <textarea
@@ -144,7 +167,14 @@ export default function UploadPage() {
               />
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Type
               </label>
               <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
@@ -154,15 +184,53 @@ export default function UploadPage() {
               </select>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 6 }}>
-                Universe
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
+                Content Category / Universe
               </label>
-              <input
+              {/* Universe picker is sentinel-gated: disabled universes are not
+                  offered, and a stale value can't be uploaded (blocked below,
+                  mirroring the 404 the server would return). */}
+              <select
                 value={universe}
                 onChange={(e) => setUniverse(e.target.value)}
-                placeholder="e.g. Reality, Comedy"
                 style={inputStyle}
-              />
+              >
+                <option value="">Select category (e.g. Movies, Comedy, Reality)</option>
+                {universeOptions.map((slug) => (
+                  <option key={slug} value={slug}>
+                    {slug.charAt(0).toUpperCase() + slug.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--creator-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
+                Audience & Supporter Gating
+              </label>
+              <select
+                value={minTier}
+                onChange={(e) => setMinTier(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="none">Public (All Viewers)</option>
+                <option value="gold">Gold Supporter Exclusive (₦50,000+ total tips)</option>
+                <option value="platinum">Platinum VIP Exclusive (₦100,000+ total tips)</option>
+              </select>
             </div>
 
             <div
@@ -196,10 +264,14 @@ export default function UploadPage() {
                 {selectedFile
                   ? selectedFile.name
                   : uploadV2
-                    ? 'Drag & drop or click to select'
-                    : 'Select a file'}
+                    ? 'Drag & drop your file here or click to browse'
+                    : 'Select a video or audio file'}
               </p>
-              {uploadV2 && <p style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>Max 500MB</p>}
+              {uploadV2 && (
+                <p style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>
+                  Supported formats: MP4, MOV, MKV, MP3 (Max 500MB)
+                </p>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -229,7 +301,7 @@ export default function UploadPage() {
 
             <button
               onClick={() => selectedFile && uploadMutation.mutate(selectedFile)}
-              disabled={!selectedFile || !title || uploadMutation.isPending}
+              disabled={!selectedFile || !title || !universe || uploadMutation.isPending}
               style={{
                 padding: '10px 20px',
                 borderRadius: 8,
@@ -311,10 +383,29 @@ export default function UploadPage() {
               {uploadV2 ? 'Processing Status' : 'Your Uploads'}
             </h3>
             {isLoading ? (
-              <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 20 }}>Loading...</p>
+              <p style={{ color: 'var(--creator-text-muted)', textAlign: 'center', padding: 20 }}>
+                Loading...
+              </p>
+            ) : uploadsFailed ? (
+              <p
+                style={{
+                  color: 'var(--creator-red)',
+                  fontSize: 13,
+                  textAlign: 'center',
+                  padding: 20,
+                }}
+              >
+                {creatorApi.errorMessage(uploadsError)}
+              </p>
             ) : uploads && uploads.length > 0 ? (
               uploads.map((u: UploadProgress) => (
-                <div key={u.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--creator-border-light)' }}>
+                <div
+                  key={u.id}
+                  style={{
+                    padding: '12px 0',
+                    borderBottom: '1px solid var(--creator-border-light)',
+                  }}
+                >
                   <div
                     style={{
                       display: 'flex',

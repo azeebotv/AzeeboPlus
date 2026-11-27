@@ -7,11 +7,19 @@ import {
   InjectionToken,
   OptionalFactoryDependency,
 } from '@nestjs/common';
-import Redis from 'ioredis';
+import Redis, { Cluster } from 'ioredis';
 import { randomUUID } from 'crypto';
 import { EventSchemaRegistry } from './schema-registry.js';
 import { DeadLetterQueue } from './dead-letter-queue.js';
 import { AggregateOrdering, OrderedEvent } from './aggregate-ordering.js';
+import {
+  PartitionedStreamManager,
+  HighVelocityVoteBuffer,
+  RedisClient,
+  VoteBatchFlushResult,
+} from './partitioned-stream.js';
+
+export { PartitionedStreamManager, HighVelocityVoteBuffer, RedisClient, VoteBatchFlushResult };
 
 // ============================================================================
 // Event Types
@@ -33,7 +41,11 @@ export interface DomainEvent<T = Record<string, unknown>> {
 export type EventHandler<T = Record<string, unknown>> = (event: DomainEvent<T>) => Promise<void>;
 
 export interface EventBusConfig {
-  redisUrl: string;
+  redisUrl?: string;
+  clusterNodes?: Array<{ host: string; port: number }> | string[];
+  sentinels?: Array<{ host: string; port: number }>;
+  sentinelMaster?: string;
+  isCluster?: boolean;
   prefix?: string;
   enableRetry?: boolean;
   maxRetries?: number;
@@ -60,6 +72,8 @@ export const EventTypes = {
   USER_CREATED: 'user.created',
   USER_UPDATED: 'user.updated',
   USER_DELETED: 'user.deleted',
+  USER_ERASURE_REQUESTED: 'user.erasure.requested',
+  USER_ERASURE_COMPLETED: 'user.erasure.completed',
 
   // Wallet events
   WALLET_FUNDED: 'wallet.funded',
@@ -110,10 +124,10 @@ export const AGGREGATE_ORDERING = 'AGGREGATE_ORDERING';
 
 export class EventBusService {
   private readonly logger = new Logger(EventBusService.name);
-  private readonly redis: Redis;
+  private readonly redis: Redis | Cluster;
   private readonly subscribers: Map<string, Set<EventHandler>> = new Map();
-  private readonly publisher: Redis;
-  private readonly subscriber: Redis;
+  private readonly publisher: Redis | Cluster;
+  private readonly subscriber: Redis | Cluster;
   private readonly prefix: string;
   private readonly serviceName: string;
   private readonly enableRetry: boolean;
@@ -146,16 +160,58 @@ export class EventBusService {
     this.deadLetterQueue = enhanced?.deadLetterQueue;
     this.aggregateOrdering = enhanced?.aggregateOrdering;
 
-    this.redis = new Redis(config.redisUrl, {
-      maxRetriesPerRequest: 3,
-      enableReadyCheck: true,
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-    });
+    const clusterNodes =
+      config.clusterNodes ||
+      (process.env.REDIS_CLUSTER_NODES
+        ? process.env.REDIS_CLUSTER_NODES.split(',').map((n) => {
+            const [host, port] = n.trim().split(':');
+            return { host, port: Number(port) || 6379 };
+          })
+        : undefined);
 
-    this.publisher = this.redis;
-    this.subscriber = this.redis.duplicate();
+    if (config.isCluster || (clusterNodes && clusterNodes.length > 0)) {
+      this.logger.log('Initializing EventBus in Redis Cluster mode');
+      const clusterInst = new Cluster(clusterNodes as Array<{ host: string; port: number }>, {
+        clusterRetryStrategy: (times: number) => Math.min(times * 50, 2000),
+        redisOptions: {
+          maxRetriesPerRequest: 3,
+        },
+      });
+      this.redis = clusterInst;
+      this.publisher = clusterInst;
+      this.subscriber = clusterInst.duplicate();
+    } else if (config.sentinels || config.sentinelMaster || process.env.REDIS_SENTINEL_HOSTS) {
+      this.logger.log('Initializing EventBus in Redis Sentinel mode');
+      const sentinels =
+        config.sentinels ||
+        (process.env.REDIS_SENTINEL_HOSTS
+          ? process.env.REDIS_SENTINEL_HOSTS.split(',').map((h) => {
+              const [host, port] = h.trim().split(':');
+              return { host, port: Number(port) || 26379 };
+            })
+          : []);
+      const sentinelClient = new Redis({
+        sentinels,
+        name: config.sentinelMaster || process.env.REDIS_SENTINEL_MASTER || 'mymaster',
+        maxRetriesPerRequest: 3,
+        retryStrategy: (times) => Math.min(times * 50, 2000),
+      });
+      this.redis = sentinelClient;
+      this.publisher = sentinelClient;
+      this.subscriber = sentinelClient.duplicate();
+    } else {
+      const url = config.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379';
+      const standaloneClient = new Redis(url, {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        retryStrategy: (times) => Math.min(times * 50, 2000),
+      });
+      this.redis = standaloneClient;
+      this.publisher = standaloneClient;
+      this.subscriber = standaloneClient.duplicate();
+    }
 
-    this.redis.on('error', (err) => {
+    this.redis.on('error', (err: Error) => {
       this.logger.error(`Event bus Redis error: ${err.message}`);
     });
 
@@ -163,9 +219,38 @@ export class EventBusService {
       this.logger.log('Event bus connected to Redis');
     });
 
-    this.subscriber.on('message', (channel, message) => {
+    this.subscriber.on('message', (channel: string, message: string) => {
       this.handleMessage(channel, message);
     });
+  }
+
+  /**
+   * Publishes an event to a partitioned channel across Redis shards.
+   * Ideal for high-throughput live broadcasts (reality voting, live event reactions).
+   */
+  async publishPartitioned<T = Record<string, unknown>>(
+    eventType: string,
+    partitionKey: string,
+    data: T,
+    metadata?: DomainEvent['metadata'],
+    numPartitions = 8
+  ): Promise<{ partition: number; channel: string }> {
+    const event: DomainEvent<T> = {
+      id: randomUUID(),
+      type: eventType,
+      source: this.serviceName,
+      timestamp: new Date().toISOString(),
+      data,
+      metadata,
+    };
+    return PartitionedStreamManager.publishPartitioned(
+      this.publisher,
+      this.prefix,
+      eventType,
+      partitionKey,
+      event,
+      numPartitions
+    );
   }
 
   /**
@@ -412,12 +497,23 @@ export class EventBusModule {
 
     const redisProvider: Provider = {
       provide: 'EVENT_BUS_REDIS',
-      useFactory: () =>
-        new Redis(config.redisUrl, {
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-          retryStrategy: (times) => Math.min(times * 50, 2000),
-        }),
+      useFactory: () => {
+        const client = new Redis(
+          config.redisUrl ||
+            process.env.EVENT_BUS_REDIS_URL ||
+            process.env.REDIS_URL ||
+            'redis://localhost:6379',
+          {
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: true,
+            retryStrategy: (times) => Math.min(times * 50, 2000),
+          }
+        );
+        client.on('error', (err: Error) => {
+          console.error(`[EventBusModule] Redis error: ${err.message}`);
+        });
+        return client;
+      },
     };
 
     const schemaRegistryProvider: Provider = {
@@ -485,12 +581,23 @@ export class EventBusModule {
 
     const redisProvider: Provider = {
       provide: 'EVENT_BUS_REDIS',
-      useFactory: (config: EventBusConfig) =>
-        new Redis(config.redisUrl, {
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
-          retryStrategy: (times) => Math.min(times * 50, 2000),
-        }),
+      useFactory: (config: EventBusConfig) => {
+        const client = new Redis(
+          config.redisUrl ||
+            process.env.EVENT_BUS_REDIS_URL ||
+            process.env.REDIS_URL ||
+            'redis://localhost:6379',
+          {
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: true,
+            retryStrategy: (times) => Math.min(times * 50, 2000),
+          }
+        );
+        client.on('error', (err: Error) => {
+          console.error(`[EventBusModule] Redis error: ${err.message}`);
+        });
+        return client;
+      },
       inject: (options.inject as (InjectionToken | OptionalFactoryDependency)[]) || [],
     };
 

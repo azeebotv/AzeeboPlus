@@ -16,7 +16,7 @@ const SHARE_PLATFORMS = [
   { id: 'twitter', label: 'Twitter', icon: Share2, color: '#1DA1F2' },
   { id: 'facebook', label: 'Facebook', icon: Share2, color: '#1877F2' },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, color: '#25D366' },
-  { id: 'copy', label: 'Copy Link', icon: Link, color: 'var(--brand-orange)' },
+  { id: 'copy', label: 'Copy Link', icon: Link, color: 'var(--color-az-flame)' },
 ] as const;
 
 export function ShareButton({
@@ -117,8 +117,7 @@ export function ShareButton({
     <div className={`relative ${className}`}>
       <button
         onClick={handleNativeShare}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10"
-        style={{ color: 'var(--text-muted, #9A8A7A)' }}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-az-ink-muted transition-colors hover:bg-az-glass-card"
         aria-label="Share this content"
       >
         <Share2 className="w-4 h-4" />
@@ -130,13 +129,13 @@ export function ShareButton({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="az-glass p-6 max-w-sm w-full mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Share</h3>
+              <h3 className="text-lg font-bold text-az-ink">Share</h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-lg hover:bg-white/10"
+                className="p-1 rounded-lg hover:bg-az-glass-card"
                 aria-label="Close share dialog"
               >
-                <X className="w-5 h-5 text-white/60" />
+                <X className="w-5 h-5 text-az-ink/60" />
               </button>
             </div>
 
@@ -146,7 +145,7 @@ export function ShareButton({
                 <img src={thumbnail} alt={title} className="w-full h-32 object-cover" />
               </div>
             )}
-            <p className="text-sm text-white/80 mb-4 line-clamp-2">{title}</p>
+            <p className="text-sm text-az-ink/80 mb-4 line-clamp-2">{title}</p>
 
             {/* Platform Buttons */}
             <div className="grid grid-cols-2 gap-3">
@@ -154,20 +153,21 @@ export function ShareButton({
                 <button
                   key={platform.id}
                   onClick={() => handlePlatformShare(platform.id)}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-white/5"
-                  style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-az-ink/10 transition-colors hover:bg-az-glass-fill"
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: `${platform.color}20` }}
+                    style={{
+                      background: `color-mix(in srgb, ${platform.color} 15%, transparent)`,
+                    }}
                   >
                     {platform.id === 'copy' && copied ? (
-                      <Check className="w-4 h-4 text-green-400" />
+                      <Check className="w-4 h-4 text-az-success-400" />
                     ) : (
                       <platform.icon className="w-4 h-4" style={{ color: platform.color }} />
                     )}
                   </div>
-                  <span className="text-sm text-white/80">
+                  <span className="text-sm text-az-ink/80">
                     {platform.id === 'copy' && copied ? 'Copied!' : platform.label}
                   </span>
                 </button>

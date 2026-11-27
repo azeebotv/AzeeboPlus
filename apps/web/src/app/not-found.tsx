@@ -1,20 +1,18 @@
 import Link from 'next/link';
+import { Compass } from 'lucide-react';
 
 export default function NotFound(): React.JSX.Element {
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: 'var(--brand-near-black)' }}
-    >
-      <div className="text-center max-w-md mx-auto px-6">
-        <div className="text-6xl mb-6"></div>
-        <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--brand-white)' }}>
-          Page Not Found
-        </h1>
-        <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
+    <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+      <div className="mx-auto max-w-md px-6 text-center">
+        <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full border border-az-scarlet/30 bg-az-scarlet/10">
+          <Compass className="size-10 text-az-flame" aria-hidden="true" />
+        </div>
+        <h1 className="az-headline mb-4 text-2xl text-az-ink">Page Not Found</h1>
+        <p className="az-body mb-8 leading-relaxed text-az-ink-muted">
           The page you are looking for does not exist or has been moved.
         </p>
-        <Link href="/" className="az-btn-primary inline-block">
+        <Link href="/" className="az-btn-primary az-btn-primary--inline">
           Go Home
         </Link>
       </div>

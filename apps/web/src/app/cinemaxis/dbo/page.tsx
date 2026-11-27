@@ -1,11 +1,10 @@
 'use client';
 import { Suspense, lazy, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import analytics from '@/lib/analytics';
 
 interface DboData {
@@ -39,93 +38,86 @@ function DboContent() {
   const data = query.data;
   if (query.isLoading)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto px-4 py-12">
+      <PageShell maxWidth="7xl" activeNav="Cinemaxis">
+        <div className="py-12">
           <Skeleton height="400px" borderRadius="16" />
         </div>
-      </div>
+      </PageShell>
     );
   if (query.error || !data)
     return (
-      <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-        <AppHeader />
-        <div className="max-w-7xl mx-auto px-4 py-12">
+      <PageShell maxWidth="7xl" activeNav="Cinemaxis">
+        <div className="py-12">
           <ErrorState title="Failed to load" description={query.error?.message} />
         </div>
-      </div>
+      </PageShell>
     );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Cinemaxis" />
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            BarChart3Digital Box Office
-          </h1>
-          <p className="text-white/50 mb-8">Rights holder revenue and ticket analytics</p>
-        </motion.div>
+    <PageShell maxWidth="7xl" activeNav="Cinemaxis">
+      <PageHero
+        eyebrow="Cinemaxis"
+        title="Digital Box Office"
+        description="Rights holder revenue and ticket analytics"
+      />
 
+      <div className="-mt-4 pb-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           <div className="az-glass p-5">
-            <p className="text-xs text-white/40 mb-1">Total Revenue</p>
-            <p className="text-2xl font-bold text-white">₦{data.totalRevenue.toLocaleString()}</p>
+            <p className="az-caption mb-1 text-az-ink-dim">Total Revenue</p>
+            <p className="az-section-title text-az-ink">₦{data.totalRevenue.toLocaleString()}</p>
           </div>
           <div className="az-glass p-5">
-            <p className="text-xs text-white/40 mb-1">Tickets Sold</p>
-            <p className="text-2xl font-bold text-white">{data.totalTickets.toLocaleString()}</p>
+            <p className="az-caption mb-1 text-az-ink-dim">Tickets Sold</p>
+            <p className="az-section-title text-az-ink">{data.totalTickets.toLocaleString()}</p>
           </div>
           <div className="az-glass p-5">
-            <p className="text-xs text-white/40 mb-1">Avg Ticket Price</p>
-            <p className="text-2xl font-bold text-white">₦{data.averageTicketPrice}</p>
+            <p className="az-caption mb-1 text-az-ink-dim">Avg Ticket Price</p>
+            <p className="az-section-title text-az-ink">₦{data.averageTicketPrice}</p>
           </div>
           <div className="az-glass p-5">
-            <p className="text-xs text-white/40 mb-1">Active Films</p>
-            <p className="text-2xl font-bold text-white">{data.films.length}</p>
+            <p className="az-caption mb-1 text-az-ink-dim">Active Films</p>
+            <p className="az-section-title text-az-ink">{data.films.length}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="az-glass p-6">
-            <h2 className="text-lg font-bold text-white mb-4">Film Performance</h2>
+            <h2 className="az-title mb-4 text-az-ink">Film Performance</h2>
             <div className="space-y-3">
               {data.films.map((f) => (
                 <div
                   key={f.id}
-                  className="flex items-center justify-between py-3 border-b border-white/5"
+                  className="flex items-center justify-between py-3 border-b border-az-ink/5"
                 >
                   <div>
-                    <p className="text-white font-semibold text-sm">{f.title}</p>
-                    <p className="text-xs text-white/40">
+                    <p className="az-body-strong text-az-ink">{f.title}</p>
+                    <p className="az-caption text-az-ink-dim">
                       {f.views.toLocaleString()} views · {f.ticketsSold} tickets
                     </p>
                   </div>
-                  <p className="text-white font-bold text-sm">₦{f.revenue.toLocaleString()}</p>
+                  <p className="az-body-strong text-az-ink">₦{f.revenue.toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="az-glass p-6">
-            <h2 className="text-lg font-bold text-white mb-4">Recent Transactions</h2>
+            <h2 className="az-title mb-4 text-az-ink">Recent Transactions</h2>
             <div className="space-y-3">
               {data.recentTransactions.map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between py-3 border-b border-white/5"
+                  className="flex items-center justify-between py-3 border-b border-az-ink/5"
                 >
                   <div>
-                    <p className="text-white font-semibold text-sm">{t.filmTitle}</p>
-                    <p className="text-xs text-white/40">
+                    <p className="az-body-strong text-az-ink">{t.filmTitle}</p>
+                    <p className="az-caption text-az-ink-dim">
                       {t.type} · {new Date(t.date).toLocaleDateString()}
                     </p>
                   </div>
                   <p
-                    className="text-sm font-bold"
-                    style={{
-                      color: t.type === 'sale' ? 'var(--brand-green)' : 'var(--brand-amber)',
-                    }}
+                    className={`az-body-strong ${t.type === 'sale' ? 'text-az-success-500' : 'text-az-warning-500'}`}
                   >
                     {t.type === 'refund' ? '-' : '+'}₦{t.amount.toLocaleString()}
                   </p>
@@ -134,9 +126,8 @@ function DboContent() {
             </div>
           </div>
         </div>
-      </section>
-      <AppFooter />
-    </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -145,8 +136,8 @@ export default function DboPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

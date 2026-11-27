@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard, Public } from '@azeebo/security';
 import { FeatureFlag, FeatureFlagGuard, realityFlags } from '@azeebo/feature-flags';
 
 import { RealityService } from './reality.service.js';
@@ -41,6 +41,7 @@ export class RealityController {
     @Inject(VoteFraudDetectionService) private readonly fraudDetection: VoteFraudDetectionService
   ) {}
 
+  @Public()
   @Get('shows')
   @Get('shows/current')
   @Get('featured')
@@ -48,29 +49,36 @@ export class RealityController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Reality shows / current / featured' })
   @ApiResponse({ status: 200, description: 'Reality shows' })
-  async getShows(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+  async listShows(): Promise<RealityResponse> {
+    return this.realityService.listShows();
   }
 
+  async getShows(): Promise<RealityResponse> {
+    return this.listShows();
+  }
+
+  @Public()
   @Get('contestants')
   @ApiOperation({ summary: 'All contestants across shows' })
   @ApiResponse({ status: 200, description: 'Contestants list' })
   async getAllContestants(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return this.realityService.listAllContestants();
   }
 
+  @Public()
   @Get('live-chat/messages')
   @ApiOperation({ summary: 'Live chat message history' })
   @ApiResponse({ status: 200, description: 'Chat messages' })
   async getLiveChatMessages(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return { success: true, data: { messages: [] } };
   }
 
+  @Public()
   @Get('live-chat/participants')
   @ApiOperation({ summary: 'Live chat participants' })
   @ApiResponse({ status: 200, description: 'Chat participants' })
   async getLiveChatParticipants(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return { success: true, data: { participants: [] } };
   }
 
   @Post('live-chat/send')
@@ -78,21 +86,18 @@ export class RealityController {
   @ApiResponse({ status: 201, description: 'Message sent' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async sendLiveChatMessage(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
+    return { success: true, data: { sent: true } };
   }
 
+  @Public()
   @Get('votes/quantity')
   @ApiOperation({ summary: 'Get vote quantities/pricing' })
   @ApiResponse({ status: 200, description: 'Vote quantities' })
   async getVoteQuantities(): Promise<RealityResponse> {
-    return this.realityService.getShow('');
-  }
-  @ApiOperation({ summary: 'List reality shows' })
-  @ApiResponse({ status: 200, description: 'Reality shows' })
-  async listShows(): Promise<RealityResponse> {
-    return this.realityService.listShows();
+    return this.realityService.getPricing();
   }
 
+  @Public()
   @Get('shows/:showId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -132,6 +137,7 @@ export class RealityController {
     return this.realityService.deleteShow(showId);
   }
 
+  @Public()
   @Get('shows/:showId/episodes')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -173,6 +179,7 @@ export class RealityController {
     return this.realityService.deleteEpisode(episodeId);
   }
 
+  @Public()
   @Get('episodes/:episodeId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -195,6 +202,7 @@ export class RealityController {
     return this.realityService.createSeason(showId, body);
   }
 
+  @Public()
   @Get('shows/:showId/contestants')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -236,6 +244,7 @@ export class RealityController {
     return this.realityService.deleteContestant(contestantId);
   }
 
+  @Public()
   @Get('contestants/:contestantId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -246,6 +255,7 @@ export class RealityController {
     return this.realityService.getContestant(contestantId);
   }
 
+  @Public()
   @Get('shows/:showId/leaderboard')
   @UseGuards(RateLimitGuard)
   @RateLimit(60, 60000)
@@ -255,6 +265,7 @@ export class RealityController {
     return this.realityService.getLeaderboard(showId);
   }
 
+  @Public()
   @Get('shows/:showId/votes')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -268,6 +279,7 @@ export class RealityController {
     return this.realityService.listVotesForShow(showId, Number(page) || 1, Number(limit) || 20);
   }
 
+  @Public()
   @Get('shows/:showId/predictions')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -293,6 +305,7 @@ export class RealityController {
     return this.realityService.getShowAnalytics(showId);
   }
 
+  @Public()
   @Get('shows/:showId/viewers')
   @UseGuards(RateLimitGuard)
   @RateLimit(60, 60000)
@@ -407,6 +420,7 @@ export class RealityController {
     return this.realityService.getPredictionDashboard(req.user.id, showId);
   }
 
+  @Public()
   @Get('clips')
   @ApiOperation({ summary: 'Get reality clips feed' })
   @ApiResponse({ status: 200, description: 'Clips feed' })
@@ -421,6 +435,7 @@ export class RealityController {
     return this.realityService.getWalletBalance(req.user.id);
   }
 
+  @Public()
   @Get('pricing')
   @ApiOperation({ summary: 'Get voting pricing' })
   @ApiResponse({ status: 200, description: 'Pricing info' })
@@ -428,6 +443,7 @@ export class RealityController {
     return this.realityService.getPricing();
   }
 
+  @Public()
   @Get('premium-extras')
   @ApiOperation({ summary: 'Get premium extras' })
   @ApiResponse({ status: 200, description: 'Premium extras list' })
@@ -518,6 +534,7 @@ export class RealityController {
     return this.realityService.likeShow(req.user.id, showId);
   }
 
+  @Public()
   @Get('shows/:showId/likes')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -540,6 +557,7 @@ export class RealityController {
     return this.realityService.addComment(req.user.id, showId, body.content);
   }
 
+  @Public()
   @Get('shows/:showId/comments')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)

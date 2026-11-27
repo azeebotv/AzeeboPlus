@@ -1,5 +1,6 @@
 # Ignore generated PgBouncer userlist (contains passwords)
+#
+# The template lives in infra/config/ (this script writes there by default), so
+# no un-ignore is needed here — an earlier `!pgbouncer_userlist.txt.template`
+# protected a path that no longer exists.
 pgbouncer_userlist.txt
-
-# Keep the template
-!pgbouncer_userlist.txt.template

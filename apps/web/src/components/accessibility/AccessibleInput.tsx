@@ -8,6 +8,12 @@ interface AccessibleInputProps extends InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
 }
 
+// Shared-layer gap: `globals.css` ships no `.az-label--error` / `.az-input--error`
+// modifier, and the unlayered sheet always beats a Tailwind `text-*` / `border-*`
+// utility, so the error tint stays a token-valued inline declaration.
+const ERROR_TINT = { color: 'var(--color-az-error-500)' } as const;
+const ERROR_BORDER = { borderColor: 'var(--color-az-error-500)' } as const;
+
 export const AccessibleInput = forwardRef<HTMLInputElement, AccessibleInputProps>(
   ({ label, error, helperText, id, ...props }, ref) => {
     const inputId = id || `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
@@ -15,15 +21,8 @@ export const AccessibleInput = forwardRef<HTMLInputElement, AccessibleInputProps
     const helperId = helperText ? `${inputId}-helper` : undefined;
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <label
-          htmlFor={inputId}
-          style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: error ? 'var(--brand-red)' : 'var(--text-primary)',
-          }}
-        >
+      <div className="flex flex-col">
+        <label htmlFor={inputId} className="az-label" style={error ? ERROR_TINT : undefined}>
           {label}
         </label>
         <input
@@ -31,24 +30,17 @@ export const AccessibleInput = forwardRef<HTMLInputElement, AccessibleInputProps
           id={inputId}
           aria-invalid={!!error}
           aria-describedby={errorId || helperId}
-          style={{
-            padding: '12px 16px',
-            borderRadius: 12,
-            border: `1px solid ${error ? 'var(--brand-red)' : 'var(--glass-border)'}`,
-            backgroundColor: 'var(--glass-bg)',
-            color: 'var(--text-primary)',
-            fontSize: 14,
-            outline: 'none',
-          }}
+          className="az-input"
+          style={error ? ERROR_BORDER : undefined}
           {...props}
         />
         {error && (
-          <span id={errorId} style={{ fontSize: 12, color: 'var(--brand-red)' }} role="alert">
+          <span id={errorId} className="az-caption mt-1 text-az-error-500" role="alert">
             {error}
           </span>
         )}
         {helperText && !error && (
-          <span id={helperId} style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+          <span id={helperId} className="az-caption mt-1 text-az-ink-muted">
             {helperText}
           </span>
         )}

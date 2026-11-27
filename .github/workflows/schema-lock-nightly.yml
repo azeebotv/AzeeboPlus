@@ -125,20 +125,20 @@ jobs:
       - name: Mint azeebo-drift-bot App token
         id: app-token
         if: ${{ always() && steps.drift-bot-config.outputs.configured == 'true' }}
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ vars.DRIFT_BOT_APP_ID }}
           private-key: ${{ secrets.DRIFT_BOT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         if: steps.creds.outputs.have-creds == 'true'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         if: steps.creds.outputs.have-creds == 'true'
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.creds.outputs.have-creds == 'true'
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -182,7 +182,7 @@ jobs:
 
       - name: Upload pool-actuals history
         if: always() && steps.creds.outputs.have-creds == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pool-actuals-${{ matrix.environment }}-${{ github.run_id }}
           path: .pool-forecast-out/
@@ -234,7 +234,7 @@ jobs:
 
       - name: Upload per-env report artifacts
         if: always() && steps.creds.outputs.have-creds == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: schema-lock-report-${{ matrix.environment }}-${{ github.run_id }}
           path: .check-live-schema-lock-out/

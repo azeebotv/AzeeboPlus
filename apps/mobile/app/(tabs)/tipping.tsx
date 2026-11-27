@@ -57,6 +57,9 @@ export default function TipsHistoryScreen() {
       style={styles.tipItem}
       onPress={() => router.push(`/creators/${item.creatorId}`)}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={`Tip to ${creatorNames[item.creatorId] || 'Creator'}, ₦${item.amount.toLocaleString()}`}
+      accessibilityHint="Opens creator profile"
     >
       <View style={styles.row}>
         <Text style={styles.creatorName}>{creatorNames[item.creatorId] || 'Creator'}</Text>
@@ -93,7 +96,7 @@ export default function TipsHistoryScreen() {
   const isLoading = tipsQuery.isLoading || (tipsQuery.isFetching && tipsQuery.isPending);
 
   return (
-    <View style={styles.container}>
+    <View accessibilityLabel="Tipping Screen" style={styles.container}>
       <Text style={styles.title}>My Tips</Text>
       <Text style={styles.subtitle}>{totalTips} tips sent</Text>
 
@@ -123,7 +126,12 @@ export default function TipsHistoryScreen() {
       ) : null}
 
       {page < totalPages && !tipsQuery.isFetching ? (
-        <TouchableOpacity style={styles.loadMore} onPress={() => setPage((p) => p + 1)}>
+        <TouchableOpacity
+          style={styles.loadMore}
+          onPress={() => setPage((p) => p + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Load more tips"
+        >
           <Text style={styles.loadMoreText}>Load More</Text>
         </TouchableOpacity>
       ) : null}
@@ -218,6 +226,8 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   loadMore: {
+    minHeight: 44,
+    justifyContent: 'center',
     padding: spacing.md,
     alignItems: 'center',
     backgroundColor: colors.bg.secondary,

@@ -98,19 +98,20 @@ done
 alert_line="alerts (7d): $alerts"
 
 # ── 3. Server-side fleet probe (via the admin backend, like the panel) ─────
-probe_line="services: probe skipped (backend unreachable)"
+probe_line="services: probe skipped (credentials or backend not configured)"
 BASE_URL="${ADMIN_BACKEND_URL:-http://localhost:4016}"
-LOGIN_EMAIL="${AUTH_EMAIL:-admin@azeeboplus.com}"
-LOGIN_PASSWORD="${AUTH_PASSWORD:-Demo123!}"
+LOGIN_EMAIL="${AUTH_EMAIL:-}"
+LOGIN_PASSWORD="${AUTH_PASSWORD:-}"
 
-login_payload=$(printf '{"email":"%s","password":"%s"}' "$LOGIN_EMAIL" "$LOGIN_PASSWORD")
-TOKEN=$(curl -sS -m 8 -X POST "$BASE_URL/api/v1/auth/login" \
-  -H 'Content-Type: application/json' -d "$login_payload" 2>/dev/null |
-  { python3 -c "import sys,json;print(json.load(sys.stdin).get('data',{}).get('access_token',''))" 2>/dev/null || true; })
+if [ -n "$LOGIN_EMAIL" ] && [ -n "$LOGIN_PASSWORD" ]; then
+  login_payload=$(printf '{"email":"%s","password":"%s"}' "$LOGIN_EMAIL" "$LOGIN_PASSWORD")
+  TOKEN=$(curl -sS -m 8 -X POST "$BASE_URL/api/v1/auth/login" \
+    -H 'Content-Type: application/json' -d "$login_payload" 2>/dev/null |
+    { python3 -c "import sys,json;print(json.load(sys.stdin).get('data',{}).get('access_token',''))" 2>/dev/null || true; })
 
-if [ -n "${TOKEN:-}" ]; then
-  PROBE=$(curl -sS -m 30 -H "Authorization: Bearer $TOKEN" "$BASE_URL/api/v1/admin/ops/services" 2>/dev/null |
-    { python3 -c "
+  if [ -n "${TOKEN:-}" ]; then
+    PROBE=$(curl -sS -m 30 -H "Authorization: Bearer $TOKEN" "$BASE_URL/api/v1/admin/ops/services" 2>/dev/null |
+      { python3 -c "
 import sys, json
 try:
     d = json.load(sys.stdin)['data']['services']
@@ -121,8 +122,9 @@ try:
 except Exception:
     print('')
 " 2>/dev/null || true; })
-  [ -n "${PROBE:-}" ] && probe_line="services: $PROBE"
-  unset TOKEN
+    [ -n "${PROBE:-}" ] && probe_line="services: $PROBE"
+    unset TOKEN
+  fi
 fi
 
 DIGEST="$job_line; $alert_line; $probe_line"

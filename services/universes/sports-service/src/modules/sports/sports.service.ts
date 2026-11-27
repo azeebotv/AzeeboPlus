@@ -517,32 +517,37 @@ export class SportsService {
       );
     }
 
-    await Promise.all(
-      correctPredictions.map(async (prediction) => {
-        const wallet = walletMap.get(prediction.userId);
-        if (wallet && rewardPerUser > 0) {
-          await axios
-            .post(
-              `${this.walletServiceBaseUrl}/wallet/credit`,
-              {
-                walletId: wallet.id,
-                amount: rewardPerUser,
-                description: `Correct prediction reward for event ${eventId}`,
-              },
-              { timeout: 10000 }
-            )
-            .catch((error: unknown) => {
-              this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
-            });
-        }
+    // Chunked concurrency: a large winner roster must not open hundreds of
+    // simultaneous wallet-service sockets.
+    const CREDIT_CHUNK_SIZE = 10;
+    for (let i = 0; i < correctPredictions.length; i += CREDIT_CHUNK_SIZE) {
+      await Promise.all(
+        correctPredictions.slice(i, i + CREDIT_CHUNK_SIZE).map(async (prediction) => {
+          const wallet = walletMap.get(prediction.userId);
+          if (wallet && rewardPerUser > 0) {
+            await axios
+              .post(
+                `${this.walletServiceBaseUrl}/wallet/credit`,
+                {
+                  walletId: wallet.id,
+                  amount: rewardPerUser,
+                  description: `Correct prediction reward for event ${eventId}`,
+                },
+                { timeout: 10000 }
+              )
+              .catch((error: unknown) => {
+                this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
+              });
+          }
 
-        await this.trackEvent('prediction_correct', prediction.userId, {
-          predictionId: prediction.id,
-          eventId,
-          reward: rewardPerUser,
-        });
-      })
-    );
+          await this.trackEvent('prediction_correct', prediction.userId, {
+            predictionId: prediction.id,
+            eventId,
+            reward: rewardPerUser,
+          });
+        })
+      );
+    }
 
     return {
       success: true,

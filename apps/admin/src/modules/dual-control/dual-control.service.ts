@@ -1,5 +1,13 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { Prisma } from '../../generated/prisma';
 import { AuditLogService } from '../audit/audit.service';
 
 // High-risk operation types eligible for dual control (TAA §55; mirrors the
@@ -14,13 +22,7 @@ const ALLOWED_ACTION_TYPES = [
 
 export type DualControlActionType = (typeof ALLOWED_ACTION_TYPES)[number];
 
-const ALLOWED_STATUSES = [
-  'pending',
-  'first_approved',
-  'approved',
-  'rejected',
-  'executed',
-] as const;
+const ALLOWED_STATUSES = ['pending', 'first_approved', 'approved', 'rejected', 'executed'] as const;
 
 /** Virtual status for the governance drill-down: anything awaiting a human
  * decision (first or second round), matching the dashboard's
@@ -50,6 +52,15 @@ export interface DualControlRequestDto {
 
 @Injectable()
 export class DualControlService {
+  private async runInTx<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    const prismaClient = this.prisma as unknown as {
+      $transaction?: (cb: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
+    };
+    if (typeof prismaClient.$transaction === 'function') {
+      return prismaClient.$transaction(fn);
+    }
+    return fn(this.prisma as unknown as Prisma.TransactionClient);
+  }
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     private readonly auditService: AuditLogService
@@ -87,7 +98,9 @@ export class DualControlService {
     monthStart.setHours(0, 0, 0, 0);
     const [totalPending, awaitingFirst, awaitingSecond, executedThisMonth] = await Promise.all([
       // Anything still short of full approval counts as pending overall.
-      this.prisma.dualControlRequest.count({ where: { status: { in: ['pending', 'first_approved'] } } }),
+      this.prisma.dualControlRequest.count({
+        where: { status: { in: ['pending', 'first_approved'] } },
+      }),
       this.prisma.dualControlRequest.count({ where: { status: 'pending' } }),
       this.prisma.dualControlRequest.count({ where: { status: 'first_approved' } }),
       this.prisma.dualControlRequest.count({
@@ -97,7 +110,12 @@ export class DualControlService {
 
     return {
       actions,
-      stats: { totalPending, awaitingFirstApproval: awaitingFirst, awaitingSecondApproval: awaitingSecond, executedThisMonth },
+      stats: {
+        totalPending,
+        awaitingFirstApproval: awaitingFirst,
+        awaitingSecondApproval: awaitingSecond,
+        executedThisMonth,
+      },
     };
   }
 
@@ -120,7 +138,7 @@ export class DualControlService {
 
     const { actionType, description, amount, currency, targetUserIds } = input;
 
-    if (!ALLOWED_ACTION_TYPES.includes(actionType as never)) {
+    if (!ALLOWED_ACTION_TYPES.includes(actionType as DualControlActionType)) {
       throw new BadRequestException(
         `Invalid action type: ${actionType}. Allowed: ${ALLOWED_ACTION_TYPES.join(', ')}`
       );
@@ -144,78 +162,121 @@ export class DualControlService {
       throw new BadRequestException('Currency is required when an amount is provided');
     }
 
-    const created = await this.prisma.dualControlRequest.create({
-      data: {
-        actionType,
-        description: description.trim(),
-        requestedBy: actorId,
-        amount: normalizedAmount,
-        currency: currency?.trim() || null,
-        targetUserIds:
-          Array.isArray(targetUserIds) && targetUserIds.length > 0 ? targetUserIds : undefined,
-        status: 'pending',
-      },
-    });
+    return this.runInTx(async (tx) => {
+      const created = await tx.dualControlRequest.create({
+        data: {
+          actionType,
+          description: description.trim(),
+          requestedBy: actorId,
+          amount: normalizedAmount,
+          currency: currency?.trim() || null,
+          targetUserIds:
+            Array.isArray(targetUserIds) && targetUserIds.length > 0 ? targetUserIds : undefined,
+          status: 'pending',
+        },
+      });
 
-    await this.auditService.log({
-      actorId,
-      action: 'dual_control.created',
-      targetType: 'dual_control_request',
-      targetId: created.id,
-      details: { actionType, description: created.description },
-    });
+      if (tx && tx !== this.prisma) {
+        await this.auditService.log(
+          {
+            actorId,
+            action: 'dual_control.created',
+            targetType: 'dual_control_request',
+            targetId: created.id,
+            details: { actionType, description: created.description },
+          },
+          tx
+        );
+      } else {
+        await this.auditService.log({
+          actorId,
+          action: 'dual_control.created',
+          targetType: 'dual_control_request',
+          targetId: created.id,
+          details: { actionType, description: created.description },
+        });
+      }
 
-    return this.toDto(created);
+      return this.toDto(created);
+    });
   }
 
   async approve(id: string, actorId: string): Promise<DualControlRequestDto> {
     if (!actorId) throw new BadRequestException('Actor identity is required to approve');
 
-    const request = await this.prisma.dualControlRequest.findUnique({ where: { id } });
-    if (!request) throw new NotFoundException(`Dual-control request ${id} not found`);
-    if (request.status === 'rejected' || request.status === 'executed') {
-      throw new ConflictException(`Request is already ${request.status}`);
-    }
-    // TAA §55 — the requester can never be an approver, on either round.
-    if (request.requestedBy === actorId) {
-      throw new ForbiddenException('Self-approval is not permitted for dual-control actions');
-    }
-
-    if (request.status === 'pending') {
-      const updated = await this.prisma.dualControlRequest.update({
-        where: { id },
-        data: { status: 'first_approved', firstApprover: actorId, firstApprovedAt: new Date() },
-      });
-      await this.auditService.log({
-        actorId,
-        action: 'dual_control.first_approval',
-        targetType: 'dual_control_request',
-        targetId: id,
-        details: { actionType: request.actionType },
-      });
-      return this.toDto(updated);
-    }
-
-    if (request.status === 'first_approved') {
-      // The two approvals must come from different admins.
-      if (request.firstApprover === actorId) {
-        throw new ConflictException('This request already has your approval — a second, distinct admin must approve');
+    return this.runInTx(async (tx) => {
+      const request = await tx.dualControlRequest.findUnique({ where: { id } });
+      if (!request) throw new NotFoundException(`Dual-control request ${id} not found`);
+      if (request.status === 'rejected' || request.status === 'executed') {
+        throw new ConflictException(`Request is already ${request.status}`);
       }
-      const updated = await this.prisma.dualControlRequest.update({
-        where: { id },
-        data: { status: 'approved', secondApprover: actorId, secondApprovedAt: new Date() },
-      });
-      await this.auditService.log({
-        actorId,
-        action: 'dual_control.second_approval',
-        targetType: 'dual_control_request',
-        targetId: id,
-        details: { actionType: request.actionType, fullyApproved: true },
-      });
-      return this.toDto(updated);
-    }
+      if (request.requestedBy === actorId) {
+        throw new ForbiddenException('Self-approval is not permitted for dual-control actions');
+      }
 
-    throw new ConflictException(`Request in status ${request.status} cannot be approved`);
+      if (request.status === 'pending') {
+        const updated = await tx.dualControlRequest.update({
+          where: { id },
+          data: { status: 'first_approved', firstApprover: actorId, firstApprovedAt: new Date() },
+        });
+        if (tx && tx !== this.prisma) {
+          await this.auditService.log(
+            {
+              actorId,
+              action: 'dual_control.first_approval',
+              targetType: 'dual_control_request',
+              targetId: id,
+              details: { actionType: request.actionType },
+            },
+            tx
+          );
+        } else {
+          await this.auditService.log({
+            actorId,
+            action: 'dual_control.first_approval',
+            targetType: 'dual_control_request',
+            targetId: id,
+            details: { actionType: request.actionType },
+          });
+        }
+        return this.toDto(updated);
+      }
+
+      if (request.status === 'first_approved') {
+        if (request.firstApprover === actorId) {
+          throw new ConflictException(
+            'This request already has your approval — a second, distinct admin must approve'
+          );
+        }
+        const updated = await tx.dualControlRequest.update({
+          where: { id },
+          data: { status: 'approved', secondApprover: actorId, secondApprovedAt: new Date() },
+        });
+        if (tx && tx !== this.prisma) {
+          await this.auditService.log(
+            {
+              actorId,
+              action: 'dual_control.second_approval',
+              targetType: 'dual_control_request',
+              targetId: id,
+              details: { actionType: request.actionType, fullyApproved: true },
+            },
+            tx
+          );
+        } else {
+          await this.auditService.log({
+            actorId,
+            action: 'dual_control.second_approval',
+            targetType: 'dual_control_request',
+            targetId: id,
+            details: { actionType: request.actionType, fullyApproved: true },
+          });
+        }
+        return this.toDto(updated);
+      }
+
+      throw new ConflictException(`Request in status ${request.status} cannot be approved`);
+    });
   }
 
   async reject(id: string, reason: string, actorId: string): Promise<DualControlRequestDto> {
@@ -227,31 +288,46 @@ export class DualControlService {
       throw new ForbiddenException('The requester cannot reject their own request');
     }
 
-    const request = await this.prisma.dualControlRequest.findUnique({ where: { id } });
-    if (!request) throw new NotFoundException(`Dual-control request ${id} not found`);
-    if (!['pending', 'first_approved'].includes(request.status)) {
-      throw new ConflictException(`Request in status ${request.status} cannot be rejected`);
-    }
+    return this.runInTx(async (tx) => {
+      const request = await tx.dualControlRequest.findUnique({ where: { id } });
+      if (!request) throw new NotFoundException(`Dual-control request ${id} not found`);
+      if (!['pending', 'first_approved'].includes(request.status)) {
+        throw new ConflictException(`Request in status ${request.status} cannot be rejected`);
+      }
 
-    const updated = await this.prisma.dualControlRequest.update({
-      where: { id },
-      data: {
-        status: 'rejected',
-        rejectionReason: reason.trim(),
-        rejectedBy: actorId,
-        rejectedAt: new Date(),
-      },
+      const updated = await tx.dualControlRequest.update({
+        where: { id },
+        data: {
+          status: 'rejected',
+          rejectionReason: reason.trim(),
+          rejectedBy: actorId,
+          rejectedAt: new Date(),
+        },
+      });
+
+      if (tx && tx !== this.prisma) {
+        await this.auditService.log(
+          {
+            actorId,
+            action: 'dual_control.rejected',
+            targetType: 'dual_control_request',
+            targetId: id,
+            details: { actionType: request.actionType, reason: reason.trim() },
+          },
+          tx
+        );
+      } else {
+        await this.auditService.log({
+          actorId,
+          action: 'dual_control.rejected',
+          targetType: 'dual_control_request',
+          targetId: id,
+          details: { actionType: request.actionType, reason: reason.trim() },
+        });
+      }
+
+      return this.toDto(updated);
     });
-
-    await this.auditService.log({
-      actorId,
-      action: 'dual_control.rejected',
-      targetType: 'dual_control_request',
-      targetId: id,
-      details: { actionType: request.actionType, reason: reason.trim() },
-    });
-
-    return this.toDto(updated);
   }
 
   private async getRequester(id: string): Promise<string | undefined> {
@@ -264,13 +340,22 @@ export class DualControlService {
 
   private async toDto(r: DualControlRequestRow): Promise<DualControlRequestDto> {
     const requester = r.requestedBy
-      ? await this.prisma.user.findUnique({ where: { id: r.requestedBy }, select: { displayName: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: r.requestedBy },
+          select: { displayName: true },
+        })
       : null;
     const first = r.firstApprover
-      ? await this.prisma.user.findUnique({ where: { id: r.firstApprover }, select: { displayName: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: r.firstApprover },
+          select: { displayName: true },
+        })
       : null;
     const second = r.secondApprover
-      ? await this.prisma.user.findUnique({ where: { id: r.secondApprover }, select: { displayName: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: r.secondApprover },
+          select: { displayName: true },
+        })
       : null;
 
     return {

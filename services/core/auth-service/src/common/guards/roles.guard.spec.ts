@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RolesGuard } from './roles.guard.js';
+import { RolesGuard } from '@azeebo/security';
 import { Reflector } from '@nestjs/core';
 import { ForbiddenException } from '@nestjs/common';
 import { ExecutionContext } from '@nestjs/common/interfaces';

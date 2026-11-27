@@ -48,7 +48,7 @@ function EarningDetailContent() {
 
   if (query.isLoading) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.15)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
         <div className="max-w-xl mx-auto py-20 px-4 space-y-6">
           <Skeleton className="h-10 w-40 rounded-xl" />
           <Skeleton className="h-64 w-full rounded-3xl" />
@@ -59,7 +59,7 @@ function EarningDetailContent() {
 
   if (query.error || !earning) {
     return (
-      <PageShell glowColor="rgba(232,66,10,0.12)">
+      <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 12%, transparent)">
         <div className="max-w-md mx-auto py-20 px-4">
           <ErrorState
             title="Earning record not found"
@@ -72,7 +72,7 @@ function EarningDetailContent() {
   }
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Settlement Ledger"
         title="Transaction Receipt"
@@ -83,29 +83,29 @@ function EarningDetailContent() {
         <button
           type="button"
           onClick={() => router.push('/creator/earnings')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Earnings Overview
         </button>
 
         <ScrollReveal>
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 space-y-6">
-            <div className="text-center pb-6 border-b border-white/10">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-3">
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border space-y-6">
+            <div className="text-center pb-6 border-b border-az-glass-border">
+              <div className="w-12 h-12 rounded-2xl bg-az-success-500/15 border border-az-success-500/30 text-az-success-400 flex items-center justify-center mx-auto mb-3">
                 <DollarSign className="w-6 h-6" />
               </div>
-              <p className="text-xs font-mono uppercase tracking-wider text-white/40 mb-1">
+              <p className="text-xs font-mono uppercase tracking-wider text-az-ink/40 mb-1">
                 {earning.type} • {earning.source}
               </p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="az-headline text-3xl sm:text-4xl font-extrabold text-az-ink">
                 ₦{earning.amount.toLocaleString()}
               </h2>
               <span
                 className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase border ${
                   earning.status === 'completed'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    ? 'bg-az-success-500/10 text-az-success-400 border-az-success-500/20'
+                    : 'bg-az-warning-500/10 text-az-warning-400 border-az-warning-500/20'
                 }`}
               >
                 {earning.status === 'completed' ? (
@@ -117,7 +117,7 @@ function EarningDetailContent() {
               </span>
             </div>
 
-            <div className="space-y-3 divide-y divide-white/5 text-xs">
+            <div className="space-y-3 divide-y divide-az-ink/5 text-xs">
               <InfoRow label="Description" value={earning.description} />
               <InfoRow label="Source Entity" value={earning.source} />
               <InfoRow
@@ -128,14 +128,14 @@ function EarningDetailContent() {
             </div>
 
             {earning.metadata && Object.keys(earning.metadata).length > 0 && (
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/40 block">
+              <div className="p-4 rounded-xl bg-az-ink/[0.02] border border-az-ink/5 space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-az-ink/40 block">
                   Attribution Metadata:
                 </span>
                 {Object.entries(earning.metadata).map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between text-xs">
-                    <span className="text-white/50">{k}:</span>
-                    <span className="text-white font-mono">{String(v)}</span>
+                    <span className="text-az-ink/50">{k}:</span>
+                    <span className="text-az-ink font-mono">{String(v)}</span>
                   </div>
                 ))}
               </div>
@@ -150,8 +150,8 @@ function EarningDetailContent() {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center pt-3 first:pt-0">
-      <span className="text-white/40">{label}</span>
-      <span className="text-white font-semibold text-right max-w-[60%] truncate">{value}</span>
+      <span className="text-az-ink/40">{label}</span>
+      <span className="text-az-ink font-semibold text-right max-w-[60%] truncate">{value}</span>
     </div>
   );
 }
@@ -162,8 +162,8 @@ export default function EarningDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

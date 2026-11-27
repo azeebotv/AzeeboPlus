@@ -443,4 +443,141 @@ export class KnowledgeService {
     // Recompute
     return this.computeKnowledgeProjection(userId);
   }
+
+  // ==========================================================================
+  // Reader-facing aggregates (AOU hub / What-You-Know / Locked screens)
+  // ==========================================================================
+
+  private static readonly SPOILER_ORDER = ['none', 'mild', 'major', 'severe'];
+
+  private static readonly TYPE_ICONS: Record<string, string> = {
+    fact: '📜',
+    character: '👤',
+    plot_point: '🎭',
+    location: '🗺️',
+    timeline: '⏳',
+  };
+
+  /** Aggregate counts for the AOU hub progress card. */
+  async getKnowledgeSummary(userId?: string) {
+    const totalUnits = await this.prisma.knowledgeUnit.count();
+    let unlockedUnits = 0;
+    if (userId) {
+      unlockedUnits = await this.prisma.userKnowledgeGrant.count({ where: { userId } });
+    }
+    return {
+      totalUnits,
+      unlockedUnits,
+      progress: totalUnits > 0 ? Math.round((unlockedUnits / totalUnits) * 100) : 0,
+    };
+  }
+
+  /**
+   * Per-unit view for the "What You Know" screen. Without an authenticated
+   * user every unit reads as locked (knowledge-service has no anonymous
+   * session today); with a userId, grants mark unlocked units.
+   */
+  async getWhatYouKnow(userId?: string) {
+    const units: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      knowledgeType: string;
+    }> = await this.prisma.knowledgeUnit.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      select: { id: true, title: true, description: true, knowledgeType: true },
+    });
+    const grants = new Map<string, Date>();
+    if (userId) {
+      const rows = await this.prisma.userKnowledgeGrant.findMany({
+        where: { userId },
+        select: { knowledgeUnitId: true, grantedAt: true },
+      });
+      for (const g of rows) grants.set(g.knowledgeUnitId, g.grantedAt);
+    }
+    return {
+      units: units.map((u) => ({
+        id: u.id,
+        title: u.title,
+        category: u.knowledgeType,
+        description: u.description ?? undefined,
+        unlocked: grants.has(u.id),
+        unlockedAt: grants.get(u.id)?.toISOString(),
+      })),
+      totalUnlocked: grants.size,
+      totalUnits: units.length,
+    };
+  }
+
+  /**
+   * Locked-knowledge view for the AOU "Locked" screen. Unlock requirements
+   * are derived from spoiler level (level) and prerequisite dependencies
+   * (missions) — the schema has no dedicated gating table.
+   */
+  async getLockedKnowledge(userId?: string) {
+    const units: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      knowledgeType: string;
+      spoilerLevel: string;
+    }> = await this.prisma.knowledgeUnit.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        knowledgeType: true,
+        spoilerLevel: true,
+      },
+    });
+    const deps: Array<{ dependentUnitId: string; dependsOnUnitId: string }> =
+      await this.prisma.knowledgeDependency.findMany({
+        where: { dependencyType: 'prerequisite' },
+        select: { dependentUnitId: true, dependsOnUnitId: true },
+      });
+    const prereqByUnit = new Map<string, string[]>();
+    for (const d of deps) {
+      const list = prereqByUnit.get(d.dependentUnitId) ?? [];
+      list.push(d.dependsOnUnitId);
+      prereqByUnit.set(d.dependentUnitId, list);
+    }
+    const titleById = new Map<string, string>();
+    const prereqIds = [...new Set(deps.map((d) => d.dependsOnUnitId))];
+    if (prereqIds.length > 0) {
+      const rows = await this.prisma.knowledgeUnit.findMany({
+        where: { id: { in: prereqIds } },
+        select: { id: true, title: true },
+      });
+      for (const r of rows) titleById.set(r.id, r.title);
+    }
+    const granted = new Set<string>();
+    if (userId) {
+      const rows = await this.prisma.userKnowledgeGrant.findMany({
+        where: { userId },
+        select: { knowledgeUnitId: true },
+      });
+      for (const g of rows) granted.add(g.knowledgeUnitId);
+    }
+    return units.map((u) => {
+      const prereqs = prereqByUnit.get(u.id) ?? [];
+      const firstPrereqTitle = prereqs.length > 0 ? titleById.get(prereqs[0]) : undefined;
+      return {
+        id: u.id,
+        title: u.title,
+        description: u.description ?? '',
+        category: u.knowledgeType,
+        requiredLevel: KnowledgeService.SPOILER_ORDER.indexOf(u.spoilerLevel) + 1,
+        requiredMissions: prereqs.length,
+        isUnlocked: granted.has(u.id),
+        unlockHint:
+          prereqs.length > 0 && firstPrereqTitle
+            ? `Requires knowing: ${firstPrereqTitle}`
+            : 'Unlock by exploring more of the story',
+        icon: KnowledgeService.TYPE_ICONS[u.knowledgeType] ?? '📖',
+      };
+    });
+  }
 }

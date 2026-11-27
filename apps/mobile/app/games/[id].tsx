@@ -79,7 +79,9 @@ export default function GameplayPage() {
 
   if (!game) {
     return (
-      <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />
+      <View accessibilityLabel="Games Screen" style={styles.container}>
+        <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />
+      </View>
     );
   }
 
@@ -87,7 +89,7 @@ export default function GameplayPage() {
     return (
       <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
-          <TouchableOpacity onPress={handlePause}>
+          <TouchableOpacity accessibilityRole="button" onPress={handlePause}>
             <Text style={styles.pauseIcon}>⏸️</Text>
           </TouchableOpacity>
           <View style={styles.gameStats}>
@@ -114,7 +116,7 @@ export default function GameplayPage() {
                 <Text style={styles.scoreButtonText}>+500</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.gameOverButton} onPress={handleGameOver}>
+            <TouchableOpacity accessibilityRole="button" style={styles.gameOverButton} onPress={handleGameOver}>
               <Text style={styles.gameOverText}>End Game</Text>
             </TouchableOpacity>
           </View>
@@ -122,25 +124,25 @@ export default function GameplayPage() {
 
         <View style={styles.controlsArea}>
           <View style={styles.dpad}>
-            <TouchableOpacity style={styles.dpadButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
               <Text style={styles.dpadIcon}>⬆️</Text>
             </TouchableOpacity>
             <View style={styles.dpadRow}>
-              <TouchableOpacity style={styles.dpadButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
                 <Text style={styles.dpadIcon}>⬅️</Text>
               </TouchableOpacity>
               <View style={styles.dpadCenter} />
-              <TouchableOpacity style={styles.dpadButton}>
+              <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
                 <Text style={styles.dpadIcon}>➡️</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.dpadButton}>
+            <TouchableOpacity accessibilityRole="button" style={styles.dpadButton}>
               <Text style={styles.dpadIcon}>⬇️</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.actionButtons}>
             {controls.slice(2).map((control) => (
-              <TouchableOpacity key={control.id} style={styles.actionButton}>
+              <TouchableOpacity accessibilityRole="button" key={control.id} style={styles.actionButton}>
                 <Text style={styles.actionIcon}>{control.icon}</Text>
               </TouchableOpacity>
             ))}
@@ -153,7 +155,7 @@ export default function GameplayPage() {
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
@@ -166,7 +168,7 @@ export default function GameplayPage() {
         <View style={styles.gamePreview}>
           <View style={styles.previewPlaceholder}>
             <Text style={styles.previewEmoji}>{game.emoji || '🎮'}</Text>
-            <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
+            <TouchableOpacity accessibilityRole="button" style={styles.playButton} onPress={handlePlay}>
               <Text style={styles.playIcon}>▶</Text>
               <Text style={styles.playText}>Play Now</Text>
             </TouchableOpacity>

@@ -29,7 +29,7 @@ export default function LiveEventsScreen() {
     queryKey: ['live', 'events', filter],
     queryFn: async () => {
       const params = filter !== 'all' ? `?status=${filter}` : '';
-      const res = await apiClient.get<LiveEvent[]>(`/v1/live/events${params}`);
+      const res = await apiClient.get<LiveEvent[]>(`/api/v1/live-events${params}`);
       return Array.isArray(res) ? res : [];
     },
     staleTime: 30_000,
@@ -45,7 +45,7 @@ export default function LiveEventsScreen() {
       style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Live Events</Text>

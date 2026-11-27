@@ -64,6 +64,26 @@ describe('configureCors', () => {
     expect(config.allowedHeaders).toContain('X-Request-ID');
   });
 
+  /**
+   * The web client sends its anonymous rollout id as `x-anonymous-id` on
+   * GET /feature-flags/bootstrap. A header missing from the allow-list makes the
+   * browser block the preflight, so the request never reaches the gateway and the
+   * flag bootstrap dies with a CORS error instead of degrading. Preflight
+   * matching is case-insensitive, which is what this asserts against.
+   */
+  it('allows every header the public web client sends', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    configureCors(mockApp as any, {
+      allowedOrigins: ['https://azeeboplus.com'],
+    });
+
+    const config = mockApp.enableCors.mock.calls[0][0];
+    const allowed = config.allowedHeaders.map((header: string) => header.toLowerCase());
+    for (const sent of ['content-type', 'x-anonymous-id']) {
+      expect(allowed).toContain(sent);
+    }
+  });
+
   it('should configure exposed headers', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configureCors(mockApp as any, {
@@ -102,10 +122,26 @@ describe('configureCors', () => {
       expect(callback).toHaveBeenCalledWith(null, false);
     });
 
-    it('should allow missing origin for server-to-server requests', () => {
+    it('should deny CORS headers for missing origin by default', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       configureCors(mockApp as any, {
         allowedOrigins: ['https://azeeboplus.com'],
+      });
+
+      const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
+      const callback = jest.fn();
+      originCallback(undefined, callback);
+      // Origin-less responses get no Access-Control-* treatment: browsers
+      // always send Origin on CORS-eligible requests, and same-origin or
+      // server-to-server traffic never reads these headers.
+      expect(callback).toHaveBeenCalledWith(null, false);
+    });
+
+    it('should emit CORS headers for missing origin when explicitly opted in', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      configureCors(mockApp as any, {
+        allowedOrigins: ['https://azeeboplus.com'],
+        allowMissingOrigin: true,
       });
 
       const originCallback = mockApp.enableCors.mock.calls[0][0].origin;

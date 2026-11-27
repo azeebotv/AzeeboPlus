@@ -1,11 +1,34 @@
 import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
 import { Readable } from 'stream';
+
+/**
+ * AWS SDK v3 reports a missing key as `NotFound`/`NoSuchKey`, with the status on
+ * `$metadata.httpStatusCode` — a shape `mapAndThrow` does not read, so without
+ * this test an absent object and an unreachable bucket look identical.
+ */
+function isMissingObject(error: unknown): boolean {
+  const shaped = error as {
+    name?: string;
+    Code?: string;
+    $metadata?: { httpStatusCode?: number };
+  };
+  return (
+    shaped?.name === 'NotFound' ||
+    shaped?.Code === 'NoSuchKey' ||
+    shaped?.$metadata?.httpStatusCode === 404
+  );
+}
 
 @Injectable()
 export class MediaService {
@@ -132,9 +155,19 @@ export class MediaService {
   async statObject(key: string): Promise<{ size: number; contentType?: string }> {
     if (!key) throw new NotFoundException('Object key not provided');
     try {
-      const head = await this.s3Client.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }));
+      const head = await this.s3Client.send(
+        new HeadObjectCommand({ Bucket: this.bucketName, Key: key })
+      );
       return { size: head.ContentLength ?? 0, contentType: head.ContentType };
     } catch (error) {
+      // allowed-fabricated-4xx: a key that is not there and a bucket that cannot
+      // be reached arrive through the same catch, and the mapper below reads
+      // neither — it can only call the missing object a 500. `isMissingObject`
+      // inspects the caught error's own code before this 404 is chosen, and every
+      // other cause still falls through to `mapAndThrow`.
+      if (isMissingObject(error)) {
+        throw new NotFoundException(`Object ${key} is not in storage`);
+      }
       this.logger.error(`Error stating object ${key}: ${(error as Error).message}`);
       mapAndThrow(error, 'stating uploaded object');
     }

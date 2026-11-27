@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '@azeebo/react-data';
 import { logger } from '@azeebo/react-data/utils/logger';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Contestant {
   id: string;
@@ -125,9 +126,9 @@ export default function ContestantProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Contestant Screen" style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#E8420A" />
+          <ActivityIndicator size="large" color={brand.flame} />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
@@ -139,7 +140,7 @@ export default function ContestantProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Contestant not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -152,7 +153,7 @@ export default function ContestantProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.coverContainer}>
           <Image source={{ uri: contestant.coverImage }} style={styles.coverImage} />
-          <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButtonAbsolute} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
         </View>
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 8,
   },
   backButtonText: {
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   statLabel: {
     fontSize: 12,
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

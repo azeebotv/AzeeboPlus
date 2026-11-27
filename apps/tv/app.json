@@ -6,19 +6,11 @@
     "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "scheme": "azeebo-tv",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B090E"
-    },
     "ios": {
       "bundleIdentifier": "com.azeebo.plus.tv",
       "infoPlist": {
-        "CFBundleURLSchemes": [
-          "azeebo-tv"
-        ],
+        "CFBundleURLSchemes": ["azeebo-tv"],
         "UIRequiresFullScreen": true,
         "UIStatusBarHidden": true
       }
@@ -38,10 +30,7 @@
               "scheme": "azeebo-tv"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
@@ -56,7 +45,18 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-video",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B090E"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

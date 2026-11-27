@@ -296,7 +296,11 @@ async function getClient() {
     const mod = await import('@prisma/client');
     PrismaClient = mod.PrismaClient;
   }
-  return new (PrismaClient as new () => {
+  const dbUrl =
+    process.env.LIFESTYLE_DATABASE_URL ||
+    'postgresql://azeebo:azeebo@localhost:5432/azeebo_lifestyle?schema=public';
+  process.env.DATABASE_URL = dbUrl;
+  return new (PrismaClient as new (opts?: unknown) => {
     user: {
       upsert: (args: unknown) => Promise<{ id: string }>;
     };
@@ -305,7 +309,7 @@ async function getClient() {
       count: (args?: unknown) => Promise<number>;
     };
     $disconnect: () => Promise<void>;
-  })();
+  })({ datasources: { db: { url: dbUrl } } });
 }
 
 export async function seedLifestyleService(dryRun = false): Promise<number> {

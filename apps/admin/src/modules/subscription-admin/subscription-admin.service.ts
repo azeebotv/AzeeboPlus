@@ -1,4 +1,10 @@
-import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { upstreamAuthContext } from '../../common/upstream-auth.middleware';
 
@@ -37,6 +43,25 @@ interface UpstreamPlan {
 }
 
 /**
+ * Promo codes are kept in `system_settings.value`, an untyped JSON column, so
+ * this is the only shape guarantee they have. A `type` rather than an
+ * `interface` because Prisma's JSON input types are index-signature shaped and
+ * interfaces do not get an implicit one.
+ */
+type PromoCode = {
+  id: string;
+  code: string;
+  discountType: 'percent' | 'flat';
+  discountValue: number;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt: string | null;
+  status: 'active' | 'expired';
+  applicablePlanIds: string[];
+  createdAt: string;
+};
+
+/**
  * Admin subscriptions — a live proxy to subscription-service's real admin
  * endpoints (its DB is the source of truth users actually subscribe against).
  * The previous implementation read a shadow plan store in system_settings and
@@ -72,13 +97,23 @@ export class SubscriptionAdminService {
   }
 
   private async upstream<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.upstreamBase}${path}`, {
-      ...init,
-      headers: { ...this.upstreamHeaders(), ...(init?.headers || {}) },
-    });
-    const body = (await res.json().catch(() => null)) as
-      | { success?: boolean; data?: T; message?: string }
-      | null;
+    let res: Response;
+    try {
+      res = await fetch(`${this.upstreamBase}${path}`, {
+        ...init,
+        headers: { ...this.upstreamHeaders(), ...(init?.headers || {}) },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`subscription-service upstream fetch failed for ${path}: ${message}`);
+      throw new ServiceUnavailableException(`subscription-service unavailable: ${message}`);
+    }
+
+    const body = (await res.json().catch(() => null)) as {
+      success?: boolean;
+      data?: T;
+      message?: string;
+    } | null;
     if (!res.ok || !body) {
       // Upstream rate limits are protective, not failures — surface them as
       // such instead of an opaque 502 (the delete route allows 5/min).
@@ -168,23 +203,36 @@ export class SubscriptionAdminService {
     const page = Number(query.page || 1);
     const limit = Number(query.limit || 15);
 
-    const upstreamPlans = await this.upstream<UpstreamPlan[]>('/plans');
-    let plans = upstreamPlans.map((p) => this.mapPlan(p));
+    try {
+      const upstreamPlans = await this.upstream<UpstreamPlan[]>('/plans');
+      let plans = upstreamPlans.map((p) => this.mapPlan(p));
 
-    if (query.status) plans = plans.filter((p) => p.status === query.status);
-    if (query.tier) plans = plans.filter((p) => p.tier === query.tier);
+      if (query.status) plans = plans.filter((p) => p.status === query.status);
+      if (query.tier) plans = plans.filter((p) => p.tier === query.tier);
 
-    const total = plans.length;
-    const startIndex = (page - 1) * limit;
-    const paginatedItems = plans.slice(startIndex, startIndex + limit);
+      const total = plans.length;
+      const startIndex = (page - 1) * limit;
+      const paginatedItems = plans.slice(startIndex, startIndex + limit);
 
-    return {
-      items: paginatedItems,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit) || 1,
-    };
+      return {
+        items: paginatedItems,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      };
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Failed to fetch upstream subscription plans: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 1,
+      };
+    }
   }
 
   async getSubscriptionPlanById(id: string) {
@@ -208,7 +256,10 @@ export class SubscriptionAdminService {
         features: Array.isArray(data.features)
           ? data.features.map(String)
           : typeof data.features === 'string'
-            ? (data.features as string).split(',').map((f) => f.trim()).filter(Boolean)
+            ? (data.features as string)
+                .split(',')
+                .map((f) => f.trim())
+                .filter(Boolean)
             : [],
         tier: String(data.tier || 'basic'),
         isActive: data.status ? data.status === 'active' : true,
@@ -229,7 +280,10 @@ export class SubscriptionAdminService {
       payload.features = Array.isArray(data.features)
         ? data.features.map(String)
         : typeof data.features === 'string'
-          ? (data.features as string).split(',').map((f) => f.trim()).filter(Boolean)
+          ? (data.features as string)
+              .split(',')
+              .map((f) => f.trim())
+              .filter(Boolean)
           : [];
     }
     if (data.isActive !== undefined) payload.isActive = data.isActive === true;
@@ -255,14 +309,14 @@ export class SubscriptionAdminService {
 
   // ─── Promo Codes (interim storage in system_settings) ─────────────────────────
 
-  private async readPromoCodes(): Promise<any[]> {
+  private async readPromoCodes(): Promise<PromoCode[]> {
     const key = 'subscription.promo_codes';
     const row = await this.prisma.systemSettings.findUnique({ where: { key } });
     if (!row || !Array.isArray(row.value)) return [];
-    return row.value;
+    return row.value as PromoCode[];
   }
 
-  private async writePromoCodes(codes: any[]): Promise<void> {
+  private async writePromoCodes(codes: PromoCode[]): Promise<void> {
     const key = 'subscription.promo_codes';
     const existing = await this.prisma.systemSettings.findUnique({ where: { key } });
     if (existing) {
@@ -302,7 +356,7 @@ export class SubscriptionAdminService {
       throw new Error(`Promo code "${cleanCode}" already exists`);
     }
 
-    const newCode = {
+    const newCode: PromoCode = {
       id: `promo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       code: cleanCode,
       discountType: data.discountType || 'percent',
@@ -336,4 +390,3 @@ export class SubscriptionAdminService {
     return { success: true };
   }
 }
-

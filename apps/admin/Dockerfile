@@ -6,7 +6,7 @@
 # packages has proven unreliable here (the dist never reaches the runtime
 # stage), so this is a single stage: install, build packages, build the app,
 # all in the final image.
-FROM node:22.16.0-alpine AS app
+FROM node:22.16.0-alpine@sha256:41e4389f3d988d2ed55392df4db1420ad048ae53324a8e2b7c6d19508288107e AS app
 
 WORKDIR /app
 
@@ -14,14 +14,15 @@ LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
 LABEL org.opencontainers.image.description="Azeebo+ Admin Panel"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
-RUN apk add --no-cache tini && \
+RUN apk add --no-cache tini bash && \
     addgroup -g 65532 -S nodejs && \
     adduser -S nodejs -u 65532 && \
     for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json .npmrc ./
-COPY packages ./packages
-COPY apps/admin/package.json ./apps/admin/
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json .npmrc ./
+COPY --chown=nodejs:nodejs packages ./packages
+COPY --chown=nodejs:nodejs scripts/build-package.sh ./scripts/build-package.sh
+COPY --chown=nodejs:nodejs apps/admin/package.json ./apps/admin/
 
 RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
@@ -32,10 +33,10 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 RUN pnpm -r --filter './packages/**' --filter '!@azeebo/test-utils' --filter '!@azeebo/contract-tests' run build
 
 
-COPY apps/admin/src ./apps/admin/src
-COPY apps/admin/client ./apps/admin/client
-COPY apps/admin/tsconfig*.json ./apps/admin/
-COPY apps/admin/prisma ./apps/admin/prisma
+COPY --chown=nodejs:nodejs apps/admin/src ./apps/admin/src
+COPY --chown=nodejs:nodejs apps/admin/client ./apps/admin/client
+COPY --chown=nodejs:nodejs apps/admin/tsconfig*.json ./apps/admin/
+COPY --chown=nodejs:nodejs apps/admin/prisma ./apps/admin/prisma
 
 # The admin build script itself runs `prisma generate` (prebuild), which emits
 # the generated client into apps/admin/src/generated.

@@ -29,6 +29,7 @@ describe('RealityService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
+      groupBy: jest.fn().mockResolvedValue([]),
     },
     prediction: {
       findMany: jest.fn(),
@@ -54,8 +55,14 @@ describe('RealityService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('test-value'),
-            getOrThrow: jest.fn().mockReturnValue('test-value'),
+            get: jest.fn().mockImplementation((key: string) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://localhost:3008';
+              return 'test-value';
+            }),
+            getOrThrow: jest.fn().mockImplementation((key: string) => {
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://localhost:3008';
+              return 'test-value';
+            }),
           },
         },
         {
@@ -216,12 +223,20 @@ describe('RealityService', () => {
       ];
 
       mockPrismaService.contestant.findMany.mockResolvedValue(mockContestants);
+      mockPrismaService.vote.groupBy.mockResolvedValue([
+        { contestantId: 'contestant-1', _sum: { quantity: 100 } },
+      ]);
 
       const result = await service.listContestants('show-1');
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      expect(result.data!.contestants).toEqual(mockContestants);
+      expect(result.data!.contestants).toEqual([
+        {
+          ...mockContestants[0],
+          votes: 100,
+        },
+      ]);
     });
   });
 

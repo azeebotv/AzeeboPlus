@@ -109,8 +109,12 @@ describe('ProxyController response-cache exclusions', () => {
     controller = module.get<ProxyController>(ProxyController);
 
     // All flags on, nothing special: maintenance off, everything else enabled.
+    // The endpoint allowlist flag stays off — these tests exercise cache
+    // exclusions, not endpoint enforcement.
     flagService.isEnabled.mockImplementation((key: string) =>
-      Promise.resolve(key !== gatewayFlags.maintenanceMode)
+      Promise.resolve(
+        key !== gatewayFlags.maintenanceMode && key !== gatewayFlags.endpointEnforcement
+      )
     );
   });
 

@@ -98,7 +98,7 @@ describe('EventsService Integration - Cross-Service Communication', () => {
           useValue: {
             get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
               const config: Record<string, unknown> = {
-                ANALYTICS_SERVICE_URL: 'http://analytics-service:3040',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service:3008',
               };
               return config[key] ?? defaultValue;
             }),

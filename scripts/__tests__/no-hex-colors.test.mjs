@@ -13,13 +13,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { Linter } from 'eslint';
 
 const require = createRequire(import.meta.url);
 const rule = require('../../packages/eslint-rules/no-hex-colors.js');
 
+// Linter resolves a probe filename against its basePath (the repo root), so
+// path-based rule options can only be exercised with real absolute paths
+// inside this repo — an invented '/repo/…' prefix silently matches nothing.
+const REPO = fileURLToPath(new URL('../..', import.meta.url)).replace(/\/$/, '');
+
 /** Lint `code` as a tsx file with the rule at the given severity/options. */
-function lint(code, { severity = 'error', options = {}, parser = null } = {}) {
+function lint(
+  code,
+  { severity = 'error', options = {}, parser = null, filename = 'probe.tsx' } = {}
+) {
   const linter = new Linter({ configType: 'flat' });
   return linter.verify(
     code,
@@ -36,8 +45,17 @@ function lint(code, { severity = 'error', options = {}, parser = null } = {}) {
         rules: { 'azeebo-custom/no-hex-colors': [severity, options] },
       },
     ],
-    'probe.tsx',
-  );
+    filename,
+  ).map((msg) => {
+    // A probe that matches no config yields a ruleId-less "No matching
+    // configuration found" notice, which would masquerade as one report.
+    assert.equal(
+      msg.ruleId,
+      'azeebo-custom/no-hex-colors',
+      `probe ${filename} was not linted by the rule: ${msg.message}`,
+    );
+    return msg;
+  });
 }
 
 test('flags a hex in StyleSheet.create exactly once (dedupe regression)', () => {
@@ -114,5 +132,77 @@ test('reports EVERY occurrence of a hex, under the typescript-eslint parser (per
     messages.length,
     3,
     `every occurrence must report independently; got ${messages.length}`,
+  );
+});
+
+/* ── retired brand accents ─────────────────────────────────────────
+ * The old #E8420A/#CC1C1C pair is still in the shared allowList for the
+ * internal consoles, so the ban has to be checked BEFORE the allow-list and
+ * keyed on the absolute filename — the ratchet runs ESLint from each
+ * workspace directory, where a repo-relative config override never matches.
+ */
+const RETIRED = {
+  retired: ['#E8420A', '#CC1C1C', '#FF6B35'],
+  retiredExemptPaths: ['/apps/admin/', '/apps/creator/'],
+  allowList: ['#E8420A', '#FFFFFF'],
+};
+
+test('reports a retired accent even though the allowList tolerates it', () => {
+  const messages = lint(
+    `const styles = StyleSheet.create({ cta: { backgroundColor: '#E8420A' } });`,
+    { options: RETIRED, filename: `${REPO}/apps/mobile/app/(tabs)/home.tsx` }
+  );
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].messageId, 'retiredBrandAccent');
+});
+
+test('exempts a console file by path fragment', () => {
+  const messages = lint(
+    `const styles = StyleSheet.create({ cta: { backgroundColor: '#E8420A' } });`,
+    { options: RETIRED, filename: `${REPO}/apps/admin/client/src/routes/users.tsx` }
+  );
+  assert.deepEqual(messages, []);
+});
+
+test('matches a retired accent case-insensitively and spares allowed colors', () => {
+  const lower = lint(
+    `const styles = StyleSheet.create({ cta: { color: '#e8420a' } });`,
+    { options: RETIRED, filename: `${REPO}/apps/web/src/ui/Badge.tsx` }
+  );
+  assert.equal(lower.length, 1);
+  assert.equal(lower[0].messageId, 'retiredBrandAccent');
+  const allowed = lint(
+    `const styles = StyleSheet.create({ cta: { color: '#FFFFFF' } });`,
+    { options: RETIRED, filename: `${REPO}/apps/web/src/ui/Badge.tsx` }
+  );
+  assert.deepEqual(allowed, []);
+});
+
+test('reports every retired hex in one gradient string, deduped per site', () => {
+  const messages = lint(
+    `const styles = StyleSheet.create({ cta: { background: '#E8420A to #CC1C1C' } });`,
+    { options: RETIRED, filename: `${REPO}/apps/mobile/src/ui/hero.tsx` }
+  );
+  assert.equal(messages.length, 2);
+});
+
+test('the real flat config hands the rule the retired-accent campaign options', async () => {
+  // The unit cases above feed options by hand; this pins that eslint.config.js
+  // actually passes them, so the ban cannot rot into an unconfigured option.
+  const { ESLint } = await import('eslint');
+  const eslint = new ESLint({ cwd: REPO });
+  const file = await eslint.calculateConfigForFile('apps/mobile/src/ui/hero.tsx');
+  const entry = file.rules['azeebo-custom/no-hex-colors'];
+  assert.ok(Array.isArray(entry), 'rule must be configured with options');
+  assert.equal(entry[0], 2, 'the ban is a hard error on public surfaces');
+  const [, options] = entry;
+  assert.deepEqual(options.retired, ['#E8420A', '#CC1C1C', '#FF6B35']);
+  assert.ok(
+    options.retiredExemptPaths.includes('/apps/admin/'),
+    'internal consoles stay exempt while they migrate',
+  );
+  assert.ok(
+    !options.retiredExemptPaths.includes('/packages/shared-services/'),
+    'shared-services is off the retired accent, so its exemption was removed',
   );
 });

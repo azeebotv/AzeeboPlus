@@ -6,6 +6,7 @@ export default function MaintenanceScreen() {
 
   return (
     <View
+      accessibilityLabel="Maintenance Screen"
       style={[
         styles.container,
         { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },

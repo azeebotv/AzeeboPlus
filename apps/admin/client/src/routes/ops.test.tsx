@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TransportFlip as BackendTransportFlip } from '../../../src/modules/ops/service-probe';
 import OpsPage from './ops';
@@ -11,7 +11,6 @@ import type {
   PgbouncerHealth,
   OpsServicesSnapshot,
 } from '@/lib/api/admin';
-
 /**
  * Render tests for the Ops Health page's transport-mismatch warning banner.
  *
@@ -72,6 +71,7 @@ const baseStatus: OpsStatus = {
 const baseSnapshot = (flips: unknown[]): OpsServicesSnapshot => ({
   services: [{ name: 'auth-service', port: 3000, status: 'healthy', latencyMs: 5, dbStatus: 'up' }],
   transportFlips: flips as OpsServicesSnapshot['transportFlips'],
+  transportStore: { mode: 'redis', detail: 'Fleet-wide Redis baseline', redisDb: 1 },
   checkedAt: new Date().toISOString(),
 });
 
@@ -202,6 +202,7 @@ describe('Ops page transport-flip trend card', () => {
     stubWithTrend({
       windowDays: 14,
       rows: [trendRow, { ...trendRow, service: 'auth-service', flips: 1, familyFlips: 0 }],
+      events: [],
       servicesWithFlips: 2,
       totalFlips: 4,
       totalFamilyFlips: 1,
@@ -227,6 +228,7 @@ describe('Ops page transport-flip trend card', () => {
       rows: [
         { ...trendRow, flips: 0, familyFlips: 0, lastFlipAt: null, lastFrom: null, lastTo: null },
       ],
+      events: [],
       servicesWithFlips: 0,
       totalFlips: 0,
       totalFamilyFlips: 0,
@@ -240,6 +242,7 @@ describe('Ops page transport-flip trend card', () => {
     stubWithTrend({
       windowDays: 14,
       rows: [],
+      events: [],
       servicesWithFlips: 0,
       totalFlips: 0,
       totalFamilyFlips: 0,
@@ -248,5 +251,656 @@ describe('Ops page transport-flip trend card', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText(/Flip trend unavailable/i)).toBeTruthy());
     expect(screen.getByText(/ledger read failed: boom/i)).toBeTruthy();
+  });
+
+  it('renders the recent flip-events table with exact timestamps and family flags', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [trendRow],
+      events: [
+        {
+          service: 'payment-service',
+          port: 3014,
+          from: 'ipv6',
+          to: 'ipv4',
+          familyChanged: true,
+          detectedAt: '2026-09-24T08:11:00.000Z',
+        },
+        {
+          service: 'auth-service',
+          port: 3000,
+          from: 'ipv4',
+          to: 'ipv6',
+          familyChanged: false,
+          detectedAt: '2026-09-24T11:40:00.000Z',
+        },
+      ],
+      servicesWithFlips: 2,
+      totalFlips: 4,
+      totalFamilyFlips: 1,
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Recent flip events/i)).toBeTruthy());
+    // Match event rows by service AND transition pair — bare service names
+    // also appear in other page tables (fleet services, trend rollup).
+    const rows = screen.getAllByRole('row').map((r) => r.textContent ?? '');
+    const paymentRow = rows.find((t) => t.includes('payment-service') && t.includes('ipv6→ipv4') && t.includes('crossed'));
+    expect(paymentRow).toBeTruthy();
+    const authRow = rows.find((t) => t.includes('auth-service') && t.includes('ipv4→ipv6') && t.includes('rebind'));
+    expect(authRow).toBeTruthy();
+    // Newest first: the payment event (08:11) must appear before auth (11:40).
+    expect(rows.findIndex((t) => t === paymentRow)).toBeLessThan(
+      rows.findIndex((t) => t === authRow)
+    );
+  });
+
+  it('hides the events table when the ledger has no flip events yet', async () => {
+    stubWithTrend({
+      windowDays: 14,
+      rows: [trendRow],
+      events: [],
+      servicesWithFlips: 1,
+      totalFlips: 3,
+      totalFamilyFlips: 1,
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Transport flip trend/i)).toBeTruthy());
+    expect(screen.queryByText(/Recent flip events/i)).toBeNull();
+  });
+
+  it('shows the store chip as redis when the transport store is healthy', async () => {
+    stubRoutes([]);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/store: redis/i)).toBeTruthy());
+  });
+
+  it('annotates the store chip with the resolved Redis DB index', async () => {
+    stubRoutes([]);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/store: redis/i)).toBeTruthy());
+    // dbIndex rides as a quiet suffix on the chip face, not just the tooltip.
+    expect(screen.getByText(/· db 1/i)).toBeTruthy();
+  });
+
+  it('shows the store chip as degraded memory with the detail tooltip', async () => {
+    const respond = (url: unknown) => {
+      const u = String(url);
+      if (u.includes('/admin/ops/services'))
+        return Promise.resolve({
+          success: true,
+          data: {
+            ...baseSnapshot([]),
+            transportStore: {
+              mode: 'memory',
+              detail: 'Redis unreachable — flip memory is per-process',
+              redisDb: null,
+            },
+          },
+        });
+      if (u.includes('/admin/ops/runs'))
+        return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+      if (u.includes('/admin/ops/pgbouncer'))
+        return Promise.resolve({ success: true, data: { available: true } });
+      if (u.includes('/admin/ops/status'))
+        return Promise.resolve({ success: true, data: baseStatus });
+      return Promise.resolve({ success: false, data: null });
+    };
+    vi.mocked(apiFetch).mockImplementation(respond as never);
+    renderPage();
+    const chip = await screen.findByText(/store: memory/i);
+    expect(chip).toBeTruthy();
+    // The degradation reason rides the title tooltip.
+    expect(chip.getAttribute('title')).toMatch(/per-process/i);
+  });
+
+  it('omits the chip entirely on old snapshots without a transportStore field', async () => {
+    const respond = (url: unknown) => {
+      const u = String(url);
+      if (u.includes('/admin/ops/services')) {
+        const { transportStore: _omit, ...rest } = baseSnapshot([]);
+        return Promise.resolve({ success: true, data: rest });
+      }
+      if (u.includes('/admin/ops/runs'))
+        return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+      if (u.includes('/admin/ops/pgbouncer'))
+        return Promise.resolve({ success: true, data: { available: true } });
+      if (u.includes('/admin/ops/status'))
+        return Promise.resolve({ success: true, data: baseStatus });
+      return Promise.resolve({ success: false, data: null });
+    };
+    vi.mocked(apiFetch).mockImplementation(respond as never);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/All systems healthy/i)).toBeTruthy());
+    expect(screen.queryByText(/store: /i)).toBeNull();
+  });
+
+  describe('foreign dialer persistence row links', () => {
+    const pgbouncerWithPersistence = (persistence: unknown) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: {
+              available: true,
+              level: 'ok',
+              foreignPersistence: persistence,
+            },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const baseRow = {
+      workspace: '/Users/partner/fleet',
+      passes: 30,
+      spanHours: 30,
+      lastSeen: new Date().toISOString(),
+      conns: 2,
+      approved: false,
+      sustained: true,
+      history: [0, 1, 2, 0, 3],
+      bucketSeconds: 7200,
+    };
+
+    it('links a sustained row to the tracking issue when its URL resolved', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [baseRow],
+        trackingIssueUrl: 'https://github.com/azeebotv/AzeeboPlus/issues/42',
+      });
+      renderPage();
+      const link = await screen.findByText(/sustained — tracking issue/i);
+      expect(link.getAttribute('href')).toBe('https://github.com/azeebotv/AzeeboPlus/issues/42');
+      expect(link.getAttribute('target')).toBe('_blank');
+    });
+
+    it('keeps the plain badge when the URL could not be resolved (degrade)', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [baseRow],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const badge = await screen.findByText(/sustained — tracked nightly/i);
+      expect(badge.getAttribute('href')).toBeNull();
+    });
+
+    it('approved rows never link (they are never tracked)', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [{ ...baseRow, approved: true, sustained: false }],
+        trackingIssueUrl: 'https://github.com/azeebotv/AzeeboPlus/issues/42',
+      });
+      renderPage();
+      const badge = await screen.findByText(/approved — not tracked/i);
+      expect(badge.getAttribute('href')).toBeNull();
+      expect(screen.queryByText(/sustained — tracking issue/i)).toBeNull();
+    });
+  });
+
+  describe('fleet transport table', () => {
+    const withServicesSnapshot = (snapshot: unknown) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({ success: true, data: { available: false, detail: 'skipped' } });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: snapshot });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const fleetServices = [
+      { name: 'auth-service', port: 3001, status: 'healthy', latencyMs: 4, dbStatus: 'up', transport: 'ipv6' },
+      { name: 'gateway', port: 3013, status: 'healthy', latencyMs: 9, dbStatus: 'up', transport: 'ipv4' },
+      { name: 'user-service', port: 3003, status: 'healthy', latencyMs: 6, dbStatus: 'up', transport: 'localhost' },
+      { name: 'search-service', port: 3004, status: 'down', latencyMs: 0, dbStatus: 'unknown', errorDetail: 'ECONNREFUSED' },
+    ];
+
+    it('renders one row per service with the family that answered', async () => {
+      withServicesSnapshot({
+        services: fleetServices,
+        transportFlips: [],
+        transportStore: { mode: 'redis', detail: 'fleet-wide', redisDb: 1 },
+        checkedAt: new Date().toISOString(),
+      });
+      renderPage();
+      const card = await screen.findByTestId('fleet-transport-card');
+      expect(card).toBeTruthy();
+      await screen.findByText('auth-service');
+      // Family labels, exactly as transportCell maps them.
+      expect(screen.getByText('IPv6-only')).toBeTruthy();
+      expect(screen.getByText('IPv4-only')).toBeTruthy();
+      // localhost is deliberately NOT a family claim: dual-stack.
+      expect(screen.getByText('dual-stack')).toBeTruthy();
+      // Down: never a family label — the sweep could not reach it. The
+      // failure detail rides the title attribute, not the cell text.
+      expect(screen.getByText('unreachable')).toBeTruthy();
+      expect(screen.getByTitle(/last probe failure: ECONNREFUSED/)).toBeTruthy();
+      expect(screen.getByText(/3\/4 answering/)).toBeTruthy();
+    });
+
+    it('a family flip from the sweep shows in the card header count', async () => {
+      withServicesSnapshot({
+        services: [fleetServices[0]],
+        transportFlips: [
+          {
+            service: 'auth-service',
+            port: 3001,
+            from: 'ipv4',
+            to: 'ipv6',
+            detectedAt: Date.now(),
+            familyChanged: true,
+          },
+        ],
+        transportStore: { mode: 'redis', detail: 'fleet-wide', redisDb: 1 },
+        checkedAt: new Date().toISOString(),
+      });
+      renderPage();
+      const card = await screen.findByTestId('fleet-transport-card');
+      // (the flip banner ALSO names the service — assert inside the card)
+      await screen.findByText(/family flips this sweep: 1/);
+      expect(card.textContent).toContain('auth-service');
+    });
+  });
+
+  describe('foreign persistence pass-history sparkline', () => {
+    const pgbouncerWithPersistence = (persistence: unknown) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: {
+              available: true,
+              level: 'ok',
+              foreignPersistence: persistence,
+            },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const sparkRow = {
+      workspace: '/Users/other/fleet',
+      passes: 8,
+      spanHours: 8,
+      lastSeen: new Date().toISOString(),
+      conns: 1,
+      approved: false,
+      sustained: false,
+      history: [1, 0, 2, 0, 5, 0, 0, 0],
+      bucketSeconds: 7200,
+    };
+
+    it('renders a per-row sparkline from the history buckets', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [sparkRow],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const bars = await screen.findAllByRole('img', {
+        name: /Flagged passes per 2h bucket/i,
+      });
+      expect(bars).toHaveLength(1);
+      const bar = bars[0]!;
+      expect(bar.getAttribute('aria-label')).toMatch(/peak bucket: 5 passes/);
+      expect(bar.getAttribute('title')).toMatch(/last 48h/);
+      // One bar per history bucket.
+      expect(bar.children).toHaveLength(sparkRow.history.length);
+    });
+
+    it('a flat (silent) history renders with no peak callout', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [{ ...sparkRow, history: [0, 0, 0, 0] }],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const bar = await screen.findByRole('img', {
+        name: /Flagged passes per 2h bucket/i,
+      });
+      expect(bar.getAttribute('aria-label')).toMatch(/\(oldest → newest\)$/);
+      expect(bar.getAttribute('aria-label')).not.toMatch(/peak bucket/i);
+    });
+
+    it('renders a per-row intensity sparkline from the conn buckets', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [
+          {
+            ...sparkRow,
+            connHistory: [null, 2, 1, 6, null, 60, 0, 0],
+          },
+        ],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const bars = await screen.findAllByRole('img', {
+        name: /Peak conns per 2h bucket/i,
+      });
+      expect(bars).toHaveLength(1);
+      const bar = bars[0]!;
+      expect(bar.getAttribute('aria-label')).toMatch(/peak: 60 conns/);
+      expect(bar.children).toHaveLength(sparkRow.history.length);
+      // Null buckets stay as visible stubs, not gaps.
+      expect(bar.children[0]!.getAttribute('aria-hidden')).toBeNull();
+    });
+
+    it('an all-null connHistory degrades to a quiet dash (pre-conns ledger)', async () => {
+      pgbouncerWithPersistence({
+        windowHours: 48,
+        sustainedMinSpanHours: 24,
+        rows: [{ ...sparkRow, connHistory: [null, null, null, null] }],
+        trackingIssueUrl: null,
+      });
+      renderPage();
+      const dash = await screen.findByRole('img', { name: /Peak conns per 2h bucket/i });
+      expect(dash.textContent).toBe('—');
+      expect(dash.getAttribute('aria-label')).toMatch(/\(oldest → newest\)$/);
+      expect(dash.getAttribute('aria-label')).not.toMatch(/peak:/i);
+    });
+  });
+
+  describe('foreign persistence project grouping', () => {
+    const stubRows = (rows: unknown[]) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: {
+              available: true,
+              level: 'ok',
+              foreignPersistence: {
+                windowHours: 48,
+                sustainedMinSpanHours: 24,
+                rows,
+                trackingIssueUrl: null,
+              },
+            },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const mkRow = (ws: string, project: string | undefined, over: Record<string, unknown> = {}) => ({
+      workspace: ws,
+      passes: 2,
+      spanHours: 5,
+      lastSeen: new Date().toISOString(),
+      conns: 1,
+      sustained: false,
+      approved: false,
+      history: [1, 0, 1, 0],
+      connHistory: [1, null, 2, null],
+      bucketSeconds: 7200,
+      ...(project !== undefined ? { project } : {}),
+      ...over,
+    });
+
+    it('groups multi-workspace projects under an aggregate section header', async () => {
+      stubRows([
+        mkRow('/Users/other/YCN/services/gateway', 'YCN'),
+        mkRow('/Users/other/YCN/services/search', 'YCN'),
+      ]);
+      renderPage();
+      const header = await screen.findByText(/YCN — 2 workspaces · 4 passes/i);
+      expect(header).toBeTruthy();
+      // Both rows carry the project label (full workspace in the tooltip).
+      expect(screen.getAllByText('YCN')).toHaveLength(2);
+    });
+
+    it('unmatched workspaces are their own group and render the full path', async () => {
+      stubRows([mkRow('/mystery/proj', '/mystery/proj')]);
+      renderPage();
+      expect(await screen.findByText('/mystery/proj')).toBeTruthy();
+      // Solo project group → no section header row.
+      expect(screen.queryByText(/— 1 workspace ·/i)).toBeNull();
+    });
+
+    it('rows without project (pre-attribution backend) degrade to the flat table', async () => {
+      stubRows([mkRow('/Users/other/fleet', undefined), mkRow('/Users/other/node', undefined)]);
+      renderPage();
+      expect(await screen.findByText('/Users/other/fleet')).toBeTruthy();
+      expect(screen.getByText('/Users/other/node')).toBeTruthy();
+      // Each path-self row is its own group → no headers anywhere.
+      expect(screen.queryByText(/— 2 workspaces/i)).toBeNull();
+      expect(screen.queryByText(/— 1 workspace ·/i)).toBeNull();
+    });
+
+    it('group headers surface sustained counts', async () => {
+      stubRows([
+        mkRow('/Users/other/YCN/services/gateway', 'YCN', { sustained: true, spanHours: 30 }),
+        mkRow('/Users/other/YCN/services/search', 'YCN'),
+      ]);
+      renderPage();
+      expect(await screen.findByText(/1 sustained/i)).toBeTruthy();
+    });
+  });
+
+  describe('foreign persistence window persistence (localStorage)', () => {
+    const KEY = 'azeebo_ops_foreign_window_hours';
+
+    /** Stub both persistence sources with per-window bodies (self-contained:
+     * stubToggle lives in the sibling toggle describe's scope). */
+    const stubWith = (
+      embedded: unknown,
+      perWindow: Record<number, unknown>
+    ) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer/foreign-persistence')) {
+          const hours = Number(new URL(u, 'http://localhost').searchParams.get('hours') ?? 0);
+          return Promise.resolve({
+            success: true,
+            data:
+              perWindow[hours] ?? {
+                windowHours: hours,
+                sustainedMinSpanHours: 24,
+                rows: [],
+                trackingIssueUrl: null,
+              },
+          });
+        }
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: { available: true, level: 'ok', foreignPersistence: embedded },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it('restores the stored window on load and re-queries at that window', async () => {
+      window.localStorage.setItem(KEY, '168');
+      stubWith({ windowHours: 48, sustainedMinSpanHours: 24, rows: [], trackingIssueUrl: null }, {});
+      renderPage();
+      // The dedicated endpoint must be queried WITH the stored window even
+      // before any chip click this session.
+      await waitFor(() => {
+        const persisted = vi
+          .mocked(apiFetch)
+          .mock.calls.some((c) => String(c[0]).includes('foreign-persistence?hours=168'));
+        expect(persisted).toBe(true);
+      });
+    });
+
+    it('an invalid stored value falls back to the snapshot (no dedicated query)', async () => {
+      window.localStorage.setItem(KEY, '999');
+      stubWith({ windowHours: 48, sustainedMinSpanHours: 24, rows: [], trackingIssueUrl: null }, {});
+      renderPage();
+      await waitFor(() => expect(screen.getByTestId('pgbouncer-card')).toBeTruthy());
+      const dedicated = vi
+        .mocked(apiFetch)
+        .mock.calls.filter((c) => String(c[0]).includes('foreign-persistence'));
+      expect(dedicated).toHaveLength(0);
+    });
+
+    it('clicking a chip persists the choice for the next load', async () => {
+      const row = {
+        workspace: '/Users/other/fleet',
+        project: '/Users/other/fleet',
+        passes: 2,
+        spanHours: 2,
+        lastSeen: new Date().toISOString(),
+        conns: 1,
+        sustained: false,
+        approved: false,
+        history: [1, 0, 1, 0],
+        connHistory: [1, null, 2, null],
+        bucketSeconds: 7200,
+      };
+      stubWith(
+        { windowHours: 48, sustainedMinSpanHours: 24, rows: [row], trackingIssueUrl: null },
+        { 168: { windowHours: 168, sustainedMinSpanHours: 24, rows: [row], trackingIssueUrl: null } }
+      );
+      renderPage();
+      await screen.findByText(/ledger, last 48h/i);
+      fireEvent.click(
+        within(screen.getByRole('group', { name: /persistence window/i })).getByRole('button', {
+          name: '7d',
+        })
+      );
+      await waitFor(() => expect(window.localStorage.getItem(KEY)).toBe('168'));
+    });
+  });
+
+  describe('foreign persistence window toggle', () => {
+    /** Stub BOTH persistence sources: the pgbouncer snapshot's embedded 48h
+     * payload and the dedicated per-window endpoint the toggle re-queries.
+     * The foreign-persistence branch must be tested BEFORE the pgbouncer
+     * branch — the longer path contains the shorter one. */
+    const stubToggle = (embedded: unknown, perWindow: Record<number, unknown>) => {
+      const respond = (url: unknown) => {
+        const u = String(url);
+        if (u.includes('/admin/ops/pgbouncer/foreign-persistence')) {
+          const hours = Number(new URL(u, 'http://localhost').searchParams.get('hours') ?? 0);
+          const body = perWindow[hours] ?? {
+            windowHours: hours,
+            sustainedMinSpanHours: 24,
+            rows: [],
+            trackingIssueUrl: null,
+          };
+          return Promise.resolve({ success: true, data: body });
+        }
+        if (u.includes('/admin/ops/pgbouncer'))
+          return Promise.resolve({
+            success: true,
+            data: { available: true, level: 'ok', foreignPersistence: embedded },
+          });
+        if (u.includes('/admin/ops/services'))
+          return Promise.resolve({ success: true, data: baseSnapshot([]) });
+        if (u.includes('/admin/ops/runs'))
+          return Promise.resolve({ success: true, data: { perJob: [], total: 0 } });
+        if (u.includes('/admin/ops/status'))
+          return Promise.resolve({ success: true, data: baseStatus });
+        return Promise.resolve({ success: false, data: null });
+      };
+      vi.mocked(apiFetch).mockImplementation(respond as never);
+    };
+
+    const row48 = {
+      workspace: '/Users/other/fleet',
+      passes: 8,
+      spanHours: 8,
+      lastSeen: new Date().toISOString(),
+      conns: 1,
+      approved: false,
+      sustained: false,
+      history: [1, 0, 2, 0, 5, 0, 0, 0],
+      connHistory: [1, null, 2, null, 5, null, null, null],
+      bucketSeconds: 7200,
+    };
+    const row168 = {
+      ...row48,
+      history: [3, 0, 0, 1],
+      connHistory: [12, null, null, 4],
+      bucketSeconds: 25200,
+    };
+
+    it('re-queries the ledger and rescales sparklines when a window chip is clicked', async () => {
+      stubToggle(
+        { windowHours: 48, sustainedMinSpanHours: 24, rows: [row48], trackingIssueUrl: null },
+        { 168: { windowHours: 168, sustainedMinSpanHours: 24, rows: [row168], trackingIssueUrl: null } }
+      );
+      renderPage();
+      expect(await screen.findByText(/ledger, last 48h/i)).toBeTruthy();
+      expect(screen.getByRole('img', { name: /Flagged passes per 2h bucket/ })).toBeTruthy();
+
+      // Scope to the persistence card's group — the flip-trend card has its
+      // own 7d/14d chips elsewhere on the page.
+      fireEvent.click(
+        within(screen.getByRole('group', { name: /persistence window/i })).getByRole('button', {
+          name: '7d',
+        })
+      );
+
+      expect(await screen.findByText(/ledger, last 168h/i)).toBeTruthy();
+      const bar = screen.getByRole('img', { name: /Flagged passes per 7h bucket/ });
+      // Rescaled: the 7d payload's buckets are 7h each, 4 of them.
+      expect(bar.getAttribute('aria-label')).toMatch(/per 7h bucket/);
+      expect(bar.children).toHaveLength(4);
+      // The intensity sparkline rescales with it (peak 12 from the 7d row).
+      const connBar = screen.getByRole('img', { name: /Peak conns per 7h bucket/ });
+      expect(connBar.getAttribute('aria-label')).toMatch(/peak: 12 conns/);
+
+      // The toggle hit the dedicated endpoint and did NOT refetch the whole
+      // pgbouncer sweep.
+      const calls = vi.mocked(apiFetch).mock.calls.map((c) => String(c[0]));
+      expect(
+        calls.filter((u) => u.includes('/admin/ops/pgbouncer') && !u.includes('foreign-persistence'))
+      ).toHaveLength(1);
+      expect(calls.filter((u) => u.includes('foreign-persistence'))).toHaveLength(1);
+    });
   });
 });

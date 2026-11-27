@@ -112,7 +112,9 @@ export default function SocialScreen() {
       >
         <Image
           source={{
-            uri: item.image || 'https://placehold.co/80x80/1a1a1a/ffffff?text=📌',
+            uri:
+              item.image ||
+              'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=80&h=80&q=80',
           }}
           style={styles.savedImage}
           resizeMode="cover"
@@ -153,10 +155,10 @@ export default function SocialScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView accessibilityLabel="Social Screen" style={styles.container}>
       <View style={[styles.container, { backgroundColor: colors.bg.primary }]}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Saved Items</Text>

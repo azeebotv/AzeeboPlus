@@ -109,34 +109,49 @@ export class PaymentReconciliationService {
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const payments = await this.prisma.paymentIntent.findMany({
-      where: {
-        createdAt: { gte: targetDate, lte: endOfDay },
-        status: { in: ['success', 'failed'] },
-      },
-    });
-
     const discrepancies: ReconciliationResult['discrepancies'] = [];
     let matched = 0;
     let mismatched = 0;
 
-    for (const payment of payments) {
-      const metadata = (payment as Record<string, unknown>).metadata as
-        | Record<string, unknown>
-        | undefined;
-      const providerVerified = metadata?.providerVerified as boolean | undefined;
+    // Cursor-paginate in batches: a single day's intents outgrow memory as
+    // volume grows, and one unbounded findMany loads them all at once.
+    const BATCH_SIZE = 500;
+    let cursor: string | undefined;
+    for (;;) {
+      const payments = await this.prisma.paymentIntent.findMany({
+        where: {
+          createdAt: { gte: targetDate, lte: endOfDay },
+          status: { in: ['success', 'failed'] },
+        },
+        orderBy: { id: 'asc' },
+        take: BATCH_SIZE,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (payments.length === 0) break;
+      cursor = payments[payments.length - 1].id;
 
-      if (providerVerified === undefined) {
-        mismatched++;
-        discrepancies.push({
-          transactionId: payment.id,
-          internalAmount: payment.amount.toString(),
-          providerAmount: 'unverified',
-          status: payment.status,
-        });
-      } else {
-        matched++;
+      for (const payment of payments) {
+        const metadata = (payment as Record<string, unknown>).metadata as
+          | Record<string, unknown>
+          | undefined;
+        const providerVerified = metadata?.providerVerified as boolean | undefined;
+
+        if (providerVerified === undefined) {
+          mismatched++;
+          discrepancies.push({
+            transactionId: payment.id,
+            internalAmount: payment.amount.toString(),
+            providerAmount: 'unverified',
+            status: payment.status,
+          });
+        } else {
+          matched++;
+        }
       }
+
+      // A short batch means this was the last page. Checking here (not only on
+      // the next empty page) keeps a non-advancing cursor from looping forever.
+      if (payments.length < BATCH_SIZE) break;
     }
 
     this.logger.log(

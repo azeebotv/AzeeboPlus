@@ -26,6 +26,34 @@ export default function UsersPage() {
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
   const [suspendDays, setSuspendDays] = useState('7');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    displayName: '',
+    password: '',
+    role: 'user',
+    isVerified: false,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => adminApi.createUser(createForm),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      setShowCreateModal(false);
+      setCreateError(null);
+      setCreateForm({
+        email: '',
+        displayName: '',
+        password: '',
+        role: 'user',
+        isVerified: false,
+      });
+    },
+    onError: (err: Error) => {
+      setCreateError(err.message || 'Failed to create user');
+    },
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'users', page, roleFilter, search],
@@ -178,6 +206,29 @@ export default function UsersPage() {
               <span>Suspend Selected ({selectedIds.length})</span>
             </button>
           )}
+          <button
+            onClick={() => {
+              setCreateError(null);
+              setShowCreateModal(true);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 18px',
+              borderRadius: 9999,
+              border: 'none',
+              background: 'var(--admin-orange-gradient)',
+              boxShadow: '0 4px 14px rgba(255, 91, 0, 0.25)',
+              color: 'white',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            <Icon name="plus" size={14} />
+            <span>New User</span>
+          </button>
           <button
             onClick={exportCSV}
             style={{
@@ -372,22 +423,23 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
                         <button
                           onClick={() => navigate(`/users/${u.id}`)}
                           style={{
-                            padding: '6px 14px',
-                            borderRadius: 999,
-                            border: '1px solid var(--admin-surface)',
-                            background: 'transparent',
-                            color: 'var(--admin-text-muted)',
+                            padding: '5px 14px',
+                            borderRadius: 9999,
+                            border: '1px solid var(--admin-border-hover)',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            color: 'var(--admin-text)',
                             fontSize: 12,
+                            fontWeight: 500,
                             cursor: 'pointer',
                           }}
                         >
                           View
                         </button>
-                        {u.role === 'creator' && (
+                        {u.role === 'creator' ? (
                           <button
                             onClick={() =>
                               verifyMutation.mutate({ id: u.id, verified: !u.isVerified })
@@ -395,17 +447,21 @@ export default function UsersPage() {
                             disabled={verifyMutation.isPending}
                             title="Toggle creator verification (POST :id/verify | :id/unverify)"
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: 999,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
+                              padding: '5px 14px',
+                              borderRadius: 9999,
+                              border: `1px solid ${u.isVerified ? 'rgba(255, 174, 0, 0.3)' : 'rgba(0, 210, 106, 0.3)'}`,
+                              background: u.isVerified ? 'rgba(255, 174, 0, 0.1)' : 'rgba(0, 210, 106, 0.1)',
                               color: u.isVerified ? 'var(--admin-amber)' : 'var(--admin-green)',
                               fontSize: 12,
+                              fontWeight: 500,
                               cursor: 'pointer',
+                              minWidth: 72,
                             }}
                           >
                             {u.isVerified ? 'Unverify' : 'Verify'}
                           </button>
+                        ) : (
+                          <div style={{ width: 72 }} />
                         )}
                         {u.suspensionStatus === 'suspended' || !u.isActive ? (
                           <button
@@ -413,13 +469,15 @@ export default function UsersPage() {
                             disabled={reinstateMutation.isPending}
                             title="Lift suspension (PUT :id/suspension/revoke)"
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: 999,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
+                              padding: '5px 14px',
+                              borderRadius: 9999,
+                              border: '1px solid rgba(0, 210, 106, 0.3)',
+                              background: 'rgba(0, 210, 106, 0.1)',
                               color: 'var(--admin-green)',
                               fontSize: 12,
+                              fontWeight: 500,
                               cursor: 'pointer',
+                              minWidth: 80,
                             }}
                           >
                             Reinstate
@@ -433,13 +491,15 @@ export default function UsersPage() {
                             disabled={suspendOneMutation.isPending}
                             title="Suspend for 7 days (PUT :id/suspend)"
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: 999,
-                              border: '1px solid var(--admin-surface)',
-                              background: 'transparent',
+                              padding: '5px 14px',
+                              borderRadius: 9999,
+                              border: '1px solid rgba(229, 9, 20, 0.3)',
+                              background: 'rgba(229, 9, 20, 0.1)',
                               color: 'var(--admin-red)',
                               fontSize: 12,
+                              fontWeight: 500,
                               cursor: 'pointer',
+                              minWidth: 80,
                             }}
                           >
                             Suspend
@@ -519,6 +579,199 @@ export default function UsersPage() {
       )}
 
       {/* Bulk Suspend Confirmation Modal */}
+      {/* New User Modal */}
+      {showCreateModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--admin-dark)',
+              border: '1px solid var(--admin-card)',
+              borderRadius: 16,
+              padding: 24,
+              width: '90%',
+              maxWidth: 480,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Create New User</h3>
+            <p style={{ fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 16 }}>
+              Add a new user account with role assignment and authentication details.
+            </p>
+
+            {createError && (
+              <p
+                style={{
+                  color: 'var(--admin-red)',
+                  fontSize: 13,
+                  marginBottom: 12,
+                  padding: 8,
+                  backgroundColor: 'rgba(204,28,28,0.1)',
+                  borderRadius: 6,
+                }}
+              >
+                {createError}
+              </p>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Display Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={createForm.displayName}
+                  onChange={(e) => setCreateForm({ ...createForm, displayName: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. user@azeebo.tv"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Password (Optional, default: AzeeboPass123!)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Leave blank for default"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginBottom: 4 }}>
+                  Role *
+                </label>
+                <select
+                  value={createForm.role}
+                  onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--admin-surface)',
+                    backgroundColor: 'var(--admin-surface)',
+                    color: 'var(--admin-text)',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <option value="user">User (Standard viewer)</option>
+                  <option value="creator">Creator (Content author)</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginTop: 4 }}>
+                <input
+                  type="checkbox"
+                  checked={createForm.isVerified}
+                  onChange={(e) => setCreateForm({ ...createForm, isVerified: e.target.checked })}
+                />
+                <span>Verified Account badge</span>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--admin-card)',
+                  backgroundColor: 'transparent',
+                  color: 'var(--admin-text-muted)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!createForm.email || !createForm.displayName) {
+                    setCreateError('Please fill in required fields');
+                    return;
+                  }
+                  createMutation.mutate();
+                }}
+                disabled={createMutation.isPending}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  backgroundColor: 'var(--admin-primary)',
+                  color: 'white',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {createMutation.isPending ? 'Creating...' : 'Create User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSuspendModal && (
         <div
           style={{

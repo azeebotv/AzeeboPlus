@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 
 interface ChangelogEntry {
   version: string;
@@ -20,7 +20,8 @@ const CHANGELOG: ChangelogEntry[] = [
     type: 'added',
     description: 'Performance monitoring and rate limiting dashboards for admin panel',
     // rate-limit dashboards shipped under the admin service, not /analytics.
-    endpoints: ['/api/v1/analytics/performance', '/api/v1/admin/ops/gateway-rate-limits'],
+    // rate-limit dashboards ship under the admin service (settings/performance), not /analytics.
+    endpoints: ['/api/v1/admin/settings/performance', '/api/v1/admin/ops/gateway-rate-limits'],
   },
   {
     version: '2.1.0',
@@ -114,13 +115,15 @@ const CHANGELOG: ChangelogEntry[] = [
   },
 ];
 
-const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  added: { bg: 'rgba(16,185,129,0.12)', text: 'var(--brand-emerald)' },
-  changed: { bg: 'rgba(59,130,246,0.12)', text: 'var(--brand-blue)' },
-  deprecated: { bg: 'rgba(245,158,11,0.12)', text: 'var(--brand-amber)' },
-  removed: { bg: 'rgba(239,68,68,0.12)', text: 'var(--brand-red)' },
-  fixed: { bg: 'rgba(139,92,246,0.12)', text: 'var(--brand-purple)' },
-  security: { bg: 'rgba(236,72,153,0.12)', text: 'var(--brand-pink)' },
+/* Changelog entry kinds are status hues, so they ride the state ramps. There is
+   no violet token, so `fixed` sits on the brand ramp instead. */
+const TYPE_TINT: Record<string, string> = {
+  added: 'text-az-success-400',
+  changed: 'text-az-secondary-400',
+  deprecated: 'text-az-warning-400',
+  removed: 'text-az-error-400',
+  fixed: 'text-az-primary-300',
+  security: 'text-az-flame',
 };
 
 export default function ChangelogPage(): React.JSX.Element {
@@ -130,114 +133,66 @@ export default function ChangelogPage(): React.JSX.Element {
     filter === 'all' ? CHANGELOG : CHANGELOG.filter((entry) => entry.type === filter);
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary, #F5F0EB)',
-      }}
-    >
-      <AppHeader />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 800,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
-      >
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>API Changelog</h1>
-        <p style={{ color: 'var(--text-muted, #9A8A7A)', marginBottom: 32 }}>
-          Track all API changes, additions, and deprecations
-        </p>
+    <PageShell activeNav="Developers" maxWidth="md">
+      <PageHero
+        eyebrow="Developer Platform"
+        title="API Changelog"
+        subtitle="Track all API changes, additions, and deprecations"
+      />
 
-        {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
-          {['all', 'added', 'changed', 'deprecated', 'removed', 'fixed', 'security'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilter(type)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: 'none',
-                backgroundColor: filter === type ? 'var(--brand-orange)' : 'var(--glass-bg)',
-                color: filter === type ? 'white' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: 500,
-                textTransform: 'capitalize',
-              }}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
+      {/* Filter Tabs */}
+      <div className="mb-8 flex flex-wrap gap-2">
+        {['all', 'added', 'changed', 'deprecated', 'removed', 'fixed', 'security'].map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => setFilter(type)}
+            className={`cursor-pointer rounded-az-pill border px-4 py-1.5 az-caption capitalize transition-colors ${
+              filter === type
+                ? 'border-az-glass-border-hover bg-az-glass-fill-active text-az-ink'
+                : 'border-az-glass-border bg-az-glass-fill text-az-ink-muted'
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
 
-        {/* Changelog Entries */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {filteredChangelog.map((entry, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              style={{
-                padding: 24,
-                borderRadius: 16,
-                border: '1px solid var(--glass-border)',
-                backgroundColor: 'var(--glass-bg)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <span
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    backgroundColor: TYPE_COLORS[entry.type]?.bg || 'rgba(102,102,102,0.12)',
-                    color: TYPE_COLORS[entry.type]?.text || 'var(--brand-grey)',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {entry.type}
-                </span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  v{entry.version}
-                </span>
-                <span style={{ fontSize: 13, color: 'var(--text-muted, #9A8A7A)' }}>
-                  {entry.date}
-                </span>
+      {/* Changelog Entries */}
+      <div className="flex flex-col gap-5">
+        {filteredChangelog.map((entry, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="az-glass p-6"
+          >
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <span
+                className={`az-chip px-2.5 py-1 az-micro-label uppercase ${TYPE_TINT[entry.type] ?? 'text-az-ink-muted'}`}
+              >
+                {entry.type}
+              </span>
+              <span className="az-body-strong text-az-ink">v{entry.version}</span>
+              <span className="az-caption text-az-ink-dim">{entry.date}</span>
+            </div>
+            <p className="az-body text-az-ink-muted">{entry.description}</p>
+            {entry.endpoints && entry.endpoints.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {entry.endpoints.map((endpoint, i) => (
+                  <code
+                    key={i}
+                    className="rounded-az-chip bg-az-surface-root/60 px-2 py-1 az-caption font-mono text-az-ink-dim"
+                  >
+                    {endpoint}
+                  </code>
+                ))}
               </div>
-              <p style={{ fontSize: 15, lineHeight: 1.6, marginBottom: entry.endpoints ? 12 : 0 }}>
-                {entry.description}
-              </p>
-              {entry.endpoints && entry.endpoints.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {entry.endpoints.map((endpoint, i) => (
-                    <code
-                      key={i}
-                      style={{
-                        padding: '4px 8px',
-                        borderRadius: 4,
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                        backgroundColor: 'rgba(26,10,10,0.5)',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {endpoint}
-                    </code>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      </main>
-      <AppFooter />
-    </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </PageShell>
   );
 }

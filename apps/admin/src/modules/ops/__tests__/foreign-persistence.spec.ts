@@ -2,6 +2,10 @@ import {
   parseForeignSegment,
   computeForeignPersistence,
   parseForeignAllowlist,
+  parseForeignProjectRoots,
+  attributeForeignProject,
+  computeForeignPassTrend,
+  FOREIGN_PASS_TREND_BUCKETS,
 } from '../ops.service';
 
 /**
@@ -197,5 +201,156 @@ describe('parseForeignAllowlist', () => {
     expect(parseForeignAllowlist(null)).toEqual(new Set());
     expect(parseForeignAllowlist('')).toEqual(new Set());
     expect(parseForeignAllowlist('  ')).toEqual(new Set());
+  });
+});
+
+describe('computeForeignPassTrend', () => {
+  // A pinned "now" keeps bucket edges deterministic.
+  const NOW = Date.parse('2026-09-27T12:00:00Z');
+  const W = 48 * 3_600_000; // the ledger window (48h)
+  const BUCKET = W / FOREIGN_PASS_TREND_BUCKETS; // 2h in ms
+
+  it('splits the window into 24 fixed buckets and counts per bucket', () => {
+    // Two passes in bucket 0, one in the middle, three in the last bucket.
+    const at = [
+      NOW - W + 1, // oldest edge of bucket 0
+      NOW - W + BUCKET - 1, // still bucket 0
+      NOW - BUCKET - 1, // second-newest bucket
+      NOW - 1,
+      NOW - 2,
+      NOW - 3, // newest bucket
+    ];
+    const trend = computeForeignPassTrend(at, W, NOW);
+    expect(trend.buckets).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(trend.bucketSeconds).toBe(Math.round(BUCKET / 1000));
+    expect(trend.buckets[0]).toBe(2);
+    expect(trend.buckets[FOREIGN_PASS_TREND_BUCKETS - 2]).toBe(1);
+    expect(trend.buckets[FOREIGN_PASS_TREND_BUCKETS - 1]).toBe(3);
+    // Everything in between is silence.
+    expect(trend.buckets.slice(1, -2).every((n) => n === 0)).toBe(true);
+    expect(trend.buckets.reduce((a, b) => a + b, 0)).toBe(6);
+  });
+
+  it('out-of-window passes clamp to the nearest edge bucket, never dropped', () => {
+    const trend = computeForeignPassTrend([NOW - W - 10 * W, NOW + 10 * W], W, NOW);
+    expect(trend.buckets[0]).toBe(1);
+    expect(trend.buckets[FOREIGN_PASS_TREND_BUCKETS - 1]).toBe(1);
+    expect(trend.buckets.reduce((a, b) => a + b, 0)).toBe(2);
+  });
+
+  it('degenerate inputs stay finite (no buckets=0, no division by zero)', () => {
+    expect(computeForeignPassTrend([], 0, NOW).buckets).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(computeForeignPassTrend([], 0, NOW).bucketSeconds).toBeGreaterThanOrEqual(1);
+    expect(computeForeignPassTrend([NOW], 0, NOW, 0).buckets).toHaveLength(1);
+    // Zero window: a single instant — but the pass is still counted
+    // (clamped into some bucket, never dropped).
+    const zero = computeForeignPassTrend([NOW], 0, NOW);
+    expect(zero.buckets).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(zero.buckets.reduce((a, b) => a + b, 0)).toBe(1);
+  });
+
+  it('carries per-row history: all flagged passes bucketed, not just the best run', () => {
+    // /gappy from the span test: 3 passes 30-28h ago, gap, then 2 recent —
+    // the OLD burst wins on length (passes=3, as the span test asserts),
+    // but history keeps BOTH bursts visible: 5 flagged passes total.
+    const rows = rowsAt([30, 29, 28, 2, 1], () => fwDetail('/gappy'));
+    const out = computeForeignPersistence(rows, { minSpanHours: 24, maxGapHours: 3 });
+    expect(out[0].passes).toBe(3);
+    expect(out[0].history.reduce((a, b) => a + b, 0)).toBe(5);
+    expect(out[0].history).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+  });
+
+  it('connHistory: per-bucket peak conns, parallel to history', () => {
+    // 4 buckets over W → W/4 each; place one pass inside each of the first
+    // three buckets (out-of-window times would clamp to the edge bucket).
+    const trend = computeForeignPassTrend(
+      [NOW - 0.9 * W, NOW - 0.6 * W, NOW - 0.3 * W],
+      W,
+      NOW,
+      4,
+      [2, 9, 5]
+    );
+    expect(trend.connBuckets).toEqual([2, 9, 5, null]);
+  });
+
+  it('connHistory: peak wins within one bucket; nulls never mask a number', () => {
+    // Three passes in the same bucket: null conns, then 3, then 7 — the
+    // peak (7) must survive, and the unrecorded ones must not reset it.
+    const trend = computeForeignPassTrend([NOW - W, NOW - W + 1, NOW - W + 2], W, NOW, 4, [
+      null,
+      3,
+      7,
+    ]);
+    expect(trend.connBuckets).toEqual([7, null, null, null]);
+  });
+
+  it('connHistory: absent values array degrades to all-null (pre-conns ledger)', () => {
+    const trend = computeForeignPassTrend([NOW - W, NOW], W, NOW, 4);
+    expect(trend.connBuckets).toEqual([null, null, null, null]);
+  });
+
+  it('rows carry connHistory end-to-end from the ledger detail strings', () => {
+    const detail = (conns: number | null) =>
+      conns === null
+        ? 'pgbouncer 62/200 clients; foreign direct clients (context, not violations): /intensity/python 777'
+        : fwDetail('/intensity', conns);
+    const rows = rowsAt([3, 2, 1], (i) => detail([5, null, 9][i]));
+    const out = computeForeignPersistence(rows, { minSpanHours: 1 });
+    expect(out[0].history).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    expect(out[0].connHistory).toHaveLength(FOREIGN_PASS_TREND_BUCKETS);
+    // 24 buckets over 3h+ of data: the three passes land in the newest
+    // buckets — peak 9 latest, 5 behind it, null where only the uncounted
+    // (segmentless) pass sits.
+    expect(out[0].connHistory.filter((v) => v !== null)).toEqual([5, 9]);
+  });
+
+  it('connHistory values are null-safe: conns recorded but passes sparse', () => {
+    const rows = rowsAt([1], () => fwDetail('/sparse', 4));
+    const out = computeForeignPersistence(rows, { minSpanHours: 1 });
+    expect(out[0].connHistory.filter((v) => v !== null)).toEqual([4]);
+  });
+
+  it('attributed rows carry their project; unmatched workspaces own their group', () => {
+    const detail = (ws: string) =>
+      `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${ws}(python 777, 2 conns)`;
+    const rows = rowsAt([2, 1], (i) =>
+      detail(i === 0 ? '/Users/x/YCN/services/gateway' : '/mystery/proj')
+    );
+    const out = computeForeignPersistence(rows, {
+      minSpanHours: 1,
+      projectRootsRaw: '/Users/x/YCN=YCN, /Users/x/YCN/services/gateway=Gateway',
+    });
+    const byWs = Object.fromEntries(out.map((r) => [r.workspace, r.project]));
+    // Longest root wins: the gateway row matches the more specific root.
+    expect(byWs['/Users/x/YCN/services/gateway']).toBe('Gateway');
+    // No match → the workspace itself is the project (never null/unknown).
+    expect(byWs['/mystery/proj']).toBe('/mystery/proj');
+  });
+
+  it('overlapping roots attribute independently (longest-prefix wins)', () => {
+    const roots = parseForeignProjectRoots('/Users/x/YCN=YCN, /Users/x/YCN-fork=YCN-fork');
+    expect(attributeForeignProject('/Users/x/YCN-fork/services/api', roots)).toBe('YCN-fork');
+    expect(attributeForeignProject('/Users/x/YCN/services/api', roots)).toBe('YCN');
+    expect(attributeForeignProject('/Users/z/other', roots)).toBe('/Users/z/other');
+  });
+
+  it('attribution sorts group-mates together within equal spans', () => {
+    const detail = (ws: string) =>
+      `pgbouncer 62/200 clients; foreign direct clients (context, not violations): ${ws}(python 777, 2 conns)`;
+    const mk = (ws: string, h: number) => ({
+      detail: detail(ws),
+      ranAt: new Date(Date.now() - h * H),
+    });
+    const rows = [
+      mk('/Users/x/YCN/services/search', 2),
+      mk('/Users/x/YCN/services/auth', 2),
+      mk('/loner', 2),
+    ].sort((a, b) => b.ranAt.getTime() - a.ranAt.getTime());
+    const out = computeForeignPersistence(rows, {
+      minSpanHours: 1,
+      projectRootsRaw: '/Users/x/YCN=YCN',
+    });
+    // Equal spans: YCN rows adjacent before the unmatched workspace.
+    expect(out.map((r) => r.project)).toEqual(['YCN', 'YCN', '/loner']);
   });
 });

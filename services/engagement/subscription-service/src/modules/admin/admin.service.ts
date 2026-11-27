@@ -80,6 +80,9 @@ export class AdminService {
       });
     } catch (error) {
       // P2002: unique constraint (plan names are unique).
+      // allowed-fabricated-4xx: this 409 is not fabricated — the catch inspects
+      // the caught error's own code before choosing it, and every other cause
+      // falls through to the rethrow below with its status intact.
       if ((error as { code?: string }).code === 'P2002') {
         throw new ConflictException(`A plan named "${data.name}" already exists`);
       }

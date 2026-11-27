@@ -54,11 +54,32 @@ export class AdminLiveEventsProxyController {
         }
       });
 
+      if (upstream.status >= 500 && req.method === 'GET') {
+        res.status(200).json({
+          success: true,
+          data: { items: [], total: 0, page: 1, limit: 20, totalPages: 0 },
+          items: [],
+          total: 0,
+          message: 'live-event-service currently offline',
+        });
+        return;
+      }
+
       res.status(upstream.status);
       const body = await upstream.text();
       res.send(body);
     } catch (e) {
       this.logger.error(`live-events proxy failed: ${(e as Error).message}`);
+      if (req.method === 'GET') {
+        res.status(200).json({
+          success: true,
+          data: { items: [], total: 0, page: 1, limit: 20, totalPages: 0 },
+          items: [],
+          total: 0,
+          message: 'live-event-service unreachable — is it running? (port 3027)',
+        });
+        return;
+      }
       res.status(502).json({
         success: false,
         message: 'live-event-service unreachable — is it running? (port 3027)',

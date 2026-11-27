@@ -91,7 +91,7 @@ export default function CharacterDetailScreen() {
         <View style={styles.heroSection}>
           <Image source={{ uri: data.heroImage || PLACEHOLDER_AVATAR }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
           </View>

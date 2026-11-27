@@ -25,6 +25,7 @@ import { PruneStaleUniverseFlagsDto } from './dto/prune-stale-universe-flags.dto
 import { RestoreUniverseFlagsDto } from './dto/restore-universe-flags.dto';
 import { QueryUniverseDto } from './dto/query-universe.dto';
 import { BulkToggleUniverseDto } from './dto/bulk-toggle-universe.dto';
+import { ToggleUniverseDto } from './dto/toggle-universe.dto';
 import { CloneUniverseDto } from './dto/clone-universe.dto';
 import { ImportUniversesBodyDto } from './dto/import-universe.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -129,7 +130,10 @@ export class UniverseManagementController {
   @Post()
   async createUniverse(@Body() data: CreateUniverseDto, @Req() req: AdminRequest) {
     this.logger.log(`Creating universe: ${data.name}`);
-    const result = await this.universeManagementService.createUniverse(data);
+    const result = await this.universeManagementService.createUniverse(
+      data,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.created',
@@ -147,7 +151,10 @@ export class UniverseManagementController {
     this.logger.log(
       `Bulk toggling ${data.ids.length} universes to ${data.isEnabled ? 'enabled' : 'disabled'}`
     );
-    const result = await this.universeManagementService.bulkToggle(data);
+    const result = await this.universeManagementService.bulkToggle(
+      data,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.bulk_toggled',
@@ -201,7 +208,11 @@ export class UniverseManagementController {
     @Req() req: AdminRequest
   ) {
     this.logger.log(`Updating universe: ${id}`);
-    const result = await this.universeManagementService.updateUniverse(id, data);
+    const result = await this.universeManagementService.updateUniverse(
+      id,
+      data,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.updated',
@@ -216,17 +227,47 @@ export class UniverseManagementController {
   @Put(':id/toggle')
   async toggleUniverse(
     @Param('id') id: string,
-    @Body('isEnabled') isEnabled: boolean,
+    @Body() dto: ToggleUniverseDto,
     @Req() req: AdminRequest
   ) {
+    const isEnabled = dto?.isEnabled === true;
     this.logger.log(`Toggling universe ${id} to ${isEnabled ? 'enabled' : 'disabled'}`);
-    const result = await this.universeManagementService.toggleUniverse(id, isEnabled);
+    const result = await this.universeManagementService.toggleUniverse(
+      id,
+      isEnabled,
+      req.user?.id ?? req.user?.sub
+    );
     await this.auditLogService.log({
       actorId: req.user?.id || req.user?.sub,
       action: 'universe.toggled',
       targetType: 'universe',
       targetId: id,
       details: { isEnabled },
+      ipAddress: req.ip,
+    });
+    return result;
+  }
+
+  @Post(':id/resync')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Republish the universe enabled sentinel to Redis from Postgres truth',
+    description:
+      'Heals a flagSync.ok === false result (Redis publish failed after retries) so the runtime store matches the DB.',
+  })
+  @ApiResponse({ status: 200, description: 'Resync attempt outcome with flagSync summary' })
+  async resyncUniverse(@Param('id') id: string, @Req() req: AdminRequest) {
+    this.logger.log(`Resyncing enabled sentinel for universe ${id}`);
+    const result = await this.universeManagementService.resyncUniverse(
+      id,
+      req.user?.id ?? req.user?.sub
+    );
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.resynced',
+      targetType: 'universe',
+      targetId: id,
+      details: { name: result.name, isEnabled: result.isEnabled, flagSync: result.flagSync },
       ipAddress: req.ip,
     });
     return result;

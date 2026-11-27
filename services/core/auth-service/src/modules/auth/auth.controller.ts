@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Post,
+  HttpCode,
+  HttpStatus,
   UseGuards,
   Request,
   Body,
@@ -69,6 +71,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000) // 10 attempts per minute

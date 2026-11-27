@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import AppHeader from '../../components/layout/AppHeader';
-import AppFooter from '../../components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHero } from '@/components/layout/PageHero';
 import { Skeleton } from '@/components/Skeleton';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Sparkles, Film, Tv, Smile, Trophy } from 'lucide-react';
+import { AlertTriangle, Sparkles, Film, Tv, Smile, Trophy } from 'lucide-react';
 
 interface ContentItem {
   id: string;
@@ -105,232 +106,178 @@ export default function RecommendationsPage(): React.JSX.Element {
     setActiveFilter(filter);
   }, []);
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader logoVariant="light" />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="az-headline text-white text-3xl sm:text-4xl mb-2">Recommended For You</h1>
-          <p className="text-white/50 text-sm">
-            Personalized content based on your viewing history and preferences
-          </p>
-        </div>
+  const chipClasses = (active: boolean): string =>
+    [
+      'az-body-strong flex items-center gap-2 whitespace-nowrap rounded-az-pill border px-4 py-2 transition-all',
+      // Solid flame + deep ink: a 14px chip cannot carry the gradient (white on
+      // the flame stop is 3.18:1, dark ink on scarlet 4.09:1).
+      active
+        ? 'border-transparent bg-az-flame text-az-surface-root shadow-az-glow'
+        : 'border-az-ink/15 text-az-ink/60 hover:border-az-glass-border-hover hover:bg-az-glass-fill hover:text-az-ink',
+    ].join(' ');
 
-        {/* Filters */}
-        <div
-          className="flex gap-3 mb-8 overflow-x-auto pb-2"
-          role="radiogroup"
-          aria-label="Content type filters"
-        >
-          {filters.map((filter) => {
-            const Icon = filter.icon;
-            const active = activeFilter === filter.id;
-            return (
-              <button
-                key={filter.id}
-                role="radio"
-                aria-checked={active}
-                onClick={() => handleFilterChange(filter.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  active
-                    ? 'text-white shadow-lg shadow-orange-500/20'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-                style={
-                  active
-                    ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                    : { border: '1px solid rgba(255,255,255,0.12)' }
-                }
-              >
-                <Icon size={16} />
-                <span>{filter.name}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Loading State */}
-        {isLoading && recommendations.length === 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="az-glass overflow-hidden">
-                <Skeleton height="200px" borderRadius="0px" />
-                <div className="p-4 space-y-3">
-                  <Skeleton width="80%" height="16px" />
-                  <Skeleton width="60%" height="12px" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="az-glass p-12 text-center rounded-2xl max-w-md mx-auto">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-              <svg
-                className="w-7 h-7"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.8}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Oops! Something went wrong</h3>
-            <p className="text-white/50 text-sm mb-4">{error}</p>
-            <button
-              onClick={() => fetchRecommendations(1, activeFilter)}
-              className="az-btn-primary"
-              style={{ width: 'auto', paddingInline: '1.5rem' }}
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
-        {/* Content Grid */}
-        {!error && recommendations.length > 0 && (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            role="list"
-            aria-label="Recommended content"
+  const filterChips = (
+    <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Content type filters">
+      {filters.map((filter) => {
+        const Icon = filter.icon;
+        const active = activeFilter === filter.id;
+        return (
+          <button
+            key={filter.id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => handleFilterChange(filter.id)}
+            className={chipClasses(active)}
           >
-            {recommendations.map((item, index) => (
-              <div
-                key={item.id}
-                ref={index === recommendations.length - 1 ? lastItemRef : null}
-                role="listitem"
-                className="az-glass overflow-hidden group"
-              >
-                <a href={`/watch/${item.id}`} className="block">
-                  <div className="relative h-48">
-                    {item.thumbnail ? (
-                      <OptimizedImage
-                        src={item.thumbnail}
-                        alt={item.title}
-                        fill
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center text-white/40"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, rgba(232,66,10,0.15), rgba(24,21,30,0.8))',
-                        }}
-                      >
-                        <svg
-                          className="w-12 h-12"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75a1.125 1.125 0 001.125 1.125m0 0h1.5m-2.625-1.125V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25-13.875h17.25"
-                          />
-                        </svg>
-                      </div>
-                    )}
-                    {item.score != null && item.score > 80 && (
-                      <span
-                        className="absolute top-3 right-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                        style={{ background: 'rgba(232,66,10,0.9)', color: 'var(--brand-white)' }}
-                      >
-                        Top Pick
-                      </span>
-                    )}
-                    {item.duration && (
-                      <span
-                        className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: 'var(--brand-white)' }}
-                      >
-                        {Math.floor(item.duration / 60)}m
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[var(--brand-orange)] transition-colors line-clamp-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-white/45 line-clamp-2 mb-2">{item.description}</p>
-                    <div className="flex items-center gap-2">
-                      {item.universe && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand-orange)]">
-                          {item.universe.name}
-                        </span>
-                      )}
-                      {item.creator && (
-                        <span className="text-[10px] text-white/40">
-                          by {item.creator.displayName}
-                        </span>
-                      )}
-                    </div>
-                    {item.reason && (
-                      <p className="text-[10px] text-white/30 mt-2 italic">{item.reason}</p>
-                    )}
-                  </div>
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Loading More */}
-        {isLoading && recommendations.length > 0 && (
-          <div className="flex justify-center py-8">
-            <div className="w-8 h-8 border-4 border-white/10 border-t-[var(--brand-orange)] rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && !error && recommendations.length === 0 && (
-          <div className="az-glass p-16 text-center rounded-2xl">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[var(--brand-orange)]">
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.8}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">No recommendations yet</h3>
-            <p className="text-white/50 text-sm mb-4">
-              Watch some content to get personalized recommendations
-            </p>
-            <a
-              href="/browse"
-              className="az-btn-primary inline-block"
-              style={{ width: 'auto', paddingInline: '2rem' }}
-            >
-              Browse Content
-            </a>
-          </div>
-        )}
-
-        {/* End of Content */}
-        {!hasMore && recommendations.length > 0 && (
-          <div className="text-center py-8">
-            <p className="text-white/40 text-sm">You&apos;ve seen all recommendations for now</p>
-          </div>
-        )}
-      </main>
-      <AppFooter logoVariant="light" />
+            <Icon size={16} aria-hidden="true" />
+            <span>{filter.name}</span>
+          </button>
+        );
+      })}
     </div>
+  );
+
+  return (
+    <PageShell maxWidth="7xl">
+      <PageHero
+        title="Recommended For You"
+        subtitle="Personalized content based on your viewing history and preferences"
+        actions={filterChips}
+      />
+
+      {/* Loading State */}
+      {isLoading && recommendations.length === 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="az-glass overflow-hidden">
+              <Skeleton height="200px" borderRadius="0px" />
+              <div className="p-4 space-y-3">
+                <Skeleton width="80%" height="16px" />
+                <Skeleton width="60%" height="12px" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="az-glass p-12 text-center max-w-md mx-auto">
+          <div className="flex h-14 w-14 items-center justify-center rounded-az-panel border border-az-error-500/20 bg-az-error-500/10 mx-auto mb-4 text-az-error-400">
+            <AlertTriangle size={28} aria-hidden="true" />
+          </div>
+          <h3 className="text-lg font-bold text-az-ink mb-2">Oops! Something went wrong</h3>
+          <p className="text-az-ink/50 text-sm mb-4">{error}</p>
+          <button
+            type="button"
+            onClick={() => fetchRecommendations(1, activeFilter)}
+            className="az-btn-primary az-btn-primary--inline"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* Content Grid */}
+      {!error && recommendations.length > 0 && (
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          role="list"
+          aria-label="Recommended content"
+        >
+          {recommendations.map((item, index) => (
+            <div
+              key={item.id}
+              ref={index === recommendations.length - 1 ? lastItemRef : null}
+              role="listitem"
+              className="az-glass overflow-hidden group"
+            >
+              <Link href={`/watch/${item.id}`} className="block">
+                <div className="relative h-48">
+                  {item.thumbnail ? (
+                    <OptimizedImage
+                      src={item.thumbnail}
+                      alt={item.title}
+                      fill
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-az-scarlet/15 to-az-surface-panel/80 text-az-ink/40">
+                      <Film size={48} aria-hidden="true" />
+                    </div>
+                  )}
+                  {item.score != null && item.score > 80 && (
+                    <span className="az-micro-label absolute top-3 right-3 rounded bg-az-scarlet/90 px-2 py-1 font-bold text-az-ink">
+                      Top Pick
+                    </span>
+                  )}
+                  {item.duration && (
+                    <span className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-xs font-medium text-az-ink">
+                      {Math.floor(item.duration / 60)}m
+                    </span>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-az-ink text-sm mb-1 group-hover:text-az-flame transition-colors line-clamp-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-az-ink/45 line-clamp-2 mb-2">{item.description}</p>
+                  <div className="flex items-center gap-2">
+                    {item.universe && (
+                      <span className="az-micro-label font-bold text-az-flame">
+                        {item.universe.name}
+                      </span>
+                    )}
+                    {item.creator && (
+                      <span className="text-[10px] text-az-ink/40">
+                        by {item.creator.displayName}
+                      </span>
+                    )}
+                  </div>
+                  {item.reason && (
+                    <p className="text-[10px] text-az-ink/30 mt-2 italic">{item.reason}</p>
+                  )}
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Loading More */}
+      {isLoading && recommendations.length > 0 && (
+        <div className="flex justify-center py-8">
+          <div
+            role="status"
+            aria-label="Loading more recommendations"
+            className="w-8 h-8 border-4 border-az-glass-border border-t-az-flame rounded-full animate-spin"
+          />
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !error && recommendations.length === 0 && (
+        <div className="az-glass p-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-az-panel border border-az-flame/20 bg-az-flame/10 mx-auto mb-4 text-az-flame">
+            <Sparkles size={32} aria-hidden="true" />
+          </div>
+          <h3 className="text-xl font-bold text-az-ink mb-2">No recommendations yet</h3>
+          <p className="text-az-ink/50 text-sm mb-4">
+            Watch some content to get personalized recommendations
+          </p>
+          <Link href="/browse" className="az-btn-primary az-btn-primary--inline inline-block">
+            Browse Content
+          </Link>
+        </div>
+      )}
+
+      {/* End of Content */}
+      {!hasMore && recommendations.length > 0 && (
+        <div className="text-center py-8">
+          <p className="text-az-ink/40 text-sm">You&apos;ve seen all recommendations for now</p>
+        </div>
+      )}
+    </PageShell>
   );
 }

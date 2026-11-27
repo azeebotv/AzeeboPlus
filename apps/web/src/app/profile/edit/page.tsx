@@ -7,7 +7,15 @@ import { api, type User } from '@/lib/api';
 import PageShell from '@/components/layout/PageShell';
 import PageHero from '@/components/layout/PageHero';
 import { AvatarUpload } from '@/components/ui/AvatarUpload';
-import { ArrowLeft, CheckCircle2, User as UserIcon, Mail, AtSign, FileText, Save } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  User as UserIcon,
+  Mail,
+  AtSign,
+  FileText,
+  Save,
+} from 'lucide-react';
 
 export default function ProfileEditPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -73,7 +81,7 @@ export default function ProfileEditPage(): React.JSX.Element {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6">
         <Link
           href="/settings"
-          className="inline-flex items-center gap-2 text-xs font-bold text-white/50 hover:text-white transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-xs font-bold text-az-ink/50 hover:text-az-ink transition-colors mb-6 group"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Back to Settings</span>
@@ -84,14 +92,14 @@ export default function ProfileEditPage(): React.JSX.Element {
         badge="Account Identity"
         title="Edit Profile"
         subtitle="Manage your Azeebo VIP profile, public display handle, and custom avatar."
-        accentColor="orange"
+        accentColor="var(--color-az-flame)"
       />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-20">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Avatar Showcase */}
-          <div className="az-glass p-8 rounded-3xl border border-white/10 text-center shadow-xl">
-            <div className="inline-block p-1.5 rounded-full bg-gradient-to-tr from-orange-500 via-red-600 to-amber-400 mb-3 shadow-lg shadow-orange-500/20">
+          <div className="az-glass p-8 border border-az-glass-border text-center">
+            <div className="inline-block p-1.5 rounded-full bg-gradient-to-tr from-az-flame via-az-scarlet to-az-warning-400 mb-3 shadow-lg shadow-az-flame/20">
               <AvatarUpload
                 currentAvatar={profile.avatar}
                 displayName={profile.displayName || profile.username}
@@ -99,74 +107,74 @@ export default function ProfileEditPage(): React.JSX.Element {
                 size={96}
               />
             </div>
-            <h3 className="text-white font-bold text-base mt-2">Profile Portrait</h3>
-            <p className="text-white/40 text-xs mt-0.5">Click the image to upload a new avatar</p>
+            <h3 className="text-az-ink font-bold text-base mt-2">Profile Portrait</h3>
+            <p className="text-az-ink/40 text-xs mt-0.5">Click the image to upload a new avatar</p>
           </div>
 
           {/* Form Fields */}
-          <div className="az-glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-5">
+          <div className="az-glass p-6 sm:p-8 border border-az-glass-border space-y-5">
             <div>
-              <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <UserIcon size={14} className="text-orange-400" />
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <UserIcon size={14} className="text-az-flame" />
                 <span>Display Name</span>
               </label>
               <input
                 type="text"
                 value={profile.displayName}
                 onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm font-medium"
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium"
                 placeholder="Your full or screen name"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <AtSign size={14} className="text-orange-400" />
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <AtSign size={14} className="text-az-flame" />
                 <span>Username Handle</span>
               </label>
               <input
                 type="text"
                 value={profile.username}
                 onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm font-medium"
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium"
                 placeholder="@username"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Mail size={14} className="text-orange-400" />
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Mail size={14} className="text-az-flame" />
                 <span>Email Address</span>
               </label>
               <input
                 type="email"
                 value={profile.email}
                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm font-medium"
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium"
                 placeholder="name@example.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <FileText size={14} className="text-orange-400" />
+              <label className="block text-xs font-bold text-az-ink/60 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <FileText size={14} className="text-az-flame" />
                 <span>Bio / Personal Tagline</span>
               </label>
               <textarea
                 value={profile.bio}
                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 rows={3}
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-orange-500 text-sm font-medium resize-none"
+                className="w-full px-4 py-3.5 bg-az-glass-fill border border-az-glass-border rounded-2xl text-az-ink placeholder-az-ink/30 focus:outline-none focus:border-az-flame text-sm font-medium resize-none"
                 placeholder="Tell the Azeebo community what shows, movies, and lore you are following..."
               />
             </div>
           </div>
 
           {saved && (
-            <div className="px-4 py-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-center text-xs font-bold flex items-center justify-center gap-2">
+            <div className="px-4 py-3 rounded-2xl bg-az-success-500/15 border border-az-success-500/30 text-az-success-400 text-center text-xs font-bold flex items-center justify-center gap-2">
               <CheckCircle2 size={16} />
               <span>Profile updated successfully!</span>
             </div>
@@ -175,7 +183,7 @@ export default function ProfileEditPage(): React.JSX.Element {
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full py-4 rounded-full font-bold text-base transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-orange-600/25 flex items-center justify-center gap-2"
+            className="transition-all az-btn-primary shadow-xl shadow-az-flame/25 flex items-center justify-center gap-2"
           >
             {isSaving ? (
               <span>Saving Profile...</span>
@@ -191,4 +199,3 @@ export default function ProfileEditPage(): React.JSX.Element {
     </PageShell>
   );
 }
-

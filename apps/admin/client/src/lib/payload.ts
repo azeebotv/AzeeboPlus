@@ -91,6 +91,31 @@ export function assertSuccess<T extends { success: boolean; message?: string }>(
   return res;
 }
 
+/**
+ * Read counterpart to `assertSuccess`. `apiFetch` resolves failed requests, so
+ * a query that returns `res.data ?? []` reports SUCCESS with an empty list:
+ * the page renders "nothing found" while the backend is actually down, and an
+ * admin can conclude the data is missing rather than unreachable. Throwing
+ * here is what turns that into a query error the UI can distinguish.
+ *
+ * `fallback` keeps endpoints that legitimately return no body (writes,
+ * void reads) working without every page having to special-case them.
+ */
+export function requireData<T>(
+  res: { success: boolean; data?: T; message?: string },
+  // `unknown`, not `T`: callers pass the empty shape their unwrap guard reads
+  // (`[]`, `{}`, `null`) even where the endpoint is typed as an envelope.
+  // Omitting the fallback makes a body-less success an error instead.
+  fallback?: unknown
+): T {
+  assertSuccess(res);
+  if (res.data === undefined || res.data === null) {
+    if (fallback !== undefined) return fallback as T;
+    throw new Error(res.message || 'Empty response body');
+  }
+  return res.data;
+}
+
 /** Boolean field guard. */
 export function bool(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;

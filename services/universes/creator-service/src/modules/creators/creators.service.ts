@@ -1,9 +1,17 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { mapAndThrow } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../../prisma/client/index.js';
 import { CreatorResponse } from './interfaces/creator-response.interface.js';
+import { CreateExclusiveContentDto } from './dto/creator.dto.js';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -1696,7 +1704,7 @@ export class CreatorsService {
         position: i + 1,
         entryId: e.id,
         userId: e.userId,
-        displayName: nameById.get(e.userId) || `Participant ${e.userId.slice(0, 8)}`, 
+        displayName: nameById.get(e.userId) || `Participant ${e.userId.slice(0, 8)}`,
         status: e.status,
         reviewedAt: e.reviewedAt,
         reviewNote: e.reviewNote,
@@ -1849,7 +1857,7 @@ export class CreatorsService {
     const VALID_ACTIONS = ['under_review', 'winner', 'rejected'] as const;
     if (!action || !VALID_ACTIONS.includes(action)) {
       throw new BadRequestException(
-        `Invalid review action: expected one of ${VALID_ACTIONS.join(', ')}`,
+        `Invalid review action: expected one of ${VALID_ACTIONS.join(', ')}`
       );
     }
 
@@ -1958,7 +1966,9 @@ export class CreatorsService {
         },
       });
     } catch (error) {
-      this.logger.warn(`Failed to create challenge-review notification: ${(error as Error).message}`);
+      this.logger.warn(
+        `Failed to create challenge-review notification: ${(error as Error).message}`
+      );
     }
 
     // 2. Best-effort templated email via notification-service.
@@ -2197,5 +2207,139 @@ export class CreatorsService {
 
     await this.cache.set(cacheK, result, 300);
     return result;
+  }
+
+  async createExclusiveContent(
+    userId: string,
+    dto: CreateExclusiveContentDto
+  ): Promise<CreatorResponse> {
+    const creator = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+    });
+    if (!creator) {
+      throw new NotFoundException('Creator profile not found');
+    }
+
+    const minTier = (dto.minTier || 'gold').toLowerCase();
+    const validTiers = ['bronze', 'silver', 'gold', 'platinum'];
+    if (!validTiers.includes(minTier)) {
+      throw new BadRequestException(`Invalid minTier. Must be one of: ${validTiers.join(', ')}`);
+    }
+
+    const item = await this.prisma.exclusiveContent.create({
+      data: {
+        creatorId: creator.id,
+        title: dto.title,
+        description: dto.description || null,
+        mediaUrl: dto.mediaUrl,
+        minTier,
+      },
+    });
+
+    return {
+      success: true,
+      data: item as unknown as Record<string, unknown>,
+    };
+  }
+
+  async getExclusiveContent(
+    creatorIdOrUserId: string,
+    currentUserId?: string
+  ): Promise<CreatorResponse> {
+    const creator = await this.prisma.creatorProfile.findFirst({
+      where: {
+        OR: [{ id: creatorIdOrUserId }, { userId: creatorIdOrUserId }],
+      },
+    });
+    if (!creator) {
+      throw new NotFoundException('Creator not found');
+    }
+
+    const items = await this.prisma.exclusiveContent.findMany({
+      where: { creatorId: creator.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    let userTier = 'none';
+    if (currentUserId) {
+      if (currentUserId === creator.userId) {
+        userTier = 'platinum';
+      } else {
+        const leaderboardEntry = await this.prisma.tipLeaderboard.findUnique({
+          where: {
+            creatorId_userId: {
+              creatorId: creator.userId,
+              userId: currentUserId,
+            },
+          },
+        });
+        if (leaderboardEntry?.tier) {
+          userTier = leaderboardEntry.tier.toLowerCase();
+        }
+      }
+    }
+
+    const tierRank: Record<string, number> = {
+      none: 0,
+      bronze: 1,
+      silver: 2,
+      gold: 3,
+      platinum: 4,
+    };
+
+    const userRank = tierRank[userTier] ?? 0;
+
+    const formatted = items.map((item) => {
+      const requiredRank = tierRank[item.minTier.toLowerCase()] ?? 3;
+      const isUnlocked = userRank >= requiredRank;
+      return {
+        id: item.id,
+        creatorId: item.creatorId,
+        title: item.title,
+        description: item.description,
+        minTier: item.minTier,
+        createdAt: item.createdAt,
+        locked: !isUnlocked,
+        mediaUrl: isUnlocked ? item.mediaUrl : null,
+        userTier,
+        requiredTier: item.minTier,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        items: formatted,
+        userTier,
+      } as unknown as Record<string, unknown>,
+    };
+  }
+
+  async deleteExclusiveContent(userId: string, contentId: string): Promise<CreatorResponse> {
+    const creator = await this.prisma.creatorProfile.findUnique({
+      where: { userId },
+    });
+    if (!creator) {
+      throw new NotFoundException('Creator profile not found');
+    }
+
+    const item = await this.prisma.exclusiveContent.findUnique({
+      where: { id: contentId },
+    });
+    if (!item) {
+      throw new NotFoundException('Exclusive content not found');
+    }
+    if (item.creatorId !== creator.id) {
+      throw new ForbiddenException('Not authorized to delete this content');
+    }
+
+    await this.prisma.exclusiveContent.delete({
+      where: { id: contentId },
+    });
+
+    return {
+      success: true,
+      data: { message: 'Exclusive content deleted successfully' },
+    };
   }
 }

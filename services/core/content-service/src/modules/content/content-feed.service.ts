@@ -35,8 +35,26 @@ export class ContentFeedService {
    * content-service copy and remains a fallback when the Redis store has no
    * row for the key (default-enabled), which also makes the two stores
    * converge instead of diverging on admin edits. Cached 5 minutes.
+   *
+   * Also ANDs in the universe VISIBILITY sentinel
+   * (`universe.<name>.enabled`, the admin enable/disable toggle): a disabled
+   * universe must not surface in ANY feed. Both lookups share ONE batched
+   * Redis MGET (FeatureFlagService.getFlags), and the result rides the same
+   * 5-minute store cache as before — so hot feed paths cost at most one extra
+   * Redis read per universe per TTL window, not per request.
    */
   async getEnabledUniverseIds(featureKey: string): Promise<string[]> {
+    return this.enabledUniverseIds(featureKey, true);
+  }
+
+  /** Universe ids gated ONLY by the visibility sentinel (no per-feature
+   * bridge) — for surfaces that list universes rather than feed content,
+   * e.g. GET /public/universes consumed by web/mobile/creator pickers. */
+  async getVisibleUniverseIds(): Promise<string[]> {
+    return this.enabledUniverseIds('enabled', false);
+  }
+
+  private async enabledUniverseIds(featureKey: string, withBridge: boolean): Promise<string[]> {
     const cacheKey = `universe-features:${featureKey}`;
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
@@ -50,14 +68,25 @@ export class ContentFeedService {
       select: { id: true, name: true },
     });
 
+    const featureKeys: string[] = [];
+    for (const universe of universes) {
+      if (withBridge) {
+        featureKeys.push(universeFlagKey(universe.name, featureKey));
+      }
+      // Visibility sentinel — the admin universe enable/disable toggle.
+      featureKeys.push(universeFlagKey(universe.name, 'enabled'));
+    }
+    const flags = await this.featureFlagService.getFlags(featureKeys);
+
+    const isOff = (key: string): boolean => {
+      const flag = flags.get(key);
+      return flag !== undefined && flag.enabled === false;
+    };
+
     const ids: string[] = [];
     for (const universe of universes) {
-      const flag = await this.featureFlagService.getFlag(
-        universeFlagKey(universe.name, featureKey)
-      );
-      if (flag && !flag.enabled) {
-        continue; // explicitly disabled by admin
-      }
+      if (withBridge && isOff(universeFlagKey(universe.name, featureKey))) continue; // explicitly disabled
+      if (isOff(universeFlagKey(universe.name, 'enabled'))) continue; // universe hidden
       ids.push(universe.id);
     }
 
@@ -213,9 +242,11 @@ export class ContentFeedService {
     error?: { code: string; message: string };
   }> {
     try {
+      const enabledUniverseFilter = await this.discoveryUniverseFilter();
       const content = await this.prisma.contentItem.findMany({
         where: {
           status: 'published',
+          ...enabledUniverseFilter,
           OR: [{ isExclusive: true }, { isPremiere: true }],
         },
         orderBy: { viewCount: 'desc' },
@@ -225,7 +256,7 @@ export class ContentFeedService {
 
       if (content.length === 0) {
         const fallback = await this.prisma.contentItem.findMany({
-          where: { status: 'published' },
+          where: { status: 'published', ...enabledUniverseFilter },
           orderBy: { viewCount: 'desc' },
           take: 6,
           include: { universe: true },
@@ -302,9 +333,11 @@ export class ContentFeedService {
   }> {
     try {
       const take = Math.min(limit || 5, 10);
+      const enabledUniverseFilter = await this.discoveryUniverseFilter();
       const content = await this.prisma.contentItem.findMany({
         where: {
           status: 'published',
+          ...enabledUniverseFilter,
           OR: [{ isExclusive: true }, { isPremiere: true }],
         },
         orderBy: { viewCount: 'desc' },
@@ -314,7 +347,7 @@ export class ContentFeedService {
 
       if (content.length === 0) {
         const fallback = await this.prisma.contentItem.findMany({
-          where: { status: 'published' },
+          where: { status: 'published', ...enabledUniverseFilter },
           orderBy: { viewCount: 'desc' },
           take,
           include: { universe: true },
@@ -341,7 +374,7 @@ export class ContentFeedService {
     try {
       const take = Math.min(limit || 12, 50);
       const content = await this.prisma.contentItem.findMany({
-        where: { status: 'published' },
+        where: { status: 'published', ...(await this.discoveryUniverseFilter()) },
         orderBy: { viewCount: 'desc' },
         take,
         include: { universe: true },

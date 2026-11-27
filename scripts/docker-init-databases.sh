@@ -6,6 +6,11 @@ set -euo pipefail
 # Creates separate databases for each microservice
 # ============================================================
 
+POSTGRES_USER="${POSTGRES_USER:-azeebo}"
+POSTGRES_DB="${POSTGRES_DB:-azeebo_dev}"
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+DEFAULT_DB_PASS="${POSTGRES_PASSWORD}"
+
 echo "Starting Azeebo+ database initialization..."
 
 # Helper function
@@ -48,53 +53,53 @@ echo "Creating service databases..."
 # ============================================================
 # CORE DOMAIN
 # ============================================================
-create_db_and_user "azeebo_auth" "azeebo" "${AUTH_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_user" "azeebo" "${USER_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_wallet" "azeebo" "${WALLET_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_payment" "azeebo" "${PAYMENT_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_content" "azeebo" "${CONTENT_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_search" "azeebo" "${SEARCH_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_media" "azeebo" "${MEDIA_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_auth" "azeebo" "${AUTH_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_user" "azeebo" "${USER_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_wallet" "azeebo" "${WALLET_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_payment" "azeebo" "${PAYMENT_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_content" "azeebo" "${CONTENT_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_search" "azeebo" "${SEARCH_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_media" "azeebo" "${MEDIA_DB_PASSWORD:-$DEFAULT_DB_PASS}"
 
 # ============================================================
 # ENGAGEMENT DOMAIN
 # ============================================================
-create_db_and_user "azeebo_notification" "azeebo" "${NOTIFICATION_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_reward" "azeebo" "${REWARD_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_engagement" "azeebo" "${ENGAGEMENT_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_messaging" "azeebo" "${MESSAGING_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_referral" "azeebo" "${REFERRAL_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_subscription" "azeebo" "${SUBSCRIPTION_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_notification" "azeebo" "${NOTIFICATION_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_reward" "azeebo" "${REWARD_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_engagement" "azeebo" "${ENGAGEMENT_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_messaging" "azeebo" "${MESSAGING_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_referral" "azeebo" "${REFERRAL_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_subscription" "azeebo" "${SUBSCRIPTION_DB_PASSWORD:-$DEFAULT_DB_PASS}"
 
 # ============================================================
 # INTELLIGENCE DOMAIN
 # ============================================================
-create_db_and_user "azeebo_analytics" "azeebo" "${ANALYTICS_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_recommendation" "azeebo" "${RECOMMENDATION_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_analytics" "azeebo" "${ANALYTICS_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_recommendation" "azeebo" "${RECOMMENDATION_DB_PASSWORD:-$DEFAULT_DB_PASS}"
 
 # ============================================================
 # UNIVERSES DOMAIN
 # ============================================================
-create_db_and_user "azeebo_reality" "azeebo" "${REALITY_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_movie" "azeebo" "${MOVIE_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_comedy" "azeebo" "${COMEDY_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_games" "azeebo" "${GAMES_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_sports" "azeebo" "${SPORTS_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_lifestyle" "azeebo" "${LIFESTYLE_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_vertical" "azeebo" "${VERTICAL_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_creator" "azeebo" "${CREATOR_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_reality" "azeebo" "${REALITY_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_movie" "azeebo" "${MOVIE_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_comedy" "azeebo" "${COMEDY_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_games" "azeebo" "${GAMES_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_sports" "azeebo" "${SPORTS_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_lifestyle" "azeebo" "${LIFESTYLE_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_vertical" "azeebo" "${VERTICAL_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_creator" "azeebo" "${CREATOR_DB_PASSWORD:-$DEFAULT_DB_PASS}"
 
 # ============================================================
 # OPERATIONS DOMAIN
 # ============================================================
-create_db_and_user "azeebo_queue" "azeebo" "${QUEUE_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_support" "azeebo" "${SUPPORT_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_moderation" "azeebo" "${MODERATION_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_queue" "azeebo" "${QUEUE_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_support" "azeebo" "${SUPPORT_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_moderation" "azeebo" "${MODERATION_DB_PASSWORD:-$DEFAULT_DB_PASS}"
 
 # ============================================================
 # FRONTEND
 # ============================================================
-create_db_and_user "azeebo_admin" "azeebo" "${ADMIN_DB_PASSWORD:-azeebo_dev_2024}"
-create_db_and_user "azeebo_creator" "azeebo" "${CREATOR_DB_PASSWORD:-azeebo_dev_2024}"
+create_db_and_user "azeebo_admin" "azeebo" "${ADMIN_DB_PASSWORD:-$DEFAULT_DB_PASS}"
+create_db_and_user "azeebo_creator" "azeebo" "${CREATOR_DB_PASSWORD:-$DEFAULT_DB_PASS}"
 
 echo "All service databases initialized successfully!"

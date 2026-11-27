@@ -84,13 +84,17 @@ async function getClient() {
     const mod = await import('@prisma/client');
     PrismaClient = mod.PrismaClient;
   }
-  return new (PrismaClient as new () => {
+  const dbUrl =
+    process.env.SUBSCRIPTION_DATABASE_URL ||
+    'postgresql://azeebo:azeebo@localhost:5432/azeebo_subscription?schema=public';
+  process.env.DATABASE_URL = dbUrl;
+  return new (PrismaClient as new (opts?: unknown) => {
     bundlePass: {
       upsert: (args: unknown) => Promise<{ id: string }>;
       count: (args?: unknown) => Promise<number>;
     };
     $disconnect: () => Promise<void>;
-  })();
+  })({ datasources: { db: { url: dbUrl } } });
 }
 
 /** Bust the service's cached bundle list (getBundles caches for 300s). */

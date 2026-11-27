@@ -56,6 +56,17 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   backoffFactor: 3,
 };
 
+/** Carries the upstream status so the retry loop can decide to retry. */
+class UpstreamStatusError extends Error {
+  constructor(public readonly status: number) {
+    super(`HTTP ${status}`);
+    this.name = 'UpstreamStatusError';
+  }
+}
+
+/** Retries are limited to methods whose replays cannot duplicate side effects. */
+const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 function jitter(value: number, factor: number = 0.3): number {
   const randomization = value * factor;
   return (Math.random() * 2 - 1) * randomization;
@@ -99,7 +110,10 @@ export class CircuitBreakerProxyService {
       headers,
       body,
       queryString,
-      timeout = 30000,
+      // AUD-21: fallback aligned with DEFAULT_HTTP_TIMEOUT_MS (5s) so the
+      // breaker budget matches the internal-call default; long jobs pass an
+      // explicit timeout in ProxyRequestOptions.
+      timeout = 5000,
       requestId,
       traceId: _traceId,
       serviceName: explicitServiceName,
@@ -242,9 +256,7 @@ export class CircuitBreakerProxyService {
           // bodies into "[object Object]"-style garbage — upstream multer
           // failed with "Unexpected end of form" on every file upload.
           fetchOptions.body =
-            typeof body === 'string' ||
-            body instanceof Buffer ||
-            body instanceof Uint8Array
+            typeof body === 'string' || body instanceof Buffer || body instanceof Uint8Array
               ? (body as unknown as BodyInit)
               : JSON.stringify(body);
         }
@@ -252,7 +264,7 @@ export class CircuitBreakerProxyService {
         const response = await fetch(target, fetchOptions);
 
         if (response.status >= 500 || response.status === 429) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new UpstreamStatusError(response.status);
         }
 
         const responseHeaders: Record<string, string> = {};
@@ -291,11 +303,11 @@ export class CircuitBreakerProxyService {
       } catch (retryError) {
         lastError = retryError as Error;
         const retryStatus =
-          typeof retryError === 'object' && retryError !== null && 'status' in retryError
-            ? (retryError as { status: number }).status
-            : undefined;
+          retryError instanceof UpstreamStatusError ? retryError.status : undefined;
         const shouldRetry =
-          attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus(retryStatus);
+          attempt < DEFAULT_RETRY_CONFIG.retries &&
+          this.shouldRetryStatus(retryStatus) &&
+          RETRYABLE_METHODS.has(method.toUpperCase());
         if (!shouldRetry) {
           throw retryError;
         }

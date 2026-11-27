@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageHero } from '@/components/layout/PageHero';
+import { PageShell } from '@/components/layout/PageShell';
 import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@/context/WalletContext';
 import { apiFetch } from '@/lib/api';
@@ -30,7 +30,15 @@ interface RealityShow {
   contestants?: RealityContestant[];
 }
 
-const VOTE_PACKAGES = [
+interface VotePackage {
+  id: string;
+  label: string;
+  votes: number;
+  price: number;
+  popular?: boolean;
+}
+
+const DEFAULT_PACKAGES: VotePackage[] = [
   { id: 'single', label: '1 Vote', votes: 1, price: 100, popular: false },
   { id: 'bronze', label: '5 Votes', votes: 5, price: 450, popular: false },
   { id: 'silver', label: '20 Votes', votes: 20, price: 1600, popular: true },
@@ -49,9 +57,20 @@ export default function VotePage(): React.JSX.Element {
   const showId = searchParams.get('showId') || '';
   const preselectedContestantId = searchParams.get('contestantId') || '';
 
+  const { data: votePackages = DEFAULT_PACKAGES } = useQuery({
+    queryKey: ['reality', 'vote-packages'],
+    queryFn: async () => {
+      const res = await fetch('/api/reality/vote-packages');
+      const json = await res.json();
+      if (json.success && json.data?.length > 0) return json.data as VotePackage[];
+      return DEFAULT_PACKAGES;
+    },
+    staleTime: 60000,
+  });
+
   const [selectedShowId, setSelectedShowId] = useState<string>(showId);
   const [selectedContestant, setSelectedContestant] = useState<RealityContestant | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[2]);
+  const [selectedPackage, setSelectedPackage] = useState<VotePackage>(DEFAULT_PACKAGES[2]);
   const [quantity, setQuantity] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -134,256 +153,262 @@ export default function VotePage(): React.JSX.Element {
   });
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--brand-near-black)', color: 'var(--text-primary)' }}
-    >
-      <AppHeader active="Reality" />
+    <PageShell activeNav="Reality" maxWidth="xl">
+      <PageHero
+        eyebrow="Reality"
+        title="Reality Show Voting"
+        description="Support your favorite contestants and decide who advances to the next round."
+      />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
-        <div className="mb-8 text-center sm:text-left">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-            Reality Show Voting
-          </h1>
-          <p className="text-white/60 text-base">
-            Support your favorite contestants and decide who advances to the next round.
+      {isSuccess ? (
+        <div
+          role="status"
+          className="az-glass animate-fadeIn mx-auto my-8 max-w-lg p-8 text-center sm:p-12"
+        >
+          <h2 className="az-heading mb-4 text-az-ink">Vote Submitted!</h2>
+          <p className="az-body mb-6 text-az-ink-muted">
+            You cast <strong className="text-az-flame">{totalVotes} votes</strong> for{' '}
+            <strong>{selectedContestant?.name}</strong>.
           </p>
-        </div>
-
-        {isSuccess ? (
-          <div className="az-glass p-8 sm:p-12 rounded-3xl text-center max-w-lg mx-auto my-8 animate-fadeIn">
-            <div className="text-6xl mb-4"></div>
-            <h2 className="text-2xl font-bold text-white mb-2">Vote Submitted!</h2>
-            <p className="text-white/70 mb-6">
-              You cast <strong className="text-[var(--brand-orange)]">{totalVotes} votes</strong>{' '}
-              for <strong>{selectedContestant?.name}</strong>.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => setIsSuccess(false)}
-                className="px-6 py-2.5 rounded-full font-semibold text-white bg-white/10 hover:bg-white/20 transition-all"
-              >
-                Vote Again
-              </button>
-              <button
-                onClick={() => router.push('/reality/results')}
-                className="px-6 py-2.5 rounded-full font-semibold text-white transition-all"
-                style={{
-                  background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                }}
-              >
-                View Leaderboard
-              </button>
-            </div>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => setIsSuccess(false)}
+              className="az-body-strong rounded-az-pill border border-az-ink/30 bg-az-ink/20 px-6 py-2.5 text-az-ink transition-all hover:bg-az-ink/30"
+            >
+              Vote Again
+            </button>
+            <button
+              onClick={() => router.push('/reality/results')}
+              className="az-btn-primary az-btn-primary--inline"
+            >
+              View Leaderboard
+            </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left 2 Cols: Contestants & Shows */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Show Selector */}
-              {shows.length > 1 && (
-                <div className="az-glass p-5 rounded-2xl">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
-                    Select Show
-                  </label>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {shows.map((show) => (
-                      <button
-                        key={show.id}
-                        onClick={() => {
-                          setSelectedShowId(show.id);
-                          setSelectedContestant(null);
-                        }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                          selectedShowId === show.id
-                            ? 'bg-[var(--brand-orange)] text-white shadow-lg'
-                            : 'bg-white/5 text-white/70 hover:bg-white/10'
-                        }`}
-                      >
-                        {show.title}
-                      </button>
-                    ))}
-                  </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Left 2 Cols: Contestants & Shows */}
+          <div className="space-y-6 lg:col-span-2">
+            {/* Show Selector */}
+            {shows.length > 1 && (
+              <div className="az-glass p-5">
+                <label className="az-label">Select Show</label>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {shows.map((show) => (
+                    <button
+                      key={show.id}
+                      onClick={() => {
+                        setSelectedShowId(show.id);
+                        setSelectedContestant(null);
+                      }}
+                      aria-pressed={selectedShowId === show.id}
+                      className={`rounded-az-control px-4 py-2 az-body whitespace-nowrap transition-all ${
+                        selectedShowId === show.id
+                          ? 'bg-az-flame text-az-surface-root shadow-az-glow'
+                          : 'bg-az-glass-fill text-az-ink/70 hover:bg-az-glass-card'
+                      }`}
+                    >
+                      {show.title}
+                    </button>
+                  ))}
                 </div>
-              )}
-
-              {/* Contestants List */}
-              <div className="az-glass p-6 rounded-3xl">
-                <h3 className="text-lg font-bold text-white mb-4">Choose a Contestant</h3>
-
-                {contestantsLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} height="140px" borderRadius="16px" />
-                    ))}
-                  </div>
-                ) : contestants.length === 0 ? (
-                  <EmptyState
-                    icon="users"
-                    title="No contestants available for this show"
-                    description="Check back later for contestants"
-                    dark
-                  />
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {contestants.map((c) => {
-                      const isSelected = selectedContestant?.id === c.id;
-                      return (
-                        <div
-                          key={c.id}
-                          onClick={() => setSelectedContestant(c)}
-                          className={`relative p-3 rounded-2xl cursor-pointer transition-all border text-center ${
-                            isSelected
-                              ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/10 shadow-lg scale-102'
-                              : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.06]'
-                          }`}
-                        >
-                          <div className="relative w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden border-2 border-white/20">
-                            {c.avatar ? (
-                              <OptimizedImage
-                                src={c.avatar}
-                                alt={c.name}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-white/10 text-xl font-bold text-white">
-                                {c.name.charAt(0)}
-                              </div>
-                            )}
-                          </div>
-                          <h4 className="text-sm font-semibold text-white truncate">{c.name}</h4>
-                          {c.votes !== undefined && (
-                            <p className="text-xs text-[var(--brand-orange)] font-medium mt-1">
-                              {c.votes.toLocaleString()} votes
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
-            {/* Right Col: Package Selector & Checkout */}
-            <div className="space-y-6">
-              <div className="az-glass p-6 rounded-3xl sticky top-24">
-                <h3 className="text-lg font-bold text-white mb-4">Select Vote Package</h3>
+            {/* Contestants List */}
+            <div className="az-glass p-6">
+              <h3 className="az-title mb-4 text-az-ink">Choose a Contestant</h3>
 
-                <div className="space-y-3 mb-6">
-                  {VOTE_PACKAGES.map((pkg) => {
-                    const isSelected = selectedPackage.id === pkg.id;
+              {contestantsLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} height="140px" borderRadius="16px" />
+                  ))}
+                </div>
+              ) : contestants.length === 0 ? (
+                <EmptyState
+                  icon="users"
+                  title="No contestants available for this show"
+                  description="Check back later for contestants"
+                  dark
+                />
+              ) : (
+                <div
+                  role="radiogroup"
+                  aria-label="Choose a contestant"
+                  className="grid grid-cols-2 sm:grid-cols-3 gap-4"
+                >
+                  {contestants.map((c) => {
+                    const isSelected = selectedContestant?.id === c.id;
                     return (
                       <div
-                        key={pkg.id}
-                        onClick={() => setSelectedPackage(pkg)}
-                        className={`p-3.5 rounded-xl cursor-pointer transition-all flex items-center justify-between border ${
+                        key={c.id}
+                        role="radio"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onClick={() => setSelectedContestant(c)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedContestant(c);
+                          }
+                        }}
+                        className={`relative cursor-pointer rounded-az-card border p-3 text-center transition-all ${
                           isSelected
-                            ? 'border-[var(--brand-orange)] bg-[var(--brand-orange)]/15'
-                            : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.06]'
+                            ? 'scale-102 border-az-flame bg-az-flame/10 shadow-az-glow'
+                            : 'border-az-ink/5 bg-az-ink/[0.02] hover:bg-az-ink/[0.06]'
                         }`}
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-white">{pkg.label}</span>
-                            {pkg.popular && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[var(--brand-orange)] text-white uppercase">
-                                Popular
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-white/50">{pkg.votes} votes total</span>
+                        <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-full border-2 border-az-ink/20">
+                          {c.avatar ? (
+                            <OptimizedImage
+                              src={c.avatar}
+                              alt={c.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-az-glass-card az-title text-az-ink">
+                              {c.name.charAt(0)}
+                            </div>
+                          )}
                         </div>
-                        <span className="text-sm font-bold text-[var(--brand-orange)]">
-                          ₦{pkg.price.toLocaleString()}
-                        </span>
+                        <h4 className="az-body-strong truncate text-az-ink">{c.name}</h4>
+                        {c.votes !== undefined && (
+                          <p className="az-caption mt-1 text-az-flame">
+                            {c.votes.toLocaleString()} votes
+                          </p>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-
-                {/* Quantity */}
-                <div className="flex items-center justify-between py-3 border-t border-white/10 mb-4">
-                  <span className="text-sm text-white/70">Quantity</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center hover:bg-white/20"
-                    >
-                      -
-                    </button>
-                    <span className="font-bold text-white w-6 text-center">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity((q) => q + 1)}
-                      className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center hover:bg-white/20"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="space-y-2 py-3 border-t border-white/10 text-sm mb-6">
-                  <div className="flex justify-between text-white/60">
-                    <span>Total Votes:</span>
-                    <span className="font-semibold text-white">{totalVotes}</span>
-                  </div>
-                  <div className="flex justify-between text-white/60">
-                    <span>Wallet Balance:</span>
-                    <span className="font-semibold text-white">
-                      ₦{currentBalance.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-base font-bold text-white pt-2 border-t border-white/5">
-                    <span>Total Cost:</span>
-                    <span className="text-[var(--brand-orange)]">
-                      ₦{totalPrice.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {!isAuthenticated ? (
-                  <button
-                    onClick={() => router.push('/auth/login')}
-                    className="w-full py-3.5 rounded-full font-bold text-white text-center transition-all hover:scale-102"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                    }}
-                  >
-                    Log In to Vote
-                  </button>
-                ) : !canAfford ? (
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => router.push('/wallet/add-funds')}
-                      className="w-full py-3.5 rounded-full font-bold text-white text-center transition-all bg-red-500 hover:bg-red-600"
-                    >
-                      Insufficient Balance — Add Funds
-                    </button>
-                    <p className="text-xs text-center text-white/40">
-                      You need ₦{(totalPrice - currentBalance).toLocaleString()} more
-                    </p>
-                  </div>
-                ) : (
-                  <button
-                    disabled={!selectedContestant || voteMutation.isPending}
-                    onClick={() => voteMutation.mutate()}
-                    className="w-full py-3.5 rounded-full font-bold text-white text-center transition-all hover:scale-102 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--brand-orange), var(--brand-red))',
-                    }}
-                  >
-                    {voteMutation.isPending ? 'Submitting Votes...' : `Cast ${totalVotes} Votes`}
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
-        )}
-      </main>
 
-      <AppFooter />
-    </div>
+          {/* Right Col: Package Selector & Checkout */}
+          <div className="space-y-6">
+            <div className="az-glass sticky top-24 p-6">
+              <h3 className="az-title mb-4 text-az-ink">Select Vote Package</h3>
+
+              <div role="radiogroup" aria-label="Select vote package" className="space-y-3 mb-6">
+                {votePackages.map((pkg) => {
+                  const isSelected = selectedPackage.id === pkg.id;
+                  return (
+                    <div
+                      key={pkg.id}
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                      onClick={() => setSelectedPackage(pkg)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedPackage(pkg);
+                        }
+                      }}
+                      className={`flex cursor-pointer items-center justify-between rounded-az-control border p-3.5 transition-all ${
+                        isSelected
+                          ? 'border-az-flame bg-az-flame/15'
+                          : 'border-az-ink/5 bg-az-ink/[0.02] hover:bg-az-ink/[0.06]'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="az-body-strong text-az-ink">{pkg.label}</span>
+                          {pkg.popular && (
+                            <span className="az-micro-label rounded-az-pill bg-az-flame px-2 py-0.5 uppercase text-az-surface-root">
+                              Popular
+                            </span>
+                          )}
+                        </div>
+                        <span className="az-caption text-az-ink-muted">
+                          {pkg.votes} votes total
+                        </span>
+                      </div>
+                      <span className="az-body-strong text-az-flame">
+                        ₦{pkg.price.toLocaleString()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Quantity */}
+              <div className="mb-4 flex items-center justify-between border-t border-az-glass-border py-3">
+                <span className="az-body text-az-ink-muted">Quantity</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    aria-label="Decrease quantity"
+                    className="flex size-8 items-center justify-center rounded-az-control bg-az-glass-card az-body-strong text-az-ink hover:bg-az-ink/20"
+                  >
+                    -
+                  </button>
+                  <span aria-live="polite" className="az-body-strong w-6 text-center text-az-ink">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    aria-label="Increase quantity"
+                    className="flex size-8 items-center justify-center rounded-az-control bg-az-glass-card az-body-strong text-az-ink hover:bg-az-ink/20"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="mb-6 space-y-2 border-t border-az-glass-border py-3">
+                <div className="az-body flex justify-between text-az-ink-muted">
+                  <span>Total Votes:</span>
+                  <span className="az-body-strong text-az-ink">{totalVotes}</span>
+                </div>
+                <div className="az-body flex justify-between text-az-ink-muted">
+                  <span>Wallet Balance:</span>
+                  <span className="az-body-strong text-az-ink">
+                    ₦{currentBalance.toLocaleString()}
+                  </span>
+                </div>
+                <div className="az-body-strong flex justify-between border-t border-az-ink/5 pt-2 text-az-ink">
+                  <span>Total Cost:</span>
+                  <span className="text-az-flame">₦{totalPrice.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {!isAuthenticated ? (
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="az-btn-primary hover:scale-102"
+                >
+                  Log In to Vote
+                </button>
+              ) : !canAfford ? (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => router.push('/wallet/add-funds')}
+                    className="az-body-strong w-full rounded-az-pill bg-az-scarlet py-3.5 text-center text-az-ink transition-all hover:bg-az-scarlet/90"
+                  >
+                    Insufficient Balance — Add Funds
+                  </button>
+                  <p className="az-caption text-center text-az-ink-muted">
+                    You need ₦{(totalPrice - currentBalance).toLocaleString()} more
+                  </p>
+                </div>
+              ) : (
+                <button
+                  disabled={!selectedContestant || voteMutation.isPending}
+                  onClick={() => voteMutation.mutate()}
+                  className="az-btn-primary hover:scale-102"
+                >
+                  {voteMutation.isPending ? 'Submitting Votes...' : `Cast ${totalVotes} Votes`}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </PageShell>
   );
 }

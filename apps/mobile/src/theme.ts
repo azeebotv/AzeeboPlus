@@ -1,20 +1,23 @@
 /**
  * Azeebo+ Brand Theme for React Native
  * Extends @azeebo/design-tokens with mobile-specific overrides.
- * Mobile uses warmer brand colors; web uses Tailwind + design-tokens CSS vars.
+ * Brand accents come from the token package so the canonical Figma accent is
+ * defined exactly once.
  */
 
 // Re-export base tokens from design-tokens package for consistency
-export { zIndex, themes } from '@azeebo/design-tokens';
+import { brand, colors as tokenColors } from '@azeebo/design-tokens';
+
+export { brand, zIndex, themes } from '@azeebo/design-tokens';
 
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {
   // Primary brand
-  primaryColor: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
-  primaryDark: '#C83A08', // Darker orange for pressed states
+  primaryColor: brand.scarlet, // Canonical accent — CTAs, logo accent, highlights
+  primaryDark: tokenColors.primary[600], // Pressed state
   secondary: '#1A1A1A', // Secondary surface color
-  red: '#CC1C1C', // Deep Red — buttons, active states, glow
-  redDark: '#B91818', // Darker red for pressed states
+  red: brand.scarlet, // Buttons, active states, glow
+  redDark: tokenColors.primary[700], // Pressed state
 
   // Backgrounds
   bg: {
@@ -38,77 +41,24 @@ export const colors = {
     tertiary: '#9A8A7A', // Warm grey — hints, captions (meets WCAG AA contrast >= 4.5:1)
     muted: '#9A8A7A', // Alias for tertiary
     inverse: '#0A0A0A', // Dark text on light backgrounds
-    accent: '#E8420A', // Orange accent text
-    link: '#E8420A', // Link color
+    accent: brand.scarlet, // Accent text
+    link: brand.scarlet, // Link color
   },
 
   // Semantic
-  primary: {
-    50: '#FEF3EC',
-    100: '#FDE2D1',
-    200: '#FBC5A3',
-    300: '#F89E6B',
-    400: '#F46E2E',
-    500: '#E8420A',
-    600: '#C83A08',
-    700: '#A33007',
-    800: '#7E2505',
-    900: '#5A1A03',
-  },
-  success: {
-    50: '#F0FDF4',
-    100: '#DCFCE7',
-    200: '#BBF7D0',
-    300: '#86EFAC',
-    400: '#4ADE80',
-    500: '#22C55E',
-    600: '#16A34A',
-    700: '#15803D',
-    800: '#166534',
-    900: '#14532D',
-  },
-  warning: {
-    50: '#FFFBEB',
-    100: '#FEF3C7',
-    200: '#FDE68A',
-    300: '#FCD34D',
-    400: '#FBBF24',
-    500: '#F59E0B',
-    600: '#D97706',
-    700: '#B45309',
-    800: '#92400E',
-    900: '#78350F',
-  },
-  error: {
-    50: '#FEF2F2',
-    100: '#FEE2E2',
-    200: '#FECACA',
-    300: '#FCA5A5',
-    400: '#F87171',
-    500: '#CC1C1C',
-    600: '#B91818',
-    700: '#991B1B',
-    800: '#7F1D1D',
-    900: '#611111',
-  },
-  info: {
-    50: '#EFF6FF',
-    100: '#DBEAFE',
-    200: '#BFDBFE',
-    300: '#93C5FD',
-    400: '#60A5FA',
-    500: '#3B82F6',
-    600: '#2563EB',
-    700: '#1D4ED8',
-    800: '#1E40AF',
-    900: '#1E3A8A',
-  },
+  primary: tokenColors.primary,
+  /* Semantic ramps come straight from the token package so a screen can never
+     drift from the web's ramp again. */
+  success: tokenColors.success,
+  warning: tokenColors.warning,
+  error: tokenColors.error,
+  info: tokenColors.secondary,
 
   // Borders
   border: {
     default: 'rgba(255,255,255,0.2)',
     primary: 'rgba(255,255,255,0.2)',
-    focus: '#E8420A',
+    focus: tokenColors.border.focus,
     subtle: 'rgba(255,255,255,0.04)',
   },
 
@@ -145,8 +95,10 @@ export const colors = {
 
   // Pre-multiplied alpha washes (8-digit hex) for tints and glows.
   alpha: {
-    primary20: '#E8420A20',
-    danger20: '#CC1C1C20',
+    /* React Native has no color-mix(), so tints are the brand hex plus an
+       alpha byte — derived from the tokens rather than restated. */
+    primary20: `${brand.flame}20`,
+    danger20: `${brand.scarlet}20`,
     success25: '#22C55E25',
     violet20: '#8B5CF620',
   },
@@ -206,12 +158,12 @@ export const pathColors = {
 // ── Universe Colors ───────────────────────────────────────────
 export const universeColors: Record<string, string> = {
   reality: '#8b5cf6',
-  creators: '#E8420A',
-  creator: '#E8420A',
+  creators: brand.flame,
+  creator: brand.flame,
   lifestyle: '#ec4899',
   vertical: '#3b82f6',
-  movies: '#E8420A',
-  movie: '#E8420A',
+  movies: brand.flame,
+  movie: brand.flame,
   games: '#06b6d4',
   comedy: '#fbbf24',
   sports: '#22c55e',
@@ -288,7 +240,7 @@ export const shadows = {
     elevation: 15,
   },
   red: {
-    shadowColor: '#CC1C1C',
+    shadowColor: brand.scarlet,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -329,7 +281,10 @@ export const depth = {
 
 // ── Default Images ──────────────────────────────────────────
 export const defaultImages = {
-  thumbnail: 'https://placehold.co/800x600/1a1a1a/ffffff?text=Azeebo%2B',
-  avatar: 'https://placehold.co/200x200/1a1a1a/ffffff?text=U',
-  banner: 'https://placehold.co/1200x400/1a1a1a/ffffff?text=Azeebo%2B',
+  thumbnail:
+    'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=800&h=600&q=80',
+  avatar:
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+  banner:
+    'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&h=400&q=80',
 } as const;

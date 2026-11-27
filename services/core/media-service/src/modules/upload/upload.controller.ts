@@ -364,7 +364,10 @@ export class UploadController {
       metadata = await this.uploadService.getFileMetadata(decodedKey);
     } catch (err) {
       if ((err as { name?: string })?.name === 'NotFound') {
-        return ApiResponseWrapper.success({ message: 'File deleted successfully', alreadyGone: true });
+        return ApiResponseWrapper.success({
+          message: 'File deleted successfully',
+          alreadyGone: true,
+        });
       }
       throw err;
     }

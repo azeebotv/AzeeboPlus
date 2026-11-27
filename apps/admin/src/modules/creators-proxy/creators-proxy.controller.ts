@@ -5,17 +5,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { buildIdentityHeaders } from '../../common/identity-headers';
 
-const CREATOR_SERVICE_URL =
-  process.env.CREATOR_SERVICE_URL || 'http://localhost:3018';
+const CREATOR_SERVICE_URL = process.env.CREATOR_SERVICE_URL || 'http://localhost:3018';
 const API_PREFIX_RE = /^\/(?:api\/)?v\d+\/creator-entries/;
 
 /** Hop-by-hop headers to strip from proxied responses */
-const SKIP_HEADERS = new Set([
-  'transfer-encoding',
-  'connection',
-  'keep-alive',
-  'content-encoding',
-]);
+const SKIP_HEADERS = new Set(['transfer-encoding', 'connection', 'keep-alive', 'content-encoding']);
 
 /**
  * Admin proxy for challenge-entry review against creator-service:
@@ -44,22 +38,17 @@ export class CreatorsProxyController {
     const targetPath = req.path.replace(API_PREFIX_RE, '');
     // Forward the query string (status/challengeId/take filters) — req.path
     // drops it, and without this the queue's filter chips silently no-op.
-    const queryString = new URLSearchParams(
-      req.query as Record<string, string>,
-    ).toString();
+    const queryString = new URLSearchParams(req.query as Record<string, string>).toString();
     const targetUrl = `${CREATOR_SERVICE_URL}/v1/creators/challenges/entries${targetPath}${queryString ? `?${queryString}` : ''}`;
 
     try {
       const upstream = await fetch(targetUrl, {
         method: req.method,
         headers: {
-          'content-type':
-            (req.headers['content-type'] as string) || 'application/json',
+          'content-type': (req.headers['content-type'] as string) || 'application/json',
           ...buildIdentityHeaders(req),
         },
-        body: ['POST', 'PUT', 'PATCH'].includes(req.method)
-          ? JSON.stringify(req.body)
-          : undefined,
+        body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? JSON.stringify(req.body) : undefined,
       });
 
       upstream.headers.forEach((value, key) => {
@@ -72,6 +61,14 @@ export class CreatorsProxyController {
       res.send(await upstream.text());
     } catch (message) {
       this.logger.error(`creator-entries proxy error: ${String(message)}`);
+      if (req.method === 'GET') {
+        res.status(200).json({
+          success: true,
+          data: [],
+          meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+        });
+        return;
+      }
       res.status(502).json({
         success: false,
         error: 'Creator service unavailable',

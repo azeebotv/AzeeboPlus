@@ -9,6 +9,7 @@ import { useWallet } from '@azeebo/react-data/contexts/WalletContext';
 import { createLogger } from '@azeebo/react-data/utils/logger';
 import type { SubscriptionPlan } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 const logger = createLogger('SubscriptionPlans');
 
@@ -71,7 +72,7 @@ export default function SubscriptionPlansScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView accessibilityLabel="Plans Screen" style={styles.container}>
         <LoadingState text="Loading subscription plans..." />
       </SafeAreaView>
     );
@@ -81,7 +82,13 @@ export default function SubscriptionPlansScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Navigates to previous screen"
+          >
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Subscription Plans</Text>
@@ -105,6 +112,9 @@ export default function SubscriptionPlansScreen() {
                 key={plan.id}
                 style={[styles.planCard, selectedPlan?.id === plan.id && styles.planCardSelected]}
                 onPress={() => setSelectedPlan(plan)}
+                accessibilityRole="button"
+                accessibilityLabel={`${plan.name}, ₦${plan.price.toLocaleString()} for ${plan.duration} days`}
+                accessibilityState={{ selected: selectedPlan?.id === plan.id }}
               >
                 <View style={styles.planHeader}>
                   <Text style={styles.planName}>{plan.name}</Text>
@@ -147,6 +157,9 @@ export default function SubscriptionPlansScreen() {
               ]}
               onPress={handleSubscribe}
               disabled={walletBalance < selectedPlan.price}
+              accessibilityRole="button"
+              accessibilityLabel={`Subscribe to ${selectedPlan.name} for ₦${selectedPlan.price.toLocaleString()}`}
+              accessibilityState={{ disabled: walletBalance < selectedPlan.price }}
             >
               <Text style={styles.buyButtonText}>
                 {walletBalance >= selectedPlan.price ? 'Subscribe Now' : 'Insufficient Funds'}
@@ -160,19 +173,19 @@ export default function SubscriptionPlansScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A0A0A' },
+  container: { flex: 1, backgroundColor: '#0B090E' },
   content: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     paddingTop: 50,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#140808',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -200,7 +213,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A1A1A',
   },
-  planCardSelected: { borderColor: '#E8420A', backgroundColor: 'rgba(232,66,10,0.15)' },
+  planCardSelected: { borderColor: brand.flame, backgroundColor: 'rgba(232,66,10,0.15)' },
   planHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -209,7 +222,7 @@ const styles = StyleSheet.create({
   },
   planName: { color: '#fff', fontSize: 16, fontWeight: '600' },
   tierBadge: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -229,9 +242,9 @@ const styles = StyleSheet.create({
   },
   checkoutTitle: { color: '#9A8A7A', fontSize: 12, marginBottom: 4 },
   checkoutName: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  checkoutPrice: { color: '#E8420A', fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  checkoutPrice: { color: brand.flame, fontSize: 18, fontWeight: '700', marginBottom: 16 },
   buyButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,

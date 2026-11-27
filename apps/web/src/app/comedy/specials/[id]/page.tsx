@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ContentItem } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -62,13 +61,11 @@ function SpecialDetailContent(): React.JSX.Element {
   const error = specialQuery.error?.message;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Comedy" />
-
+    <PageShell activeNav="Comedy" maxWidth="lg">
       {isLoading ? (
-        <Skeleton height="500px" borderRadius="0" />
+        <Skeleton height="500px" borderRadius="16px" />
       ) : error ? (
-        <div className="h-[500px] flex items-center justify-center">
+        <div className="flex h-[500px] items-center justify-center">
           <ErrorState
             title="Failed to load special"
             description={error}
@@ -76,8 +73,8 @@ function SpecialDetailContent(): React.JSX.Element {
           />
         </div>
       ) : special ? (
-        <section className="relative">
-          <div className="relative h-[500px]">
+        <section className="py-4">
+          <div className="relative h-[400px] overflow-hidden rounded-az-feature sm:h-[500px]">
             <OptimizedImage
               src={special.thumbnail}
               alt={special.title}
@@ -85,31 +82,30 @@ function SpecialDetailContent(): React.JSX.Element {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)] via-[var(--brand-near-black)]/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
+            <div className="az-scrim--hero absolute inset-0" />
+            <div className="absolute bottom-0 left-0 right-0 p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: 'var(--brand-orange)' }}
-                  >
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="az-micro-label inline-block rounded-az-pill bg-az-scarlet/20 px-3 py-1 text-az-flame">
                     Special
                   </span>
                   {special.duration && (
-                    <span className="text-sm text-white/60">
+                    <span className="az-caption text-az-ink-muted">
                       {Math.floor(special.duration / 60)} min
                     </span>
                   )}
                 </div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{special.title}</h1>
+                <h1 className="az-headline mb-3 text-4xl text-az-ink sm:text-5xl">
+                  {special.title}
+                </h1>
                 {special.comedian && (
                   <Link
                     href={`/comedy/comedians/${special.comedian.id}`}
-                    className="text-white/60 text-lg hover:text-[var(--brand-orange)] transition-colors"
+                    className="az-subtitle text-az-ink-muted transition-colors hover:text-az-flame"
                   >
                     {special.comedian.name}
                   </Link>
@@ -121,14 +117,13 @@ function SpecialDetailContent(): React.JSX.Element {
       ) : null}
 
       {special && (
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <section className="py-10 sm:py-12">
           <ScrollReveal>
-            <div className="flex items-center gap-4 mb-8">
+            <div className="mb-8 flex items-center gap-4">
               <Link href={`/watch/${special.id}`}>
                 <motion.button
                   type="button"
-                  className="px-8 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ backgroundColor: 'var(--brand-orange)' }}
+                  className="az-btn-primary az-btn-primary--inline"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -139,11 +134,7 @@ function SpecialDetailContent(): React.JSX.Element {
                 <Link href={`/comedy/comedians/${special.comedian.id}`}>
                   <motion.button
                     type="button"
-                    className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                    style={{
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                    }}
+                    className="az-body-strong rounded-az-pill border border-az-ink/20 bg-az-ink/5 px-6 py-3 text-az-ink transition-all hover:bg-az-ink/10"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -153,31 +144,31 @@ function SpecialDetailContent(): React.JSX.Element {
               )}
             </div>
 
-            <p className="text-white/70 text-lg leading-relaxed">{special.description}</p>
+            <p className="az-lead leading-relaxed text-az-ink-muted">{special.description}</p>
 
             {special.releaseDate && (
-              <p className="text-sm text-white/40 mt-4">Released: {special.releaseDate}</p>
+              <p className="az-caption mt-4 text-az-ink-muted">Released: {special.releaseDate}</p>
             )}
           </ScrollReveal>
 
           {related.length > 0 && (
             <div className="mt-12">
               <ScrollReveal>
-                <h2 className="text-2xl font-bold text-white mb-6">More Comedy</h2>
+                <h2 className="az-section-title mb-6 text-az-ink">More Comedy</h2>
               </ScrollReveal>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {related.map((item) => (
                   <Link key={item.id} href={`/watch/${item.id}`}>
-                    <GlowCard universe="comedy" className="overflow-hidden group">
+                    <GlowCard universe="comedy" className="group overflow-hidden">
                       <OptimizedImage
                         src={item.thumbnail}
                         alt={item.title}
                         width={400}
                         height={120}
-                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
+                        className="h-32 w-full object-cover transition-transform group-hover:scale-105"
                       />
                       <div className="p-3">
-                        <h3 className="font-semibold text-white text-sm truncate">{item.title}</h3>
+                        <h3 className="az-body-strong truncate text-az-ink">{item.title}</h3>
                       </div>
                     </GlowCard>
                   </Link>
@@ -187,9 +178,7 @@ function SpecialDetailContent(): React.JSX.Element {
           )}
         </section>
       )}
-
-      <AppFooter />
-    </div>
+    </PageShell>
   );
 }
 
@@ -199,8 +188,8 @@ export default function SpecialDetailPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
-import { RolesGuard } from './roles.guard.js';
-import { Roles } from '../decorators/roles.decorator.js';
+import { RolesGuard } from '@azeebo/security';
+import { Roles } from '@azeebo/security';
 import { APP_GUARD } from '@nestjs/core';
 import { Controller, Get } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';

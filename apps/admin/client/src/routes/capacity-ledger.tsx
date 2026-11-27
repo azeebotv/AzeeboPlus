@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
 import { useAuth } from '@/context/AuthContext';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -80,7 +81,7 @@ export default function CapacityLedgerPage() {
       if (domainFilter) params.set('domain', domainFilter);
       return apiFetch<CapacityEntry[]>(`/api/v1/analytics/capacity/entries?${params}`);
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const summaryQuery = useQuery({
@@ -194,10 +195,10 @@ export default function CapacityLedgerPage() {
             }}
           >
             <Icon name="clock" size={32} color="var(--admin-orange)" />
-            <span>Capacity Ledger</span>
+            <span>Capacity & Efficiency Ledger</span>
           </h1>
           <p style={{ color: 'var(--admin-text-muted)' }}>
-            Before/after time tracking, headcount avoidance, and CFO/People validation
+            Track operational hours saved, automation ROI, and leadership sign-off across automated workflows
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -345,7 +346,7 @@ export default function CapacityLedgerPage() {
                   marginBottom: 4,
                 }}
               >
-                Baseline Hours/Week
+                Manual Hours Previously Needed (hrs/wk)
               </label>
               <input
                 type="number"
@@ -373,7 +374,7 @@ export default function CapacityLedgerPage() {
                   marginBottom: 4,
                 }}
               >
-                Post-Agent Hours/Week
+                Hours Required With Automation (hrs/wk)
               </label>
               <input
                 type="number"
@@ -403,7 +404,7 @@ export default function CapacityLedgerPage() {
                   marginBottom: 4,
                 }}
               >
-                Redeployment Target (optional)
+                Staff Reassigned To (optional)
               </label>
               <input
                 type="text"
@@ -431,7 +432,7 @@ export default function CapacityLedgerPage() {
                   marginBottom: 4,
                 }}
               >
-                Role Description (optional)
+                Role Description / Team Impact (optional)
               </label>
               <input
                 type="text"
@@ -465,7 +466,7 @@ export default function CapacityLedgerPage() {
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={2}
-                placeholder="Context for the CFO/People validation review"
+                placeholder="Context for finance and leadership review"
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -497,7 +498,7 @@ export default function CapacityLedgerPage() {
                 checked={formData.headcountAvoided}
                 onChange={(e) => setFormData({ ...formData, headcountAvoided: e.target.checked })}
               />
-              Headcount Avoided
+              Staff Time Saved
             </label>
             <label
               style={{
@@ -514,7 +515,7 @@ export default function CapacityLedgerPage() {
                 checked={formData.vendorAvoided}
                 onChange={(e) => setFormData({ ...formData, vendorAvoided: e.target.checked })}
               />
-              Vendor Avoided
+              External Vendor / Agency Cost Avoided
             </label>
             <select
               value={formData.period}
@@ -582,7 +583,7 @@ export default function CapacityLedgerPage() {
           }}
         >
           <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
-            Total Hours Released
+            Total Staff Hours Saved
           </p>
           <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-emerald)' }}>
             {summary.totalHoursReleased.toLocaleString()}h
@@ -597,7 +598,7 @@ export default function CapacityLedgerPage() {
           }}
         >
           <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
-            Headcount Avoided
+            Full-Time Roles Reallocated
           </p>
           <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-blue)' }}>
             {summary.headcountAvoided}
@@ -612,7 +613,7 @@ export default function CapacityLedgerPage() {
           }}
         >
           <p style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginBottom: 8 }}>
-            Tracked Workflows
+            Automated Workflows
           </p>
           <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-orange)' }}>
             {summary.totalEntries}
@@ -645,7 +646,7 @@ export default function CapacityLedgerPage() {
                   {domain}
                 </p>
                 <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--admin-text)' }}>
-                  {data.released}h released
+                  {data.released}h saved
                 </p>
                 <p style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>
                   {data.count} workflows
@@ -728,11 +729,11 @@ export default function CapacityLedgerPage() {
               <tr style={{ backgroundColor: 'rgba(232,66,10,0.08)' }}>
                 <th style={thStyle}>Task Type</th>
                 <th style={thStyle}>Domain</th>
-                <th style={thStyle}>Baseline</th>
-                <th style={thStyle}>Post-Agent</th>
-                <th style={thStyle}>Hours Released</th>
-                <th style={thStyle}>Savings %</th>
-                <th style={thStyle}>Headcount</th>
+                <th style={thStyle}>Manual Hours</th>
+                <th style={thStyle}>Automated Hours</th>
+                <th style={thStyle}>Hours Saved</th>
+                <th style={thStyle}>Time Saved %</th>
+                <th style={thStyle}>Roles Saved</th>
                 <th style={thStyle}>Validated</th>
                 <th style={thStyle}>Period</th>
                 <th style={thStyle}>Actions</th>

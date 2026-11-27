@@ -20,6 +20,13 @@ import type Redis from 'ioredis';
  * with graceful fallback to in-memory Map for single-instance deployments.
  * Limit: 10 requests per 60 seconds for auth endpoints.
  * All other routes fall through to the default ThrottlerGuard behavior.
+ *
+ * AUD-20: when Redis WAS configured but is unreachable, auth requests fail
+ * CLOSED by default — degrading to per-instance in-memory buckets silently
+ * multiplies the limit by the replica count, which is exactly what a
+ * credential-stuffing botnet wants. Opt out with RATE_LIMIT_FAIL_CLOSED=false
+ * (restores the old fail-open posture). Deployments without REDIS_URL are
+ * unaffected: in-memory is their intended store, not a degraded state.
  */
 @Injectable()
 export class AuthThrottlerGuard extends ThrottlerGuard {
@@ -33,9 +40,10 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
   private redisClient: Redis | null = null;
   private readonly useRedis: boolean;
   /**
-   * When true, requests are rejected when Redis is down (fail-closed).
-   * Defaults to false (fail-open) for backward compatibility.
-   * Set RATE_LIMIT_FAIL_CLOSED=true in production for auth endpoints.
+   * AUD-20: fail-closed is the DEFAULT (previously opt-in via === 'true').
+   * Set RATE_LIMIT_FAIL_CLOSED=false to restore fail-open degradation when
+   * the Redis throttler is unreachable. Applies only when REDIS_URL is
+   * configured — see canActivate.
    */
   private readonly failClosed: boolean;
 
@@ -55,7 +63,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     private readonly httpMetrics: HttpMetricsService
   ) {
     super(options, storageService, reflector);
-    this.failClosed = process.env.RATE_LIMIT_FAIL_CLOSED === 'true';
+    this.failClosed = process.env.RATE_LIMIT_FAIL_CLOSED !== 'false';
     if (process.env.REDIS_URL) {
       try {
         const Redis = require('ioredis');
@@ -64,21 +72,28 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
           enableOfflineQueue: false,
           lazyConnect: true,
         });
+        // AUD-20: do NOT null the client reference here — ioredis reconnects
+        // on its own (retryStrategy is event-driven and survives a failed
+        // initial connect()). Dropping the reference made every outage
+        // permanent until a gateway restart. Health is derived from
+        // redisReady() instead.
         this.redisClient!.on('error', (err: Error) => {
           this.logger.error(
-            `[CRITICAL] Redis throttler connection lost — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!` +
-              (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
+            `[CRITICAL] Redis throttler connection error — auth throttling is degraded` +
+              (this.failClosed
+                ? ' (fail-closed: auth requests are REJECTED until Redis recovers)'
+                : ' — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!') +
               ` Error: ${err.message}`
           );
-          this.redisClient = null;
         });
         this.redisClient!.connect().catch((err) => {
           this.logger.error(
-            `[CRITICAL] Redis throttler connect failed — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!` +
-              (this.failClosed ? ' FAIL_CLOSED is enabled: auth requests will be rejected.' : '') +
+            `[CRITICAL] Redis throttler connect failed — auth throttling is degraded` +
+              (this.failClosed
+                ? ' (fail-closed: auth requests are REJECTED until Redis recovers)'
+                : ' — falling back to in-memory rate limiting. Rate limits are NOT enforced across instances!') +
               ` Error: ${(err as Error).message}`
           );
-          this.redisClient = null;
         });
         this.useRedis = true;
       } catch {
@@ -88,6 +103,11 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     } else {
       this.useRedis = false;
     }
+  }
+
+  /** True when the Redis throttler client is connected and usable. */
+  private redisReady(): boolean {
+    return this.redisClient !== null && this.redisClient.status === 'ready';
   }
 
   private isAuthRoute(path: string): boolean {
@@ -123,10 +143,13 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       return true;
     }
 
-    // Fail-closed: reject auth requests when Redis is unavailable
-    if (this.failClosed && (!this.useRedis || !this.redisClient)) {
+    // AUD-20 fail-closed: Redis was configured for distributed throttling but
+    // is unreachable → reject auth requests instead of silently degrading to
+    // per-instance buckets (the limit would be N×10/60s across N replicas).
+    // No REDIS_URL at all = in-memory is the intended store, not a failure.
+    if (this.failClosed && this.useRedis && !this.redisReady()) {
       this.logger.error(
-        `[CRITICAL] Auth request rejected — Redis unavailable and RATE_LIMIT_FAIL_CLOSED=true. IP: ${request.ip || request.socket?.remoteAddress || 'unknown'}`
+        `[CRITICAL] Auth request rejected (fail-closed) — Redis throttler unavailable. IP: ${request.ip || request.socket?.remoteAddress || 'unknown'}`
       );
       throw new ThrottlerException('Service temporarily unavailable. Please try again later.');
     }
@@ -203,10 +226,20 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
       return Math.max(0, limit - count);
     } catch (error) {
       if (error instanceof ThrottlerException) throw error;
+      // AUD-20: this runtime-failure path previously ALWAYS fell back to
+      // in-memory, leaking past the fail-closed pre-check above — one failed
+      // INCR was enough to bypass distributed limiting for that request.
+      if (this.failClosed && this.useRedis) {
+        this.logger.error(
+          `[CRITICAL] Redis throttler command failed (fail-closed) — rejecting auth request for ${identifier}: ${(error as Error).message}`
+        );
+        throw new ThrottlerException('Service temporarily unavailable. Please try again later.');
+      }
       this.logger.warn(
         `Redis throttler error, falling back to in-memory: ${(error as Error).message}`
       );
-      this.redisClient = null;
+      // Keep the client reference: ioredis reconnects on its own; nulling it
+      // would make the outage permanent (and skip fail-closed forever).
       return this.checkInMemory(identifier, Math.floor(Date.now() / (this.AUTH_TTL * 1000)), limit);
     }
   }

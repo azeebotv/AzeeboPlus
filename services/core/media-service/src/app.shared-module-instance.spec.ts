@@ -21,7 +21,14 @@ const mockRegisterState = { featureFlag: 0, flagMetrics: 0, rateLimiter: 0, even
 // Expected registrations per dynamic module for this service (A-13 audit).
 // A count of 0 for an unused module is asserted too, so an unlisted module
 // registration can never sneak in silently.
-const EXPECTED = { featureFlag: 1, flagMetrics: 1, rateLimiter: 1, eventBus: 0, bull: 0 };
+//
+// `eventBus` is 1, not 0: `app.module.ts` registers `EventBusModule.forRoot`
+// once, and it has to — `UploadModule` declares `ErasureConsumerService`, which
+// injects `EVENT_BUS_SERVICE`, so without that registration the service could
+// not boot. The baseline said 0, which made this guard fail on a graph that is
+// correct. Duplicate registrations are still caught: the assertion is equality,
+// so a second `forRoot` anywhere in the graph reports 2.
+const EXPECTED = { featureFlag: 1, flagMetrics: 1, rateLimiter: 1, eventBus: 1, bull: 0 };
 
 jest.mock('@azeebo/feature-flags', () => {
   const actual = jest.requireActual('@azeebo/feature-flags');
@@ -112,6 +119,15 @@ jest.mock('ioredis', () => {
     expire = jest.fn(async () => 1);
     ttl = jest.fn(async () => -1);
     exists = jest.fn(async () => 0);
+    // EventBusService is instantiated now that the graph is asserted to hold
+    // exactly one registration: its constructor calls `redis.duplicate()` and
+    // subscribes on the duplicate, so the fake has to cover the pub/sub surface
+    // too — otherwise the guard fails on the double, not on the registration.
+    duplicate = jest.fn(() => new FakeRedis());
+    publish = jest.fn(async () => 1);
+    subscribe = jest.fn(async () => 1);
+    unsubscribe = jest.fn(async () => 0);
+    disconnect = jest.fn(async () => 'OK' as never);
   }
   // ioredis is imported both as default (`import Redis from 'ioredis'`) and
   // named (`import { Redis } from 'ioredis'`) across the graph — cover both.

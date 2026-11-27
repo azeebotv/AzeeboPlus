@@ -8,8 +8,8 @@ interface SectionHeaderProps {
 export default function SectionHeader({ title, subtitle }: SectionHeaderProps): React.JSX.Element {
   return (
     <div className="mb-3">
-      <h2 className="text-lg sm:text-xl font-bold text-white">{title}</h2>
-      {subtitle && <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>}
+      <h2 className="az-title text-az-ink">{title}</h2>
+      {subtitle && <p className="az-caption mt-0.5 text-az-ink-muted">{subtitle}</p>}
     </div>
   );
 }

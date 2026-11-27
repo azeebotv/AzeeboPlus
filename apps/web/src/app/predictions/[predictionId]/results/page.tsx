@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
 import { Check, ArrowLeft, BarChart3 } from 'lucide-react';
 
 export default function PredictionResultsPage(): React.JSX.Element {
@@ -38,189 +37,96 @@ export default function PredictionResultsPage(): React.JSX.Element {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <AppHeader logoVariant="light" />
-      <main
-        style={{
-          paddingTop: 100,
-          paddingBottom: 60,
-          maxWidth: 700,
-          margin: '0 auto',
-          padding: '100px 24px 60px',
-        }}
+    <PageShell maxWidth="sm">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="az-body mb-5 inline-flex items-center gap-2 text-az-ink-muted transition-colors hover:text-az-ink"
       >
-        <button
-          onClick={() => router.back()}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'rgba(255,255,255,0.6)',
-            cursor: 'pointer',
-            fontSize: 14,
-            marginBottom: 20,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <ArrowLeft size={16} /> Back
-        </button>
+        <ArrowLeft size={16} /> Back
+      </button>
 
-        {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #18151e',
-                borderTopColor: 'var(--brand-orange, #E8420A)',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
-          </div>
-        ) : !results ? (
+      {isLoading ? (
+        <div className="flex justify-center py-16">
           <div
-            className="az-glass"
-            style={{
-              padding: 48,
-              borderRadius: 20,
-              textAlign: 'center',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <div className="w-16 h-16 rounded-2xl bg-orange-500/10 text-[var(--brand-orange)] flex items-center justify-center mx-auto mb-4">
-              <BarChart3 size={32} />
+            className="size-10 animate-spin rounded-full border-[3px] border-az-ink/20 border-t-az-flame"
+            role="status"
+            aria-label="Loading results"
+          />
+        </div>
+      ) : !results ? (
+        <div className="az-glass px-6 py-12 text-center">
+          <span className="mx-auto mb-4 flex size-16 items-center justify-center rounded-az-card bg-az-flame/10 text-az-flame">
+            <BarChart3 size={32} />
+          </span>
+          <h3 className="az-subtitle text-az-ink">Results not available yet</h3>
+          <p className="az-body text-az-ink-muted mt-2">Check back after the prediction closes</p>
+        </div>
+      ) : (
+        <>
+          <h1 className="az-headline text-az-heading text-az-ink mb-2">
+            {results.title || 'Prediction Results'}
+          </h1>
+          {results.description && (
+            <p className="az-body text-az-ink-muted mb-8">{results.description}</p>
+          )}
+
+          {results.correctAnswer && (
+            <div className="mb-5 rounded-az-feature border border-az-success-400/30 bg-az-success-400/10 px-6 py-6 text-center backdrop-blur-az-glass">
+              <p className="az-body text-az-ink-muted mb-2">Correct Answer</p>
+              <p className="az-section-title text-az-success-400 font-bold">
+                {results.correctAnswer}
+              </p>
             </div>
-            <h3 style={{ fontSize: 18, color: 'white', fontWeight: 600 }}>
-              Results not available yet
-            </h3>
-            <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>
-              Check back after the prediction closes
-            </p>
-          </div>
-        ) : (
-          <>
-            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, color: 'white' }}>
-              {results.title || 'Prediction Results'}
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>
-              {results.description || ''}
-            </p>
+          )}
 
-            {results.correctAnswer && (
-              <div
-                className="az-glass"
-                style={{
-                  padding: 24,
-                  borderRadius: 20,
-                  marginBottom: 20,
-                  border: '1px solid rgba(16,185,129,0.3)',
-                  backgroundColor: 'rgba(16,185,129,0.08)',
-                  textAlign: 'center',
-                }}
-              >
-                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 8 }}>
-                  Correct Answer
-                </p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#34D399' }}>
-                  {results.correctAnswer}
-                </p>
-              </div>
-            )}
-
-            {results.options && (
-              <div
-                className="az-glass"
-                style={{
-                  padding: 24,
-                  borderRadius: 20,
-                  marginBottom: 20,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'white' }}>
-                  Results Breakdown
-                </h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {results.options.map((opt, i) => {
-                    const pct =
-                      results.totalVotes && results.totalVotes > 0
-                        ? Math.round((opt.votes / results.totalVotes) * 100)
-                        : 0;
-                    const isCorrect = opt.text === results.correctAnswer;
-                    return (
-                      <div key={i}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: 6,
-                          }}
+          {results.options && (
+            <div className="az-glass mb-5 p-6">
+              <h2 className="az-subtitle text-az-ink mb-4">Results Breakdown</h2>
+              <div className="flex flex-col gap-3.5">
+                {results.options.map((opt, i) => {
+                  const pct =
+                    results.totalVotes && results.totalVotes > 0
+                      ? Math.round((opt.votes / results.totalVotes) * 100)
+                      : 0;
+                  const isCorrect = opt.text === results.correctAnswer;
+                  return (
+                    <div key={i}>
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span
+                          className={`az-body inline-flex items-center gap-1.5 ${
+                            isCorrect ? 'text-az-success-400 font-bold' : 'text-az-ink'
+                          }`}
                         >
-                          <span
-                            style={{
-                              fontWeight: 600,
-                              fontSize: 14,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              color: isCorrect ? '#34D399' : 'white',
-                            }}
-                          >
-                            {opt.text}{' '}
-                            {isCorrect && <Check size={14} className="text-emerald-400" />}
-                          </span>
-                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
-                            {pct}% ({opt.votes} votes)
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: 'var(--bg-tertiary)',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${pct}%`,
-                              borderRadius: 4,
-                              background: isCorrect
-                                ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
-                                : 'linear-gradient(135deg, var(--brand-orange, #E8420A) 0%, var(--brand-red, #CC1C1C) 100%)',
-                              transition: 'width 0.5s ease',
-                            }}
-                          />
-                        </div>
+                          {opt.text}{' '}
+                          {isCorrect && <Check size={14} className="text-az-success-400" />}
+                        </span>
+                        <span className="az-caption text-az-ink-muted">
+                          {pct}% ({opt.votes} votes)
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-                <p
-                  style={{
-                    color: 'rgba(255,255,255,0.5)',
-                    fontSize: 13,
-                    marginTop: 16,
-                    textAlign: 'center',
-                  }}
-                >
-                  Total votes: {results.totalVotes}
-                </p>
+                      <div className="h-2 overflow-hidden rounded-az-chip bg-az-surface-edge">
+                        <div
+                          className="h-full rounded-az-chip transition-[width] duration-500"
+                          style={{
+                            width: `${pct}%`,
+                            background: isCorrect
+                              ? 'linear-gradient(135deg, var(--color-az-success-500), var(--color-az-success-400))'
+                              : 'var(--gradient-az-cta)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </>
-        )}
-      </main>
-      <AppFooter logoVariant="light" />
-    </div>
+              <p className="az-caption text-az-ink-dim mt-4 text-center">
+                Total votes: {results.totalVotes}
+              </p>
+            </div>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }

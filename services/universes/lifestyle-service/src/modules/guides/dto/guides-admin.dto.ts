@@ -132,11 +132,17 @@ export class CreateNeighborhoodPlaceDto {
   @IsString()
   category!: string;
 
-  @ApiProperty()
+  /**
+   * Optional: `guides-admin.service` writes `rating: dto.rating ?? 0`, so a
+   * place can be created without one. Requiring it made that fallback
+   * unreachable and rejected the form that omits an unrated venue.
+   */
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
-  rating!: number;
+  rating?: number;
 
   @ApiPropertyOptional()
   @IsString()
@@ -265,7 +271,8 @@ export class UpdatePartnerDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  city?: string;  @ApiPropertyOptional()
+  city?: string;
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   description?: string;

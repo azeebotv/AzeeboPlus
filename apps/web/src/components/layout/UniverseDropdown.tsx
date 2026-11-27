@@ -10,6 +10,15 @@ interface UniverseDropdownProps {
   compact?: boolean;
 }
 
+// Token vocabulary for the listbox: the floating panel reuses the same
+// near-black frost the header menus use (`--color-az-surface-root` at 97%),
+// replacing the legacy forest-green fill, and the brand accent is `az-flame`.
+const MENU_ROW_BASE_CLS =
+  'px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-100 flex items-center gap-3 text-sm outline-none';
+const MENU_ROW_SELECTED_CLS = 'bg-az-glass-card text-az-ink';
+const MENU_ROW_IDLE_CLS = 'text-az-ink/70 hover:bg-az-glass-card hover:text-az-ink';
+const MENU_PANEL_CLS = 'bg-az-surface-root/97 backdrop-blur-[24px]';
+
 export default function UniverseDropdown({
   className = '',
   compact = false,
@@ -195,10 +204,10 @@ export default function UniverseDropdown({
       return (
         <li className="px-3 py-4" role="option" aria-disabled="true">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-white/10 animate-pulse" />
+            <div className="w-6 h-6 rounded-full bg-az-glass-card animate-pulse" />
             <div className="flex-1">
-              <div className="h-3 w-24 bg-white/10 rounded animate-pulse mb-1" />
-              <div className="h-2.5 w-16 bg-white/5 rounded animate-pulse" />
+              <div className="h-3 w-24 bg-az-glass-card rounded animate-pulse mb-1" />
+              <div className="h-2.5 w-16 bg-az-glass-fill rounded animate-pulse" />
             </div>
           </div>
         </li>
@@ -209,14 +218,14 @@ export default function UniverseDropdown({
       return (
         <li className="px-3 py-4" role="option" aria-disabled="true">
           <div className="flex flex-col items-center gap-2">
-            <p className="text-xs text-red-400 text-center">{error}</p>
+            <p className="az-caption text-az-error-400 text-center">{error}</p>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 refetch();
               }}
-              className="text-xs text-[var(--brand-orange)] hover:text-[var(--brand-orange)]/80 font-medium"
+              className="text-xs text-az-flame hover:text-az-flame/80 font-medium"
             >
               Retry
             </button>
@@ -235,15 +244,9 @@ export default function UniverseDropdown({
           aria-selected={isSelected}
           id={`universe-option-${u.id}`}
           tabIndex={-1}
-          className={`
-            px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-100
-            flex items-center gap-3 text-sm outline-none
-            ${
-              isHighlighted
-                ? 'bg-white/10 text-white'
-                : 'text-white/70 hover:bg-white/10 hover:text-white'
-            }
-          `}
+          className={`${MENU_ROW_BASE_CLS} ${
+            isHighlighted ? MENU_ROW_SELECTED_CLS : MENU_ROW_IDLE_CLS
+          }`}
           onClick={() => handleSelect(u.id)}
           onMouseEnter={() => setHighlightedIndex(idx)}
         >
@@ -253,8 +256,7 @@ export default function UniverseDropdown({
           <span className="flex-1 min-w-0 truncate">{u.name}</span>
           {isSelected && (
             <svg
-              className="w-4 h-4 flex-shrink-0"
-              style={{ color: 'var(--brand-orange, #E8420A)' }}
+              className="w-4 h-4 flex-shrink-0 text-az-flame"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -280,9 +282,9 @@ export default function UniverseDropdown({
         }}
         onKeyDown={handleTriggerKeyDown}
         className={`
-          flex items-center gap-2 rounded-lg text-white/80 hover:text-white
-          hover:bg-white/10 transition-colors duration-200
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-forest)]
+          flex items-center gap-2 rounded-lg text-az-ink/80 hover:text-az-ink
+          hover:bg-az-glass-card transition-colors duration-200
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame focus-visible:ring-offset-2 focus-visible:ring-offset-az-surface-root
           ${compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
         `}
         role="combobox"
@@ -299,11 +301,8 @@ export default function UniverseDropdown({
       >
         {isLoading ? (
           <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded-full border-2 border-white/20 animate-spin"
-              style={{ borderTopColor: 'var(--brand-orange, #E8420A)' }}
-            />
-            {!compact && <span className="text-white/50">Loading...</span>}
+            <div className="w-4 h-4 rounded-full border-2 border-az-ink/20 border-t-az-flame animate-spin" />
+            {!compact && <span className="text-az-ink/50">Loading...</span>}
           </div>
         ) : selected ? (
           <>
@@ -317,11 +316,11 @@ export default function UniverseDropdown({
             <span className="text-base" aria-hidden="true">
               {'\u{1F30D}'}
             </span>
-            {!compact && <span className="text-white/50">All</span>}
+            {!compact && <span className="text-az-ink/50">All</span>}
           </>
         )}
         <svg
-          className={`w-3.5 h-3.5 text-white/40 transition-transform duration-200 ${
+          className={`w-3.5 h-3.5 text-az-ink/40 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
           fill="none"
@@ -337,21 +336,15 @@ export default function UniverseDropdown({
       {/* Dropdown Listbox */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 shadow-2xl py-1 z-50"
-          style={{
-            background: 'rgba(13,59,46,0.97)',
-            backdropFilter: 'blur(24px)',
-          }}
+          className={`absolute right-0 mt-2 w-56 rounded-az-card border border-az-glass-border shadow-2xl py-1 z-50 ${MENU_PANEL_CLS}`}
         >
           {/* Dropdown header */}
           <div className="px-3 pt-2.5 pb-1.5">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">
-              Universe
-            </p>
+            <p className="az-overline text-az-ink/40">Universe</p>
           </div>
 
           {error && universes.length > 0 && (
-            <div className="mx-3 mb-2 px-2 py-1.5 rounded-lg text-[11px] text-amber-400 bg-amber-400/10 flex items-center gap-1.5">
+            <div className="mx-3 mb-2 px-2 py-1.5 rounded-lg text-[11px] text-az-warning-400 bg-az-warning-400/10 flex items-center gap-1.5">
               <svg
                 className="w-3 h-3 flex-shrink-0"
                 fill="none"

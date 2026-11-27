@@ -42,8 +42,8 @@ and its `auth-service` context badge derive from that registry automatically.
    see `services/core/auth-service/.env.example`. If the hash secret is ever
    rotated, every pending in-flight code dies; that is acceptable (TVs show the
    "get a new code" path) but choose a quiet window.
-4. **Web**: confirm `azeebo.tv/link` resolves to the web `/link` activation page
-   in production (the TV screen displays this URL verbatim).
+4. **Web**: confirm `app.azeeboplus.com/link` resolves to the web `/link`
+   activation page in production (the TV screen displays this URL verbatim).
 5. **Smoke**: with the flag still off, a TV dev build should show the
    "not available yet" message — proving the fail-closed path, not just the
    happy path.

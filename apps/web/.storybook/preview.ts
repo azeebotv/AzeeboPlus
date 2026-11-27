@@ -16,7 +16,7 @@ const preview: Preview = {
         { name: 'light', value: '#ffffff' },
         { name: 'surface', value: '#1F2937' },
         { name: 'card', value: '#374151' },
-        { name: 'brand-orange', value: '#E8420A' },
+        { name: 'brand-flame', value: '#EC691F' },
         { name: 'brand-green', value: '#10B981' },
       ],
     },

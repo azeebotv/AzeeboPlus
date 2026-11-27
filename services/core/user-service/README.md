@@ -100,7 +100,7 @@ Manages user profiles, preferences, watch history, saved items, follows, subscri
 |----------|---------|-------------|
 | `PORT` | 3001 | Service port |
 | `DATABASE_URL` | - | PostgreSQL connection string (`azeebo_user` database) |
-| `ANALYTICS_SERVICE_URL` | `http://analytics-service:3040` | Analytics service URL |
+| `ANALYTICS_SERVICE_URL` | `http://analytics-service:3008` | Analytics service URL |
 | `REDIS_URL` | - | Redis connection string for caching |
 
 ## Prisma Models

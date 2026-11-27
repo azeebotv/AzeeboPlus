@@ -34,13 +34,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-az-ink-dim mb-1.5">
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-az-ink-muted">
               {leftIcon}
             </div>
           )}
@@ -48,8 +48,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={`
-              w-full px-3 py-2.5 bg-bg-secondary border rounded-lg text-text-primary
-              placeholder:text-text-tertiary
+              w-full px-3 py-2.5 bg-az-surface-raised border rounded-lg text-az-ink
+              placeholder:text-az-ink-muted
               transition-all duration-200
               focus:outline-none focus:ring-2 focus:ring-offset-0
               disabled:opacity-50 disabled:cursor-not-allowed
@@ -57,8 +57,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               ${rightIcon ? 'pr-10' : ''}
               ${
                 error
-                  ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
-                  : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
+                  ? 'border-az-error-500 focus:border-az-error-500 focus:ring-az-error-500/20'
+                  : 'border-az-glass-border focus:border-az-primary-500 focus:ring-az-primary-500/20'
               }
               ${className}
             `}
@@ -70,18 +70,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-az-ink-muted">
               {rightIcon}
             </div>
           )}
         </div>
         {error && (
-          <p id={errorId} className="mt-1.5 text-sm text-error-400" role="alert">
+          <p id={errorId} className="mt-1.5 text-sm text-az-error-400" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={helperId} className="mt-1.5 text-sm text-text-tertiary">
+          <p id={helperId} className="mt-1.5 text-sm text-az-ink-muted">
             {helperText}
           </p>
         )}
@@ -109,7 +109,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-az-ink-dim mb-1.5">
             {label}
           </label>
         )}
@@ -117,16 +117,16 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={inputId}
           className={`
-            w-full px-3 py-2.5 bg-bg-secondary border rounded-lg text-text-primary
-            placeholder:text-text-tertiary
+            w-full px-3 py-2.5 bg-az-surface-raised border rounded-lg text-az-ink
+            placeholder:text-az-ink-muted
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-offset-0
             disabled:opacity-50 disabled:cursor-not-allowed
             resize-y min-h-[80px]
             ${
               error
-                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
-                : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
+                ? 'border-az-error-500 focus:border-az-error-500 focus:ring-az-error-500/20'
+                : 'border-az-glass-border focus:border-az-primary-500 focus:ring-az-primary-500/20'
             }
             ${className}
           `}
@@ -138,12 +138,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && (
-          <p id={errorId} className="mt-1.5 text-sm text-error-400" role="alert">
+          <p id={errorId} className="mt-1.5 text-sm text-az-error-400" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={helperId} className="mt-1.5 text-sm text-text-tertiary">
+          <p id={helperId} className="mt-1.5 text-sm text-az-ink-muted">
             {helperText}
           </p>
         )}
@@ -186,7 +186,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-az-ink-dim mb-1.5">
             {label}
           </label>
         )}
@@ -194,15 +194,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={inputId}
           className={`
-            w-full px-3 py-2.5 bg-bg-secondary border rounded-lg text-text-primary
+            w-full px-3 py-2.5 bg-az-surface-raised border rounded-lg text-az-ink
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-offset-0
             disabled:opacity-50 disabled:cursor-not-allowed
             appearance-none cursor-pointer
             ${
               error
-                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
-                : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
+                ? 'border-az-error-500 focus:border-az-error-500 focus:ring-az-error-500/20'
+                : 'border-az-glass-border focus:border-az-primary-500 focus:ring-az-primary-500/20'
             }
             ${className}
           `}
@@ -223,12 +223,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {error && (
-          <p id={errorId} className="mt-1.5 text-sm text-error-400" role="alert">
+          <p id={errorId} className="mt-1.5 text-sm text-az-error-400" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={helperId} className="mt-1.5 text-sm text-text-tertiary">
+          <p id={helperId} className="mt-1.5 text-sm text-az-ink-muted">
             {helperText}
           </p>
         )}
@@ -254,16 +254,16 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       <div className={className}>
         <label
           htmlFor={inputId}
-          className={`inline-flex items-center gap-2 cursor-pointer ${error ? 'text-error-400' : 'text-text-primary'}`}
+          className={`inline-flex items-center gap-2 cursor-pointer ${error ? 'text-az-error-400' : 'text-az-ink'}`}
         >
           <input
             ref={ref}
             id={inputId}
             type="checkbox"
             className={`
-              w-4 h-4 rounded border-border-default bg-bg-secondary
-              text-primary-500 focus:ring-primary-500/20 focus:ring-2
-              checked:bg-primary-500 checked:border-primary-500
+              w-4 h-4 rounded border-az-glass-border bg-az-surface-raised
+              text-az-primary-500 focus:ring-az-primary-500/20 focus:ring-2
+              checked:bg-az-primary-500 checked:border-az-primary-500
               disabled:opacity-50 disabled:cursor-not-allowed
               cursor-pointer transition-colors duration-200
             `}
@@ -274,7 +274,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           <span className="text-sm">{label}</span>
         </label>
         {error && (
-          <p id={errorId} className="mt-1 text-sm text-error-400" role="alert">
+          <p id={errorId} className="mt-1 text-sm text-az-error-400" role="alert">
             {error}
           </p>
         )}
@@ -298,7 +298,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     return (
       <label
         htmlFor={inputId}
-        className={`inline-flex items-center gap-2 cursor-pointer text-text-primary ${className}`}
+        className={`inline-flex items-center gap-2 cursor-pointer text-az-ink ${className}`}
       >
         <input
           ref={ref}
@@ -306,9 +306,9 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
           type="radio"
           name={name}
           className={`
-            w-4 h-4 border-border-default bg-bg-secondary
-            text-primary-500 focus:ring-primary-500/20 focus:ring-2
-            checked:bg-primary-500 checked:border-primary-500
+            w-4 h-4 border-az-glass-border bg-az-surface-raised
+            text-az-primary-500 focus:ring-az-primary-500/20 focus:ring-2
+            checked:bg-az-primary-500 checked:border-az-primary-500
             disabled:opacity-50 disabled:cursor-not-allowed
             cursor-pointer transition-colors duration-200
           `}

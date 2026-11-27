@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 export default function BiometricAuthScreen() {
   const router = useRouter();
@@ -132,9 +133,10 @@ export default function BiometricAuthScreen() {
   if (isLoading) {
     return (
       <SafeAreaView
+        accessibilityLabel="Biometric Loading Screen"
         style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
       >
-        <ActivityIndicator size="large" color="#E8420A" />
+        <ActivityIndicator size="large" color={brand.flame} />
         <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           Initializing biometric authentication...
         </Text>
@@ -144,6 +146,7 @@ export default function BiometricAuthScreen() {
 
   return (
     <SafeAreaView
+      accessibilityLabel="Biometric Authentication Screen"
       style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
     >
       <View style={styles.content}>
@@ -278,7 +281,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   errorText: {
-    color: '#CC1C1C',
+    color: brand.scarlet,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   primaryButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -316,7 +319,7 @@ const styles = StyleSheet.create({
     borderColor: colors.neutral[700],
   },
   secondaryButtonText: {
-    color: '#E8420A',
+    color: brand.flame,
     fontSize: 16,
     fontWeight: '600',
   },

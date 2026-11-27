@@ -12,7 +12,11 @@ import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import { Prisma, WalletTransaction } from '../../prisma/client/index.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { FundWalletDto } from './dto/fund-wallet.dto.js';
-import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto.js';
+import {
+  WithdrawWalletDto,
+  TransferWalletDto,
+  resolveWithdrawalDestination,
+} from './dto/withdraw-transfer.dto.js';
 import { WalletResponse } from './interfaces/wallet-response.interface.js';
 import { toNumber, addDecimals } from '@azeebo/utils';
 import { CacheService, cacheKey, RedisService } from '@azeebo/shared-services';
@@ -51,7 +55,7 @@ export class WalletService {
     this.webhookSecret = this.configService.getOrThrow<string>('WEBHOOK_SECRET');
     this.analyticsServiceBaseUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3040'
+      'http://analytics-service:3008'
     );
   }
 
@@ -88,9 +92,13 @@ export class WalletService {
   }
 
   private async invalidateWalletCache(userId: string): Promise<void> {
-    await this.cacheService.delete(cacheKey('wallet', `balance:${userId}`));
-    await this.cacheService.delete(cacheKey('wallet', `summary:${userId}`));
-    await this.cacheService.deleteByPattern(cacheKey('wallet', `transactions:${userId}:*`));
+    await Promise.allSettled([
+      this.cacheService.delete(cacheKey('wallet', `balance:${userId}`)),
+      this.cacheService.delete(cacheKey('wallet', `summary:${userId}`)),
+      this.cacheService.delete(cacheKey('wallet', `transactions:${userId}:1:20`)),
+      this.cacheService.delete(cacheKey('wallet', `transactions:${userId}:1:10`)),
+      this.cacheService.delete(cacheKey('wallet', `transactions:${userId}:1:50`)),
+    ]);
   }
 
   private async invalidateWalletCacheByWalletId(walletId: string): Promise<void> {
@@ -504,6 +512,12 @@ export class WalletService {
         throw new BadRequestException('Amount must be greater than 0');
       }
 
+      // The client's provider/method choice is recorded, not acted on: the
+      // pending transaction is settled by whichever provider confirms it, and
+      // keeping the request alongside the record is what lets reconciliation
+      // explain a mismatch later.
+      const requestedProvider = fundWalletDto.provider ?? fundWalletDto.paymentMethod;
+
       const transaction = await this.prisma.walletTransaction.create({
         data: {
           walletId: wallet.id,
@@ -512,6 +526,11 @@ export class WalletService {
           status: 'pending',
           description: 'Wallet funding',
           reference: fundWalletDto.reference,
+          provider: requestedProvider,
+          metadata: {
+            ...(requestedProvider ? { requestedProvider } : {}),
+            ...(fundWalletDto.email ? { payerEmail: fundWalletDto.email } : {}),
+          } as Prisma.InputJsonValue,
           idempotencyKey,
         },
       });
@@ -520,6 +539,7 @@ export class WalletService {
         transactionId: transaction.id,
         amount: fundWalletDto.amount,
         reference: fundWalletDto.reference,
+        requestedProvider,
       });
 
       return {
@@ -554,58 +574,105 @@ export class WalletService {
    * @throws NotFoundException if wallet does not exist
    * @throws BadRequestException if insufficient balance
    */
-  async withdraw(userId: string, withdrawDto: WithdrawWalletDto): Promise<WalletResponse> {
+  async withdraw(
+    userId: string,
+    withdrawDto: WithdrawWalletDto,
+    idempotencyKeyHeader?: string
+  ): Promise<WalletResponse> {
     try {
       await this.assertFraudChecksPass(userId, 'withdraw', withdrawDto.amount);
 
-      const reference = `WD-${randomUUID()}`;
-      const idempotencyKey = `withdraw-${userId}-${withdrawDto.amount}-${Date.now()}`;
+      // Three destination shapes reach this method: a linked bank-account id,
+      // the mobile pair (bankCode + accountNumber) and the web object
+      // (bankDetails). Normalizing here means the payout record always carries
+      // whichever the caller supplied instead of rejecting two of the three.
+      const destination = resolveWithdrawalDestination(withdrawDto);
+      if (!destination) {
+        throw new BadRequestException(
+          'A withdrawal destination is required (bankAccountId or bank account details)'
+        );
+      }
 
-      const updatedWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        // Lock the wallet row and check balance atomically
-        const [wallet] = await tx.$queryRaw<WalletRow[]>`
+      const reference = `WD-${randomUUID()}`;
+      // The DTO requires a client key; the header is an alias for clients
+      // that send it there. Never synthesize a server-side key: a fresh key
+      // per retry re-opens the duplicate-withdrawal window (AUD-03).
+      const idempotencyKey = withdrawDto.idempotencyKey || idempotencyKeyHeader || undefined;
+
+      const result = await this.prisma.$transaction(
+        async (
+          tx: Prisma.TransactionClient
+        ): Promise<{ wallet: WalletRow; existingTransaction?: WalletTransaction }> => {
+          // Lock the wallet row and check balance atomically
+          const [wallet] = await tx.$queryRaw<WalletRow[]>`
           SELECT * FROM "wallets" WHERE "userId" = ${userId} FOR UPDATE
         `;
 
-        if (!wallet) {
-          throw new NotFoundException(`Wallet not found for user ${userId}`);
-        }
+          if (!wallet) {
+            throw new NotFoundException(`Wallet not found for user ${userId}`);
+          }
 
-        if (toNumber(wallet.balance.toString()) < withdrawDto.amount) {
-          throw new BadRequestException('Insufficient balance');
-        }
+          if (idempotencyKey) {
+            const existingTransaction = await tx.walletTransaction.findUnique({
+              where: { idempotencyKey },
+            });
+            if (existingTransaction) {
+              return { wallet, existingTransaction };
+            }
+          }
 
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { balance: { decrement: withdrawDto.amount } },
-        });
+          if (toNumber(wallet.balance.toString()) < withdrawDto.amount) {
+            throw new BadRequestException('Insufficient balance');
+          }
 
-        await tx.walletTransaction.create({
-          data: {
-            walletId: wallet.id,
-            type: 'withdraw',
-            amount: withdrawDto.amount,
-            status: 'processing',
-            description: withdrawDto.description || 'Withdrawal to bank account',
-            reference,
-            idempotencyKey,
-            metadata: {
-              bankAccountId: withdrawDto.bankAccountId,
+          await tx.wallet.update({
+            where: { id: wallet.id },
+            data: { balance: { decrement: withdrawDto.amount } },
+          });
+
+          await tx.walletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: 'withdraw',
+              amount: withdrawDto.amount,
+              status: 'processing',
+              description: withdrawDto.description || 'Withdrawal to bank account',
+              reference,
+              idempotencyKey,
+              metadata: destination as unknown as Prisma.InputJsonValue,
             },
-          },
-        });
+          });
 
-        return tx.wallet.findUnique({ where: { id: wallet.id } });
-      });
+          return { wallet: (await tx.wallet.findUnique({ where: { id: wallet.id } }))! };
+        }
+      );
+
+      if (result.existingTransaction) {
+        const existing = result.existingTransaction;
+        return {
+          success: true,
+          data: {
+            transactionId: existing.reference,
+            amount: toNumber(existing.amount.toString()),
+            status: existing.status as 'processing' | 'completed' | 'failed',
+            description: existing.description ?? 'Withdrawal to bank account',
+            balance: toNumber(result.wallet.balance.toString()),
+            bonusBalance: toNumber(result.wallet.bonusBalance.toString()),
+            promoBalance: toNumber(result.wallet.promoBalance.toString()),
+          },
+        };
+      }
+
+      const updatedWallet = result.wallet;
 
       await this.invalidateWalletCache(userId);
 
       await this.writeLedgerEntry({
-        walletId: updatedWallet!.id,
+        walletId: updatedWallet.id,
         userId,
         operationType: 'withdraw',
         amount: withdrawDto.amount,
-        balanceAfter: updatedWallet!.balance.toString(),
+        balanceAfter: updatedWallet.balance.toString(),
         reference,
         idempotencyKey,
       });
@@ -613,7 +680,8 @@ export class WalletService {
       this.trackAnalyticsEvent('wallet_withdrawal_initiated', userId, {
         transactionId: reference,
         amount: withdrawDto.amount,
-        bankAccountId: withdrawDto.bankAccountId,
+        bankAccountId: destination.bankAccountId,
+        hasBankAccountDetails: Boolean(destination.accountNumber),
       });
 
       return {
@@ -623,9 +691,9 @@ export class WalletService {
           amount: withdrawDto.amount,
           status: 'processing' as const,
           description: withdrawDto.description || 'Withdrawal to bank account',
-          balance: toNumber(updatedWallet!.balance.toString()),
-          bonusBalance: toNumber(updatedWallet!.bonusBalance.toString()),
-          promoBalance: toNumber(updatedWallet!.promoBalance.toString()),
+          balance: toNumber(updatedWallet.balance.toString()),
+          bonusBalance: toNumber(updatedWallet.bonusBalance.toString()),
+          promoBalance: toNumber(updatedWallet.promoBalance.toString()),
         },
       };
     } catch (error: unknown) {
@@ -653,7 +721,11 @@ export class WalletService {
    * @throws NotFoundException if sender or recipient wallet does not exist
    * @throws BadRequestException if insufficient balance or self-transfer
    */
-  async transfer(senderId: string, transferDto: TransferWalletDto): Promise<WalletResponse> {
+  async transfer(
+    senderId: string,
+    transferDto: TransferWalletDto,
+    idempotencyKeyHeader?: string
+  ): Promise<WalletResponse> {
     try {
       if (senderId === transferDto.recipientId) {
         throw new BadRequestException('Cannot transfer to yourself');
@@ -663,27 +735,40 @@ export class WalletService {
 
       const senderReference = `TRF-OUT-${randomUUID()}`;
       const recipientReference = `TRF-IN-${randomUUID()}`;
-      const idempotencyKey = `transfer-${senderId}-${transferDto.recipientId}-${transferDto.amount}-${Date.now()}`;
+      // Same contract as withdraw: client key required by the DTO, header
+      // accepted as an alias, never a synthesized per-request key (AUD-03).
+      const idempotencyKey = transferDto.idempotencyKey || idempotencyKeyHeader || undefined;
 
       const updatedSenderWallet = await this.prisma.$transaction(
-        async (tx: Prisma.TransactionClient) => {
-          // Lock sender wallet and check balance atomically
-          const [senderWallet] = await tx.$queryRaw<WalletRow[]>`
-          SELECT * FROM "wallets" WHERE "userId" = ${senderId} FOR UPDATE
+        async (
+          tx: Prisma.TransactionClient
+        ): Promise<{ wallet: WalletRow; existingTransaction?: WalletTransaction }> => {
+          // Lock both wallets in a deterministic (id) order so concurrent
+          // A→B and B→A transfers cannot deadlock on each other's locks
+          const lockedWallets = await tx.$queryRaw<WalletRow[]>`
+          SELECT * FROM "wallets"
+          WHERE "userId" IN (${senderId}, ${transferDto.recipientId})
+          ORDER BY "id" FOR UPDATE
         `;
+          const senderWallet = lockedWallets.find((w) => w.userId === senderId);
+          const recipientWallet = lockedWallets.find((w) => w.userId === transferDto.recipientId);
 
           if (!senderWallet) {
             throw new NotFoundException(`Wallet not found for user ${senderId}`);
           }
 
+          if (idempotencyKey) {
+            const existingTransaction = await tx.walletTransaction.findUnique({
+              where: { idempotencyKey },
+            });
+            if (existingTransaction) {
+              return { wallet: senderWallet, existingTransaction };
+            }
+          }
+
           if (toNumber(senderWallet.balance.toString()) < transferDto.amount) {
             throw new BadRequestException('Insufficient balance');
           }
-
-          // Lock recipient wallet
-          const [recipientWallet] = await tx.$queryRaw<WalletRow[]>`
-          SELECT * FROM "wallets" WHERE "userId" = ${transferDto.recipientId} FOR UPDATE
-        `;
 
           if (!recipientWallet) {
             throw new NotFoundException(`Wallet not found for user ${transferDto.recipientId}`);
@@ -705,6 +790,7 @@ export class WalletService {
               idempotencyKey,
               metadata: {
                 recipientId: transferDto.recipientId,
+                recipientReference,
               },
             },
           });
@@ -728,9 +814,28 @@ export class WalletService {
             },
           });
 
-          return tx.wallet.findUnique({ where: { id: senderWallet.id } });
+          return { wallet: senderWallet };
         }
       );
+
+      if (updatedSenderWallet.existingTransaction) {
+        const existing = updatedSenderWallet.existingTransaction;
+        return {
+          success: true,
+          data: {
+            senderReference: existing.reference,
+            recipientReference:
+              (existing.metadata as { recipientReference?: string } | null)?.recipientReference ??
+              existing.reference,
+            amount: toNumber(existing.amount.toString()),
+            status: existing.status as 'completed',
+            description: existing.description ?? `Transfer to user ${transferDto.recipientId}`,
+            balance: toNumber(updatedSenderWallet.wallet.balance.toString()),
+            bonusBalance: toNumber(updatedSenderWallet.wallet.bonusBalance.toString()),
+            promoBalance: toNumber(updatedSenderWallet.wallet.promoBalance.toString()),
+          },
+        };
+      }
 
       await this.invalidateWalletCache(senderId);
       await this.invalidateWalletCache(transferDto.recipientId);
@@ -740,16 +845,16 @@ export class WalletService {
         select: { id: true, balance: true },
       });
       await this.writeLedgerEntry({
-        walletId: updatedSenderWallet!.id,
+        walletId: updatedSenderWallet.wallet.id,
         userId: senderId,
         operationType: 'transfer_out',
         amount: transferDto.amount,
-        balanceAfter: updatedSenderWallet!.balance.toString(),
+        balanceAfter: updatedSenderWallet.wallet.balance.toString(),
         reference: senderReference,
         idempotencyKey,
       });
       await this.writeLedgerEntry({
-        walletId: recipientWalletAfter?.id ?? updatedSenderWallet!.id,
+        walletId: recipientWalletAfter?.id ?? updatedSenderWallet.wallet.id,
         userId: transferDto.recipientId,
         operationType: 'transfer_in',
         amount: transferDto.amount,
@@ -784,9 +889,9 @@ export class WalletService {
           amount: transferDto.amount,
           status: 'completed' as const,
           description: transferDto.description || `Transfer to user ${transferDto.recipientId}`,
-          balance: toNumber(updatedSenderWallet!.balance.toString()),
-          bonusBalance: toNumber(updatedSenderWallet!.bonusBalance.toString()),
-          promoBalance: toNumber(updatedSenderWallet!.promoBalance.toString()),
+          balance: toNumber(updatedSenderWallet.wallet.balance.toString()),
+          bonusBalance: toNumber(updatedSenderWallet.wallet.bonusBalance.toString()),
+          promoBalance: toNumber(updatedSenderWallet.wallet.promoBalance.toString()),
         },
       };
     } catch (error: unknown) {

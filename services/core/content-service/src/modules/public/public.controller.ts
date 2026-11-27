@@ -11,6 +11,7 @@ import {
 import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service.js';
+import { ContentFeedService } from '../content/content-feed.service.js';
 
 @ApiTags('Public')
 @Public()
@@ -19,7 +20,10 @@ import { PrismaService } from '../database/prisma.service.js';
 export class PublicController {
   private readonly logger = new Logger(PublicController.name);
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ContentFeedService) private readonly contentFeedService: ContentFeedService
+  ) {}
 
   @Get('universes')
   @RateLimit(100, 60000)
@@ -27,8 +31,14 @@ export class PublicController {
   @ApiResponse({ status: 200, description: 'Universes retrieved successfully' })
   async getEnabledUniverses() {
     try {
+      // Admin enable/disable lives in the admin DB; the runtime contract is
+      // the `universe.<name>.enabled` sentinel (see getVisibleUniverseIds),
+      // so the list must be sentinel-filtered in addition to the local
+      // isEnabled copy — otherwise web nav, mobile pickers and the creator
+      // upload universe list keep serving disabled universes.
+      const visibleIds = await this.contentFeedService.getVisibleUniverseIds();
       const universes = await this.prisma.universe.findMany({
-        where: { isEnabled: true },
+        where: { isEnabled: true, id: { in: visibleIds } },
         include: {
           featureFlags: {
             where: { isEnabled: true },
@@ -143,6 +153,11 @@ export class PublicController {
       });
 
       if (!universe || !universe.isEnabled) {
+        throw new NotFoundException('Universe not found or disabled');
+      }
+      // Sentinel visibility, same contract as the universe list above.
+      const visibleIds = await this.contentFeedService.getVisibleUniverseIds();
+      if (!visibleIds.includes(universe.id)) {
         throw new NotFoundException('Universe not found or disabled');
       }
 

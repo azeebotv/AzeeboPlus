@@ -4,41 +4,51 @@ import { RateLimitService } from './rate-limit.service';
 import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
+const setNodeEnv = (val: string | undefined) => {
+  (process.env as Record<string, string | undefined>)['NODE_ENV'] = val;
+};
+
 describe('isDevLoopbackRequest', () => {
   const makeReq = (ip: string): Parameters<typeof isDevLoopbackRequest>[0] =>
     ({ ip, socket: { remoteAddress: ip } }) as unknown as Parameters<
       typeof isDevLoopbackRequest
     >[0];
 
-  it.each(['::1', '127.0.0.1', '::ffff:127.0.0.1', '127.0.0.1.'])('bypasses loopback IP %s in development', (ip) => {
-    process.env.NODE_ENV = 'development';
-    delete process.env.DISABLE_RATE_LIMITING;
-    expect(isDevLoopbackRequest(makeReq(ip))).toBe(true);
-  });
+  it.each(['::1', '127.0.0.1', '::ffff:127.0.0.1', '127.0.0.1.'])(
+    'bypasses loopback IP %s in development',
+    (ip) => {
+      setNodeEnv('development');
+      delete process.env.DISABLE_RATE_LIMITING;
+      expect(isDevLoopbackRequest(makeReq(ip))).toBe(true);
+    }
+  );
 
   it('does not bypass in NODE_ENV=test so enforcement specs keep their teeth', () => {
-    process.env.NODE_ENV = 'test';
+    setNodeEnv('test');
     delete process.env.DISABLE_RATE_LIMITING;
     expect(isDevLoopbackRequest(makeReq('::1'))).toBe(false);
   });
 
-  it.each(['::2', '192.168.1.1', '10.0.0.5', 'unknown', ''])('does not bypass non-loopback IP %s', (ip) => {
-    process.env.NODE_ENV = 'development';
-    delete process.env.DISABLE_RATE_LIMITING;
-    expect(isDevLoopbackRequest(makeReq(ip))).toBe(false);
-  });
+  it.each(['::2', '192.168.1.1', '10.0.0.5', 'unknown', ''])(
+    'does not bypass non-loopback IP %s',
+    (ip) => {
+      setNodeEnv('development');
+      delete process.env.DISABLE_RATE_LIMITING;
+      expect(isDevLoopbackRequest(makeReq(ip))).toBe(false);
+    }
+  );
 
   it('never bypasses loopback in production', () => {
-    process.env.NODE_ENV = 'production';
+    setNodeEnv('production');
     try {
       expect(isDevLoopbackRequest(makeReq('::1'))).toBe(false);
     } finally {
-      process.env.NODE_ENV = 'test';
+      setNodeEnv('test');
     }
   });
 
   it('bypasses any IP when DISABLE_RATE_LIMITING is true', () => {
-    process.env.NODE_ENV = 'development';
+    setNodeEnv('development');
     process.env.DISABLE_RATE_LIMITING = 'true';
     try {
       expect(isDevLoopbackRequest(makeReq('203.0.113.9'))).toBe(true);
@@ -113,7 +123,7 @@ describe('RateLimitGuard', () => {
   describe('canActivate', () => {
     it('skips rate limiting entirely for loopback requests in development', async () => {
       const prevEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      setNodeEnv('development');
       try {
         const context = createMockExecutionContext('::1');
         jest.spyOn(reflector, 'get').mockReturnValue({ limit: 1, windowMs: 60000 });
@@ -125,7 +135,7 @@ describe('RateLimitGuard', () => {
         expect(rateLimitService.checkRateLimit).not.toHaveBeenCalled();
         expect(rateLimitService.recordViolation).not.toHaveBeenCalled();
       } finally {
-        process.env.NODE_ENV = prevEnv;
+        setNodeEnv(prevEnv);
       }
     });
 

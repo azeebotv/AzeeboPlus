@@ -58,6 +58,7 @@ export interface RewardResponse {
     level?: LevelData;
     message?: string;
     activity?: string;
+    missionId?: string;
     pointsEarned?: number;
     newBalance?: number;
     balance?: number;

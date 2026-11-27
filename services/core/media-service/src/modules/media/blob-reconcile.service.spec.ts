@@ -43,7 +43,11 @@ describe('BlobReconcileService', () => {
 
     expect(result.alreadyLinked).toBe(0);
     expect(result.linked).toHaveLength(1);
-    expect(result.linked[0]).toMatchObject({ key: 'videos/0f8d5a21-7c3e-4a9b-8a44-6f2fbd5a9101.mp4', uploadId: 'm-new-1', size: 7429 });
+    expect(result.linked[0]).toMatchObject({
+      key: 'videos/0f8d5a21-7c3e-4a9b-8a44-6f2fbd5a9101.mp4',
+      uploadId: 'm-new-1',
+      size: 7429,
+    });
     expect(mockPrisma.mediaUpload.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         key: 'videos/0f8d5a21-7c3e-4a9b-8a44-6f2fbd5a9101.mp4',
@@ -57,8 +61,16 @@ describe('BlobReconcileService', () => {
 
   it('skips objects whose key or uuid stem is already referenced', async () => {
     mockS3.listAllObjects.mockResolvedValue([
-      { Key: 'videos/0f8d5a21-7c3e-4a9b-8a44-6f2fbd5a9101.mp4', Size: 10, LastModified: new Date() },
-      { Key: 'videos/11111111-2222-4333-8444-555555555555.mp4', Size: 20, LastModified: new Date() },
+      {
+        Key: 'videos/0f8d5a21-7c3e-4a9b-8a44-6f2fbd5a9101.mp4',
+        Size: 10,
+        LastModified: new Date(),
+      },
+      {
+        Key: 'videos/11111111-2222-4333-8444-555555555555.mp4',
+        Size: 20,
+        LastModified: new Date(),
+      },
     ]);
     // First row stores the bare key; second stores only the uuid stem
     mockPrisma.mediaUpload.findMany.mockResolvedValue([

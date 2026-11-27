@@ -70,11 +70,11 @@ function ParticipationResultContent(): React.JSX.Element {
   }
 
   return (
-    <PageShell activeNav="Reality" glowColor="rgba(232, 66, 10, 0.2)">
+    <PageShell activeNav="Reality" glowColor="rgba(227, 30, 36, 0.2)">
       <div className="mb-6">
         <Link
           href="/vote"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-az-ink/60 hover:text-az-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Community Voting & Trivia
         </Link>
@@ -83,11 +83,13 @@ function ParticipationResultContent(): React.JSX.Element {
       <div className="max-w-3xl mx-auto">
         <PageHero
           eyebrow={`FINAL ${result.type.toUpperCase()} RESULTS`}
-          eyebrowColor={result.type === 'quiz' ? 'var(--brand-purple)' : 'var(--brand-orange)'}
+          eyebrowColor={
+            result.type === 'quiz' ? 'var(--color-az-category-violet)' : 'var(--color-az-flame)'
+          }
           badge={`${result.totalParticipants.toLocaleString()} PARTICIPANTS`}
           title={result.title}
           subtitle="Official verified consensus and score metrics from the Azeebo+ audience."
-          glowColor="rgba(232, 66, 10, 0.25)"
+          glowColor="color-mix(in srgb, var(--color-az-scarlet) 25%, transparent)"
         />
 
         {/* User outcome banner */}
@@ -97,25 +99,25 @@ function ParticipationResultContent(): React.JSX.Element {
             animate={{ opacity: 1, scale: 1 }}
             className={`p-6 rounded-3xl mb-8 flex items-center justify-between gap-4 border ${
               result.userCorrect
-                ? 'bg-emerald-500/15 border-emerald-500/30'
-                : 'bg-red-500/15 border-red-500/30'
+                ? 'bg-az-success-500/15 border-az-success-500/30'
+                : 'bg-az-error-500/15 border-az-error-500/30'
             }`}
           >
             <div className="flex items-center gap-3.5">
               {result.userCorrect ? (
-                <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-8 h-8 text-az-success-400 shrink-0" />
               ) : (
-                <XCircle className="w-8 h-8 text-red-400 shrink-0" />
+                <XCircle className="w-8 h-8 text-az-error-400 shrink-0" />
               )}
               <div>
                 <p
                   className={`text-lg font-bold ${
-                    result.userCorrect ? 'text-emerald-300' : 'text-red-300'
+                    result.userCorrect ? 'text-az-success-400' : 'text-az-error-300'
                   }`}
                 >
                   {result.userCorrect ? 'Correct Submission!' : 'Incorrect Answer'}
                 </p>
-                <p className="text-xs sm:text-sm text-white/60">
+                <p className="text-xs sm:text-sm text-az-ink/60">
                   {result.userCorrect
                     ? 'Your answer aligned with the verified answer key.'
                     : 'Better luck next time! Review the breakdown below.'}
@@ -125,8 +127,8 @@ function ParticipationResultContent(): React.JSX.Element {
 
             {result.pointsEarned !== undefined && result.pointsEarned > 0 && (
               <div className="text-right shrink-0">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 font-extrabold text-sm border border-amber-500/30">
-                  <Sparkles className="w-4 h-4 text-amber-400" />+{result.pointsEarned} Pts
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-az-warning-500/20 text-az-warning-400 font-extrabold text-sm border border-az-warning-500/30">
+                  <Sparkles className="w-4 h-4 text-az-warning-400" />+{result.pointsEarned} Pts
                 </span>
               </div>
             )}
@@ -145,39 +147,35 @@ function ParticipationResultContent(): React.JSX.Element {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08 }}
-                className={`az-glass p-5 sm:p-6 rounded-2xl border transition-all ${
-                  isCorrectAnswer
-                    ? 'border-emerald-500/40 bg-emerald-500/5'
-                    : isUserAnswer
-                      ? 'border-red-500/40 bg-red-500/5'
-                      : 'border-white/10'
+                className={`az-glass p-5 sm:p-6 border transition-all ${
+                  isCorrectAnswer ? '' : isUserAnswer ? '' : 'border-az-glass-border'
                 }`}
               >
                 <div className="flex justify-between items-center mb-2 gap-4">
                   <div className="flex items-center gap-2.5">
-                    <span className="text-white font-bold text-base">{option.label}</span>
+                    <span className="text-az-ink font-bold text-base">{option.label}</span>
                     {isCorrectAnswer && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-az-success-500/20 text-az-success-400 border border-az-success-500/30">
                         <CheckCircle2 className="w-3 h-3" /> Correct Key
                       </span>
                     )}
                     {isUserAnswer && !isCorrectAnswer && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-az-error-500/20 text-az-error-400 border border-az-error-500/30">
                         Your Choice
                       </span>
                     )}
                   </div>
 
-                  <span className="text-white/80 font-bold text-sm">
+                  <span className="text-az-ink/80 font-bold text-sm">
                     {option.percentage}%{' '}
-                    <span className="text-white/40 text-xs font-normal">
+                    <span className="text-az-ink/40 text-xs font-normal">
                       ({option.votes.toLocaleString()} votes)
                     </span>
                   </span>
                 </div>
 
                 {/* Meter */}
-                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-az-glass-card rounded-full h-2 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${option.percentage}%` }}
@@ -185,10 +183,10 @@ function ParticipationResultContent(): React.JSX.Element {
                     className="h-full rounded-full"
                     style={{
                       background: isCorrectAnswer
-                        ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                        ? 'linear-gradient(90deg, var(--color-az-category-emerald) 0%, #059669 100%)'
                         : isUserAnswer
-                          ? 'linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)'
-                          : 'linear-gradient(90deg, #e8420a 0%, #cc1c1c 100%)',
+                          ? 'linear-gradient(90deg, var(--color-az-error-500) 0%, #b91c1c 100%)'
+                          : 'linear-gradient(90deg, var(--color-az-flame) 0%, var(--color-az-scarlet) 100%)',
                     }}
                   />
                 </div>
@@ -206,8 +204,8 @@ export default function ParticipationResultPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--hp-bg)]">
-          <div className="w-10 h-10 border-2 border-white/20 border-t-[var(--brand-orange)] rounded-full animate-spin" />
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <div className="w-10 h-10 border-2 border-az-ink/20 border-t-[var(--color-az-flame)] rounded-full animate-spin" />
         </div>
       }
     >

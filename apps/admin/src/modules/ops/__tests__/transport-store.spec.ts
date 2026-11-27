@@ -18,7 +18,13 @@
  */
 import Redis from 'ioredis';
 
-import { RedisTransportStore, type TransportStore } from '../transport-store';
+import {
+  RedisTransportStore,
+  opsRedisUrl,
+  redisDbFromUrl,
+  OPS_REDIS_DB_DEFAULT,
+  type TransportStore,
+} from '../transport-store';
 import type { TransportFlip } from '../service-probe';
 
 // ── fake ioredis: implements EVAL/HGETALL/HDEL/DEL with the same semantics ──
@@ -92,6 +98,62 @@ const flipOf = (over: Partial<TransportFlip>): TransportFlip => ({
 });
 
 // ── store contract via the fake ─────────────────────────────────────────────
+
+describe('opsRedisUrl (dedicated ops DB index)', () => {
+  it('rewrites a bare URL onto the default ops index', () => {
+    expect(opsRedisUrl('redis://localhost:6379')).toBe(
+      `redis://localhost:6379/${OPS_REDIS_DB_DEFAULT}`
+    );
+    expect(opsRedisUrl('redis://localhost:6379')).toBe('redis://localhost:6379/1');
+  });
+
+  it('preserves auth and TLS scheme while appending the index', () => {
+    expect(opsRedisUrl('redis://:s3cret@redis.internal:6379')).toBe(
+      'redis://:s3cret@redis.internal:6379/1'
+    );
+    expect(opsRedisUrl('rediss://redis.example.com')).toBe('rediss://redis.example.com/1');
+  });
+
+  it('leaves an explicit index untouched (operator choice wins)', () => {
+    expect(opsRedisUrl('redis://localhost:6379/0')).toBe('redis://localhost:6379/0');
+    expect(opsRedisUrl('redis://localhost:6379/7')).toBe('redis://localhost:6379/7');
+    expect(opsRedisUrl('redis://:p@h:6379/0?db=0')).toBe('redis://:p@h:6379/0?db=0');
+  });
+
+  it('honors the OPS_REDIS_DB override for bare URLs', () => {
+    expect(opsRedisUrl('redis://localhost:6379', '5')).toBe('redis://localhost:6379/5');
+  });
+
+  it('returns garbage as-is (fail-open owns bad targets, never throws)', () => {
+    expect(opsRedisUrl('not a url')).toBe('not a url');
+    expect(opsRedisUrl('')).toBe('');
+    // Non-redis schemes (e.g. someone points OPS_REDIS_URL at postgres by
+    // mistake) pass through untouched — the connect failure degrades.
+    expect(opsRedisUrl('postgresql://localhost:5432/azeebo')).toBe(
+      'postgresql://localhost:5432/azeebo'
+    );
+  });
+
+  it('resolves from env when called without args (store construction path)', () => {
+    const prevUrl = process.env.OPS_REDIS_URL;
+    const prevDb = process.env.OPS_REDIS_DB;
+    try {
+      delete process.env.OPS_REDIS_URL;
+      delete process.env.OPS_REDIS_DB;
+      process.env.REDIS_URL = 'redis://fleet.internal:6379';
+      expect(opsRedisUrl()).toBe('redis://fleet.internal:6379/1');
+      process.env.OPS_REDIS_URL = 'redis://ops.internal:6379';
+      process.env.OPS_REDIS_DB = '3';
+      expect(opsRedisUrl()).toBe('redis://ops.internal:6379/3');
+    } finally {
+      if (prevUrl === undefined) delete process.env.OPS_REDIS_URL;
+      else process.env.OPS_REDIS_URL = prevUrl;
+      if (prevDb === undefined) delete process.env.OPS_REDIS_DB;
+      else process.env.OPS_REDIS_DB = prevDb;
+      if (process.env.REDIS_URL === 'redis://fleet.internal:6379') delete process.env.REDIS_URL;
+    }
+  });
+});
 
 describe('RedisTransportStore (fake client)', () => {
   let fake: FakeRedis;
@@ -276,4 +338,82 @@ describeLive('RedisTransportStore (live Redis — real Lua script)', () => {
     expect(await store.baseline()).toEqual({});
     expect(await store.commitTransport('svc', 1, 'ipv6')).toBeNull();
   });
+});
+
+// ── locality smoke: ops:transport keys only ever in the dedicated DB ────────
+
+/**
+ * Namespace-locality smoke for the dedicated ops Redis DB. Builds the store
+ * through the PRODUCTION path (no injected client, so opsRedisUrl() resolves
+ * the URL + DB index exactly as the running service does), writes real
+ * baseline + flip keys through it, then sweeps EVERY DB index on the server
+ * and requires `ops:transport:*` keys to exist ONLY on the store's own
+ * resolved index. A violation means some writer bypassed the resolver and
+ * scattered transport state into the generic namespace (DB 0) or another
+ * store's DB — exactly the drift the DB 0/1/2 namespace map exists to
+ * prevent. Live-gated like the rest of the live-Redis layer
+ * (RUN_LIVE_REDIS=1).
+ */
+describeLive('RedisTransportStore locality smoke (ops:transport keys stay in their DB)', () => {
+  it("writes ops:transport:* keys ONLY into the store's resolved Redis DB", async () => {
+    const store = new RedisTransportStore(); // production resolution path
+    const resolved = new URL(opsRedisUrl());
+    expect(store.dbIndex).not.toBeNull();
+    expect(store.dbIndex).toBe(redisDbFromUrl(resolved.toString()));
+    const dbIndex = store.dbIndex as number;
+
+    // Mirror the module-private BASELINE_KEY / FLIPS_KEY names.
+    const ownedKeys = ['ops:transport:baseline', 'ops:transport:flips'];
+
+    const sweep: Redis[] = [];
+    try {
+      const boot = new Redis(resolved.toString());
+      let dbCount = 16; // vanilla default when CONFIG is disabled (managed Redis)
+      try {
+        const cfg = (await boot.config('GET', 'databases')) as unknown as string[];
+        dbCount = Number(cfg?.[1]) || dbCount;
+      } catch {
+        /* CONFIG disabled — sweep the vanilla default */
+      }
+      await boot.quit();
+
+      for (let index = 0; index < dbCount; index += 1) {
+        sweep.push(
+          new Redis({
+            host: resolved.hostname,
+            port: Number(resolved.port) || 6379,
+            db: index,
+            lazyConnect: false,
+            maxRetriesPerRequest: 1,
+            connectTimeout: 1_000,
+            commandTimeout: 5_000,
+          })
+        );
+      }
+
+      // Real HASH writes through the real script path: one baseline field,
+      // one flip inside the hold window.
+      await store.commitTransport('locality-smoke-svc', 4_000, 'localhost');
+      await store.commitTransport('locality-smoke-svc', 4_000, 'ipv4');
+
+      // Positive control: the store's OWN DB must hold its two keys, so a
+      // silently broken sweep can never pass vacuously.
+      const ownKeys = await sweep[dbIndex].keys('ops:transport:*');
+      for (const key of ownedKeys) expect(ownKeys).toContain(key);
+
+      const offenders: Array<{ db: number; keys: string[] }> = [];
+      for (let index = 0; index < sweep.length; index += 1) {
+        if (index === dbIndex) continue;
+        const stray = await sweep[index].keys('ops:transport:*');
+        if (stray.length > 0) offenders.push({ db: index, keys: stray.sort() });
+      }
+      expect(offenders).toEqual([]);
+      // DB 0 is the reserved/generic namespace — call it out by name.
+      expect(await sweep[0].keys('ops:transport:*')).toEqual([]);
+    } finally {
+      await Promise.allSettled(sweep.map((c) => c.quit()));
+      await store.flushForTests();
+      await store.close(); // closes only the client it owns
+    }
+  }, 30_000);
 });

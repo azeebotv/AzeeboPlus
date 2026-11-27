@@ -20,7 +20,17 @@
     "test:cov": "jest --coverage",
     "lint": "eslint src"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@azeebo/shared-services": "workspace:*",
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/config": "^4.0.4",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.217.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.217.0",
+    "@opentelemetry/resources": "^2.7.0",
+    "@opentelemetry/sdk-metrics": "^2.7.1",
+    "@opentelemetry/sdk-node": "^0.217.0",
+    "@opentelemetry/semantic-conventions": "^1.30.0"
+  },
   "peerDependencies": {
     "@azeebo/shared-services": "workspace:*",
     "@nestjs/common": "^11.1.27",

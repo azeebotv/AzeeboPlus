@@ -43,7 +43,7 @@ function NeighborhoodDetailContent() {
   const n = query.data;
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.15)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 15%, transparent)">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <Breadcrumbs
@@ -56,7 +56,7 @@ function NeighborhoodDetailContent() {
           />
           <Link
             href="/lifestyle/neighborhoods"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-az-ink/50 hover:text-az-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             All Neighborhoods
@@ -77,25 +77,27 @@ function NeighborhoodDetailContent() {
           <div className="max-w-md mx-auto py-16">
             <ErrorState
               title="District Not Found"
-              description={query.error?.message || 'The requested neighborhood could not be loaded.'}
+              description={
+                query.error?.message || 'The requested neighborhood could not be loaded.'
+              }
               onButtonPress={() => query.refetch()}
             />
           </div>
         ) : (
           <div className="space-y-8">
             <ScrollReveal>
-              <div className="az-glass p-8 rounded-3xl border border-white/10 shadow-2xl space-y-4">
-                <div className="flex items-center gap-2 text-xs font-mono text-[var(--brand-orange)]">
+              <div className="az-glass p-8 border border-az-glass-border space-y-4">
+                <div className="flex items-center gap-2 text-xs font-mono text-[var(--color-az-flame)]">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>{n.city}</span>
-                  <span className="text-white/30">•</span>
-                  <span className="text-white/50">{n.places?.length || 0} Premier Spots</span>
+                  <span className="text-az-ink/30">•</span>
+                  <span className="text-az-ink/50">{n.places?.length || 0} Premier Spots</span>
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                <h1 className="az-headline text-2xl sm:text-4xl font-extrabold text-az-ink">
                   {n.name}
                 </h1>
-                <p className="text-sm sm:text-base text-white/70 leading-relaxed max-w-3xl">
+                <p className="text-sm sm:text-base text-az-ink/70 leading-relaxed max-w-3xl">
                   {n.description}
                 </p>
               </div>
@@ -103,11 +105,11 @@ function NeighborhoodDetailContent() {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[var(--brand-orange)]" />
+                <h2 className="text-base font-bold text-az-ink flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[var(--color-az-flame)]" />
                   Curated Venues in {n.name}
                 </h2>
-                <span className="text-xs font-mono text-white/40">
+                <span className="text-xs font-mono text-az-ink/40">
                   {n.places?.length} venues cataloged
                 </span>
               </div>
@@ -117,22 +119,22 @@ function NeighborhoodDetailContent() {
                   <ScrollReveal key={p.id}>
                     <Link href={`/lifestyle/places/${p.id}`}>
                       <motion.div whileHover={{ y: -2 }}>
-                        <GlowCard className="p-4 rounded-2xl border border-white/10 flex items-center justify-between group cursor-pointer">
+                        <GlowCard className="p-4 rounded-2xl border border-az-glass-border flex items-center justify-between group cursor-pointer">
                           <div className="space-y-1">
-                            <h3 className="text-sm font-bold text-white group-hover:text-[var(--brand-orange)] transition-colors">
+                            <h3 className="text-sm font-bold text-az-ink group-hover:text-[var(--color-az-flame)] transition-colors">
                               {p.name}
                             </h3>
-                            <span className="text-xs text-white/40 font-mono block">
+                            <span className="text-xs text-az-ink/40 font-mono block">
                               {p.category}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-xs text-amber-400 font-bold">
-                              <Star className="w-3.5 h-3.5 fill-amber-400" />
+                            <div className="flex items-center gap-1 text-xs text-az-warning-400 font-bold">
+                              <Star className="w-3.5 h-3.5 fill-az-warning-400" />
                               <span>{p.rating.toFixed(1)}</span>
                             </div>
-                            <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[var(--brand-orange)] group-hover:translate-x-1 transition-all" />
+                            <ArrowRight className="w-4 h-4 text-az-ink/30 group-hover:text-[var(--color-az-flame)] group-hover:translate-x-1 transition-all" />
                           </div>
                         </GlowCard>
                       </motion.div>
@@ -154,8 +156,8 @@ export default function NeighborhoodDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="text-az-ink/50 text-lg">Loading...</p>
         </div>
       }
     >

@@ -25,3 +25,10 @@ export {
   ErrorBudgetState,
   SLIMeasurement,
 } from './error-budget.service';
+export {
+  SyntheticJourneyService,
+  SyntheticJourneyReport,
+  SyntheticStepResult,
+  SyntheticClientAdapters,
+  StepStatus,
+} from './synthetic-journey.service';

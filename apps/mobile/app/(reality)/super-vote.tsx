@@ -18,6 +18,7 @@ import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import { getVotePackages } from '../../src/config/prices';
 import type { VotePackage } from '@azeebo/react-data/types/api';
 import { colors } from '../../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface Contestant {
   id: string;
@@ -154,7 +155,7 @@ export default function SuperVoteScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView accessibilityLabel="Super Vote Screen" style={styles.container} edges={['top']}>
         <LoadingState text="Loading..." />
       </SafeAreaView>
     );
@@ -171,7 +172,13 @@ export default function SuperVoteScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          accessibilityHint="Navigates to previous screen"
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -196,6 +203,9 @@ export default function SuperVoteScreen() {
                   selectedContestant === contestant.id && styles.contestantCardSelected,
                 ]}
                 onPress={() => setSelectedContestant(contestant.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select contestant ${contestant.name}, rank ${contestant.rank}`}
+                accessibilityState={{ selected: selectedContestant === contestant.id }}
               >
                 <Image source={{ uri: contestant.avatar }} style={styles.contestantAvatar} />
                 <Text style={styles.contestantName}>{contestant.name}</Text>
@@ -218,6 +228,9 @@ export default function SuperVoteScreen() {
                 package_.isPopular && styles.packageCardPopular,
               ]}
               onPress={() => setSelectedPackage(package_.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`${package_.name}, ${package_.votes} votes, ₦${package_.price.toLocaleString()}`}
+              accessibilityState={{ selected: selectedPackage === package_.id }}
             >
               {package_.isPopular && (
                 <View style={styles.popularBadge}>
@@ -243,6 +256,9 @@ export default function SuperVoteScreen() {
             ]}
             onPress={handleVote}
             disabled={!selectedContestant || !selectedPackage || isVoting}
+            accessibilityRole="button"
+            accessibilityLabel="Submit Super Vote"
+            accessibilityState={{ disabled: !selectedContestant || !selectedPackage || isVoting }}
           >
             {isVoting ? (
               <ActivityIndicator color="#fff" />
@@ -259,7 +275,7 @@ export default function SuperVoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: '#0B090E',
   },
   loadingContainer: {
     flex: 1,
@@ -280,6 +296,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
   },
   backButtonText: {
@@ -296,7 +317,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#E8420A',
+    color: brand.flame,
   },
   balanceContainer: {
     alignItems: 'flex-end',
@@ -329,7 +350,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   contestantCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   contestantAvatar: {
     width: 80,
@@ -356,17 +377,17 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
   },
   packageCardPopular: {
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     backgroundColor: colors.bg.deepRaised,
   },
   popularBadge: {
     position: 'absolute',
     top: -10,
     right: 12,
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -394,14 +415,14 @@ const styles = StyleSheet.create({
   packagePrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   footer: {
     padding: 24,
     paddingBottom: 32,
   },
   voteButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

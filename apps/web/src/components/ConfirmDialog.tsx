@@ -48,22 +48,24 @@ export function ConfirmDialog({
       aria-label={title}
     >
       <div className="az-glass p-6 w-full max-w-sm text-center">
-        <h2 className="text-lg font-bold text-[var(--brand-white)] mb-2">{title}</h2>
-        <p className="text-[var(--brand-white)]/60 text-sm mb-6">{message}</p>
+        <h2 className="az-title text-az-ink mb-2">{title}</h2>
+        <p className="az-body text-az-ink/60 mb-6">{message}</p>
         <div className="flex gap-3 justify-center">
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white/70 border border-white/15 hover:bg-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-full text-sm font-semibold text-az-ink/70 border border-az-ink/15 hover:bg-az-glass-card transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-              destructive ? 'bg-[var(--brand-red)] text-white hover:bg-[#A31616]' : 'az-btn-primary'
+            className={`px-5 py-2.5 rounded-full text-sm font-semibold text-az-surface-root transition-colors ${
+              destructive
+                ? 'bg-az-error-500 hover:bg-az-error-600'
+                : 'bg-az-flame hover:bg-az-scarlet'
             }`}
           >
             {confirmLabel}

@@ -36,12 +36,12 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
       <div
         style={{
           position: 'fixed',
-          bottom: 24,
-          right: 24,
+          bottom: 'var(--spacing-az-xl)',
+          right: 'var(--spacing-az-xl)',
           zIndex: 9999,
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          gap: 'var(--spacing-az-sm)',
         }}
       >
         {toasts.map((toast) => (
@@ -49,22 +49,22 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
             key={toast.id}
             onClick={() => removeToast(toast.id)}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
+              padding: 'var(--spacing-az-md) var(--spacing-az-gutter)',
+              borderRadius: 'var(--radius-az-card)',
               backgroundColor:
                 toast.type === 'error'
-                  ? 'var(--brand-red, #CC1C1C)'
+                  ? 'var(--color-az-scarlet)'
                   : toast.type === 'success'
-                    ? '#059669'
-                    : 'var(--brand-near-black, #0b090e)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#FFFFFF',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-              fontSize: 14,
+                    ? 'var(--color-az-success-600)'
+                    : 'var(--color-az-flame)',
+              border: '1px solid color-mix(in srgb, var(--color-az-ink) 15%, transparent)',
+              color: 'var(--color-az-ink)',
+              boxShadow: 'var(--shadow-az-lifted)',
+              fontSize: 'var(--text-az-body)',
               fontWeight: 500,
               cursor: 'pointer',
               animation: 'fadeIn 0.2s ease',
-              backdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(var(--blur-az-glass))',
             }}
           >
             {toast.message}

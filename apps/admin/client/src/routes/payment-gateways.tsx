@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { PaymentGateway, WebhookEvent } from '@/lib/admin-types';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import { useAlert } from '@/components/ui';
 
 export default function PaymentGatewaysPage() {
   const queryClient = useQueryClient();
+  const alert = useAlert();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<PaymentGateway | null>(null);
   const [expandedGatewayId, setExpandedGatewayId] = useState<string | null>(null);
@@ -48,8 +51,7 @@ export default function PaymentGatewaysPage() {
       // The endpoint returns a dashboard envelope {items, recentIntents,
       // total} — cast the items array out (an unguarded cast of res.data
       // crashed this page: `gateways.map is not a function`).
-      if (!res.success) return [];
-      const d = res.data as unknown;
+      const d = requireData(res, []) as unknown;
       const list: unknown[] = Array.isArray(d)
         ? d
         : Array.isArray((d as { items?: unknown[] }).items)
@@ -81,7 +83,7 @@ export default function PaymentGatewaysPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'payment-gateways'] });
     },
     onError: () => {
-      window.alert('Failed to update gateway. Please try again.');
+      void alert('Gateway Update Failed', 'Failed to update gateway. Please try again.');
     },
   });
 

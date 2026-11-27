@@ -31,9 +31,9 @@
  *
  * Part 4 — FeatureFlagGuard ↔ @FeatureFlag pairing (A-8 hardening):
  *  - any @UseGuards(...FeatureFlagGuard...) must sit on a class/method that
- *    also carries @FeatureFlag (or a class whose methods do), otherwise the
- *    guard's legacy x-feature-flag header fallback lets clients self-enable
- *    any stored flag
+ *    also carries @FeatureFlag (or a class whose methods do); without the
+ *    legacy x-feature-flag header fallback a bare guard now gates nothing, so
+ *    it is dead code that reads like protection
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -287,11 +287,7 @@ export function runFlagConventionChecks(root) {
       };
       check(SENTINEL_RE, (s) => canonical.has(s), 'sentinel');
       check(BUILDER_RE, (s) => canonical.has(s), 'builder arg');
-      check(
-        NAV_FLAG_RE,
-        (s) => canonical.has(s) || NAV_FLAG_ALLOWLIST.has(s),
-        'nav flag value'
-      );
+      check(NAV_FLAG_RE, (s) => canonical.has(s) || NAV_FLAG_ALLOWLIST.has(s), 'nav flag value');
     }
 
     // The gateway must serve every canonical slug — derived from the shared
@@ -354,8 +350,9 @@ export function runFlagConventionChecks(root) {
   /* ────────────── Part 4: FeatureFlagGuard ↔ @FeatureFlag ─────────────── */
 
   // A controller/handler that applies FeatureFlagGuard WITHOUT a matching
-  // @FeatureFlag on the same class/method lets a client self-enable any stored
-  // flag via the guard's legacy x-feature-flag opt-in header fallback.
+  // @FeatureFlag on the same class/method gates nothing (the legacy
+  // x-feature-flag header fallback was removed) — dead code that reads like
+  // protection, so the pairing is still required.
   {
     const files = [];
     const walkTs = (dir) => {

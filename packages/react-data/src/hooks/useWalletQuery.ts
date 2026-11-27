@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { walletApi, type WalletBalance, type Transaction } from '../api';
+import { generateIdempotencyKey } from '../api/client';
 
 interface WalletSummary {
   balance: number;
@@ -92,16 +94,24 @@ export function useFundWallet() {
 
 export function useWithdraw() {
   const queryClient = useQueryClient();
+  // Stable per-intent key: reused across retries of the same withdrawal until
+  // it succeeds, then rotated so the next distinct action gets a fresh key
+  // (AUD-03).
+  const keyRef = useRef<string | null>(null);
 
   return useMutation({
     mutationFn: async (data: { amount: number; bankCode: string; accountNumber: string }) => {
-      const response = await walletApi.withdraw(data);
+      const response = await walletApi.withdraw({
+        ...data,
+        idempotencyKey: (keyRef.current ??= generateIdempotencyKey()),
+      });
       if (!response.success) {
         throw new Error(response.message || 'Failed to withdraw funds');
       }
       return response.data;
     },
     onSuccess: () => {
+      keyRef.current = null;
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
     },
   });
@@ -109,16 +119,22 @@ export function useWithdraw() {
 
 export function useTransfer() {
   const queryClient = useQueryClient();
+  // Same per-intent key contract as useWithdraw (AUD-03).
+  const keyRef = useRef<string | null>(null);
 
   return useMutation({
     mutationFn: async (data: { recipientId: string; amount: number; description?: string }) => {
-      const response = await walletApi.transfer(data);
+      const response = await walletApi.transfer({
+        ...data,
+        idempotencyKey: (keyRef.current ??= generateIdempotencyKey()),
+      });
       if (!response.success) {
         throw new Error(response.message || 'Failed to transfer funds');
       }
       return response.data;
     },
     onSuccess: () => {
+      keyRef.current = null;
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
     },
   });

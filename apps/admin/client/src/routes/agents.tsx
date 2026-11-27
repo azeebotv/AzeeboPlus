@@ -1,8 +1,10 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
 import { useAuth } from '@/context/auth-context';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types (mirror of the analytics-service agent-registry contract) ───────── */
 
@@ -63,6 +65,39 @@ const CATEGORY_LABELS: Record<string, string> = {
   'control-plane': 'Control Plane',
   'shared-enterprise': 'Shared Enterprise',
   'domain-skill-pack': 'Domain Skill Pack',
+};
+
+const EXECUTION_TIER_LABELS: Record<string, string> = {
+  T0: 'T0 — Batch / Offline Processing',
+  T1: 'T1 — Background Asynchronous',
+  T2: 'T2 — Standard Interactive (<5s)',
+  T3: 'T3 — Real-Time Low Latency (<1s)',
+  T4: 'T4 — Mission Critical (<250ms)',
+};
+
+const RISK_LEVEL_LABELS: Record<string, string> = {
+  R0: 'R0 — Negligible / Informational',
+  R1: 'R1 — Low (Read-Only / Safe)',
+  R2: 'R2 — Moderate (Internal State Changes)',
+  R3: 'R3 — High (Financial / User Mutations)',
+  R4: 'R4 — Critical (Security & Infrastructure)',
+};
+
+const AUTONOMY_LEVEL_LABELS: Record<string, string> = {
+  A0: 'A0 — Manual (Human Invocation Only)',
+  A1: 'A1 — Assisted (Step-by-Step Approval)',
+  A2: 'A2 — Semi-Autonomous (Human Sign-off)',
+  A3: 'A3 — Conditional Autonomy (Guarded)',
+  A4: 'A4 — High Autonomy (Audited Actions)',
+  A5: 'A5 — Full Autonomy (Automated)',
+};
+
+const KILL_SWITCH_LEVEL_LABELS: Record<string, string> = {
+  K0: 'K0 — Manual Kill-Switch Only',
+  K1: 'K1 — Budget & Error Auto-Pause',
+  K2: 'K2 — Security Alert Quarantine',
+  K3: 'K3 — Cascading Dependent Halt',
+  K4: 'K4 — Hard Revocation & Termination',
 };
 
 /* ── Form state for register/edit ──────────────────────────────────────────── */
@@ -433,7 +468,7 @@ function AgentFormModal({
           <select style={inputStyle} value={form.executionTier} onChange={set('executionTier')}>
             {EXECUTION_TIERS.map((t) => (
               <option key={t} value={t}>
-                {t}
+                {EXECUTION_TIER_LABELS[t] || t}
               </option>
             ))}
           </select>
@@ -443,7 +478,7 @@ function AgentFormModal({
           <select style={inputStyle} value={form.riskLevel} onChange={set('riskLevel')}>
             {RISK_LEVELS.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {RISK_LEVEL_LABELS[r] || r}
               </option>
             ))}
           </select>
@@ -453,7 +488,7 @@ function AgentFormModal({
           <select style={inputStyle} value={form.autonomyLevel} onChange={set('autonomyLevel')}>
             {AUTONOMY_LEVELS.map((a) => (
               <option key={a} value={a}>
-                {a}
+                {AUTONOMY_LEVEL_LABELS[a] || a}
               </option>
             ))}
           </select>
@@ -463,7 +498,7 @@ function AgentFormModal({
           <select style={inputStyle} value={form.killSwitchLevel} onChange={set('killSwitchLevel')}>
             {KILL_SWITCH_LEVELS.map((k) => (
               <option key={k} value={k}>
-                {k}
+                {KILL_SWITCH_LEVEL_LABELS[k] || k}
               </option>
             ))}
           </select>
@@ -539,6 +574,7 @@ function AgentFormModal({
 /* ── Detail modal with kill-switch history ─────────────────────────────────── */
 
 function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: () => void }) {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const historyQuery = useQuery({
@@ -585,9 +621,13 @@ function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: (
         {[
           ['Status', agent.status, statusColor(agent.status)],
           ['Health', agent.healthStatus ?? 'unknown', healthColor(agent.healthStatus ?? 'unknown')],
-          ['Risk / Autonomy', `${agent.riskLevel} / ${agent.autonomyLevel}`, 'var(--admin-text)'],
-          ['Execution tier', agent.executionTier, 'var(--admin-text)'],
-          ['Kill-switch level', agent.killSwitchLevel, 'var(--admin-text)'],
+          [
+            'Risk / Autonomy',
+            `${RISK_LEVEL_LABELS[agent.riskLevel] || agent.riskLevel} / ${AUTONOMY_LEVEL_LABELS[agent.autonomyLevel] || agent.autonomyLevel}`,
+            'var(--admin-text)',
+          ],
+          ['Execution tier', EXECUTION_TIER_LABELS[agent.executionTier] || agent.executionTier, 'var(--admin-text)'],
+          ['Kill-switch level', KILL_SWITCH_LEVEL_LABELS[agent.killSwitchLevel] || agent.killSwitchLevel, 'var(--admin-text)'],
           ['Human owner', agent.humanOwner, 'var(--admin-text)'],
           [
             'Budget',
@@ -638,8 +678,8 @@ function AgentDetailModal({ agent, onClose }: { agent: AgentRegistry; onClose: (
           <button
             style={{ ...btnStyle('danger'), opacity: retireMutation.isPending ? 0.6 : 1 }}
             disabled={retireMutation.isPending}
-            onClick={() => {
-              if (window.confirm(`Retire agent ${agent.agentId}? This is recorded for audit.`)) {
+            onClick={async () => {
+              if (await confirm({ title: "Retire Agent", message: `Retire agent ${agent.agentId}? This is recorded for audit.`, variant: "warning" })) {
                 retireMutation.mutate();
               }
             }}
@@ -718,7 +758,7 @@ export default function AgentsPage() {
       if (statusFilter) params.set('status', statusFilter);
       return apiFetch<AgentRegistry[]>(`/api/v1/analytics/agents?${params}`);
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const statsQuery = useQuery({
@@ -1108,12 +1148,16 @@ export default function AgentsPage() {
                   </td>
                   <td style={tdStyle}>
                     <span
-                      style={{ color: riskColor(agent.riskLevel), fontWeight: 600, fontSize: 13 }}
+                      title={RISK_LEVEL_LABELS[agent.riskLevel] || agent.riskLevel}
+                      style={{ color: riskColor(agent.riskLevel), fontWeight: 600, fontSize: 13, cursor: 'help' }}
                     >
                       {agent.riskLevel}
                     </span>
                     <span style={{ color: 'var(--admin-text-muted)', margin: '0 4px' }}>/</span>
-                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>
+                    <span
+                      title={AUTONOMY_LEVEL_LABELS[agent.autonomyLevel] || agent.autonomyLevel}
+                      style={{ color: 'var(--admin-text-muted)', fontSize: 13, cursor: 'help' }}
+                    >
                       {agent.autonomyLevel}
                     </span>
                   </td>

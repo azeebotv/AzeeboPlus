@@ -23,6 +23,14 @@ export interface AuditPrismaClient {
       where: Record<string, unknown>;
     }) => Promise<Record<string, unknown> | null>;
     count: (args?: { where?: Record<string, unknown> }) => Promise<number>;
+    groupBy: (args: {
+      by: string[];
+      where?: Record<string, unknown>;
+    }) => Promise<Record<string, unknown>[]>;
+    updateMany: (args: {
+      where?: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<{ count: number }>;
   };
   dualControlRequest: {
     create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;

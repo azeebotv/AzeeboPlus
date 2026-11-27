@@ -19,6 +19,7 @@ describe('FlagGate', () => {
       isEnabled: (key: string) => key === 'test-flag',
       isLoading: false,
       flags: [],
+      universeOptions: [],
     });
 
     renderWithRouter(
@@ -35,6 +36,7 @@ describe('FlagGate', () => {
       isEnabled: () => false,
       isLoading: false,
       flags: [],
+      universeOptions: [],
     });
 
     renderWithRouter(
@@ -51,6 +53,7 @@ describe('FlagGate', () => {
       isEnabled: () => true,
       isLoading: true,
       flags: [],
+      universeOptions: [],
     });
 
     const { container } = renderWithRouter(

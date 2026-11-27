@@ -28,7 +28,7 @@ DB_HOST="${DB_HOST:-db-staging.internal}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USER="${DB_USER:-azeebo_staging}"
 
-# ---- Database List (26 databases) ----
+# ---- Database List (29 databases) ----
 DATABASES=(
     "azeebo_auth"
     "azeebo_user"
@@ -49,6 +49,7 @@ DATABASES=(
     "azeebo_lifestyle"
     "azeebo_vertical"
     "azeebo_creator"
+    "azeebo_live_event"
     "azeebo_support"
     "azeebo_moderation"
     "azeebo_queue"

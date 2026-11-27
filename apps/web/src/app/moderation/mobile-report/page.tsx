@@ -4,8 +4,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import { PageShell } from '@/components/layout/PageShell';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
 import {
@@ -142,30 +141,25 @@ function MobileReportPageContent(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <AppHeader logoVariant="light" />
-
-      <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <PageShell maxWidth="sm">
+      <div className="mx-auto max-w-lg">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="mb-8 text-center"
         >
-          <div
-            className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(239,68,68,0.15)' }}
-          >
-            <ShieldAlert className="w-8 h-8 text-rose-500" />
+          <div className="mx-auto mb-4 grid size-16 place-items-center rounded-full bg-az-error-500/15">
+            <ShieldAlert className="size-8 text-az-error-500" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Report Content</h1>
-          <p className="text-white/50 text-sm">Help keep our community safe</p>
+          <h1 className="az-headline mb-2 text-2xl text-az-ink sm:text-3xl">Report Content</h1>
+          <p className="az-body text-az-ink-muted">Help keep our community safe</p>
         </motion.div>
 
         {!contentId ? (
           <ScrollReveal>
             <GlowCard className="p-8 text-center">
-              <p className="text-white/50 mb-4">No content selected for reporting.</p>
-              <p className="text-sm text-white/40">
+              <p className="az-body mb-4 text-az-ink-muted">No content selected for reporting.</p>
+              <p className="az-caption text-az-ink/40">
                 Navigate to the content you want to report and use the report button.
               </p>
             </GlowCard>
@@ -176,17 +170,16 @@ function MobileReportPageContent(): React.JSX.Element {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(34,197,94,0.15)' }}
+                className="mx-auto mb-6 grid size-20 place-items-center rounded-full bg-az-success-500/15"
               >
-                <Check className="w-10 h-10 text-emerald-400" />
+                <Check className="size-10 text-az-success-400" aria-hidden="true" />
               </motion.div>
-              <h2 className="text-xl font-bold text-white mb-2">Report Submitted</h2>
-              <p className="text-white/50 mb-4">
+              <h2 className="az-title mb-2 text-az-ink">Report Submitted</h2>
+              <p className="az-body mb-4 text-az-ink-muted">
                 Thank you for helping keep our community safe. We&apos;ll review your report within
                 24 hours.
               </p>
-              <p className="text-xs text-white/40">
+              <p className="az-micro-label text-az-ink/40">
                 Reference: {Math.random().toString(36).substring(2, 10).toUpperCase()}
               </p>
             </GlowCard>
@@ -195,76 +188,72 @@ function MobileReportPageContent(): React.JSX.Element {
           <div className="space-y-6">
             <ScrollReveal>
               <GlowCard className="p-5">
-                <h2 className="text-lg font-bold text-white mb-4">Select a reason</h2>
-                <div className="space-y-2">
-                  {REASONS.map((reason) => (
-                    <button
-                      key={reason.id}
-                      type="button"
-                      onClick={() => setSelectedReason(reason.id)}
-                      className="w-full text-left p-3 rounded-lg flex items-start gap-3 transition-all"
-                      style={{
-                        backgroundColor:
-                          selectedReason === reason.id
-                            ? 'rgba(232,66,10,0.15)'
-                            : 'rgba(255,255,255,0.03)',
-                        border:
-                          selectedReason === reason.id
-                            ? '1px solid rgba(232,66,10,0.3)'
-                            : '1px solid rgba(255,255,255,0.06)',
-                      }}
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{
-                          backgroundColor:
-                            selectedReason === reason.id
-                              ? 'rgba(232,66,10,0.2)'
-                              : 'rgba(255,255,255,0.05)',
-                          color: selectedReason === reason.id ? '#E8420A' : 'rgba(255,255,255,0.7)',
-                        }}
+                <h2 className="az-title mb-4 text-az-ink">Select a reason</h2>
+                <div className="space-y-2" role="radiogroup" aria-label="Report reason">
+                  {REASONS.map((reason) => {
+                    const selected = selectedReason === reason.id;
+                    return (
+                      <button
+                        key={reason.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setSelectedReason(reason.id)}
+                        className={`flex w-full items-start gap-3 rounded-az-control border p-3 text-left transition-all ${
+                          selected
+                            ? 'border-az-scarlet/30 bg-az-scarlet/15'
+                            : 'border-az-ink/6 bg-az-ink/3'
+                        }`}
                       >
-                        {getReasonIcon(reason.icon)}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">{reason.label}</p>
-                        <p className="text-xs text-white/40 mt-0.5">{reason.description}</p>
-                      </div>
-                      {selectedReason === reason.id && (
-                        <Check className="mt-1 w-4 h-4 text-orange-500 flex-shrink-0" />
-                      )}
-                    </button>
-                  ))}
+                        <div
+                          className={`mt-0.5 flex size-8 flex-shrink-0 items-center justify-center rounded-az-control ${
+                            selected
+                              ? 'bg-az-scarlet/20 text-az-flame'
+                              : 'bg-az-ink/5 text-az-ink/70'
+                          }`}
+                        >
+                          {getReasonIcon(reason.icon)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="az-body-strong text-az-ink">{reason.label}</p>
+                          <p className="az-caption mt-0.5 text-az-ink/40">{reason.description}</p>
+                        </div>
+                        {selected && (
+                          <Check
+                            className="mt-1 size-4 flex-shrink-0 text-az-flame"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </GlowCard>
             </ScrollReveal>
 
             <ScrollReveal delay={0.1}>
               <GlowCard className="p-5">
-                <h2 className="text-lg font-bold text-white mb-3">Additional details</h2>
-                <p className="text-xs text-white/40 mb-3">
+                <h2 className="az-title mb-3 text-az-ink">Additional details</h2>
+                <p className="az-caption mb-3 text-az-ink/40">
                   Optional - help us understand the issue better
                 </p>
+                <label htmlFor="mobile-report-details" className="sr-only">
+                  Additional details
+                </label>
                 <textarea
+                  id="mobile-report-details"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Provide any additional context..."
-                  className="w-full h-28 px-4 py-3 rounded-lg text-sm text-white placeholder-white/30 resize-none focus:outline-none"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                  }}
+                  className="az-input h-28 resize-none"
                 />
               </GlowCard>
             </ScrollReveal>
 
             {error && (
               <div
-                className="p-4 rounded-lg text-sm text-red-400"
-                style={{
-                  backgroundColor: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.2)',
-                }}
+                role="alert"
+                className="az-body rounded-az-control border border-az-error-500/20 bg-az-error-500/10 p-4 text-az-error-400"
               >
                 {error}
               </div>
@@ -275,8 +264,7 @@ function MobileReportPageContent(): React.JSX.Element {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!selectedReason || isSubmitting}
-                className="w-full py-4 rounded-full text-base font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                className="az-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
                 whileHover={{ scale: selectedReason ? 1.02 : 1 }}
                 whileTap={{ scale: selectedReason ? 0.98 : 1 }}
               >
@@ -285,16 +273,14 @@ function MobileReportPageContent(): React.JSX.Element {
             </ScrollReveal>
 
             <ScrollReveal delay={0.25}>
-              <p className="text-xs text-white/30 text-center">
+              <p className="az-caption text-center text-az-ink/30">
                 Reports are reviewed within 24 hours. Your identity is kept confidential.
               </p>
             </ScrollReveal>
           </div>
         )}
       </div>
-
-      <AppFooter logoVariant="light" />
-    </div>
+    </PageShell>
   );
 }
 
@@ -304,8 +290,8 @@ export default function MobileReportPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-[var(--color-az-surface-root)]">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

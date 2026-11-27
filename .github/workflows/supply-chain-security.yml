@@ -2,9 +2,9 @@ name: Supply Chain Security
 
 on:
   push:
-    branches: [main, develop]
+    branches: [Dev-Branch]
   pull_request:
-    branches: [main, develop]
+    branches: [Dev-Branch]
   release:
     types: [published]
 
@@ -18,22 +18,22 @@ jobs:
     name: Vulnerability Scan (Block Critical)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
-      # Block CRITICAL vulnerabilities (exit code 1)
+      # Block CRITICAL vulnerabilities via audit gate (AUD-03)
       - name: Block critical vulnerabilities
         run: |
           echo "Checking for critical vulnerabilities..."
-          pnpm audit --audit-level=critical
-          echo "No critical vulnerabilities found."
+          node scripts/audit-gate.mjs --severity=critical
+          echo "No unallowlisted critical vulnerabilities found."
 
       # Report high vulnerabilities (don't block, but surface them)
       - name: Report high vulnerabilities
@@ -45,11 +45,11 @@ jobs:
     name: SBOM Generation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -57,14 +57,13 @@ jobs:
 
       # Generate SBOM using Syft
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@v0
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
         id: syft-install
 
       - name: Generate SBOM (CycloneDX format)
         run: |
           syft dir:. -o cyclonedx-json=sbom-cyclonedx.json
           syft dir:. -o spdx-json=sbom-spdx.json
-        continue-on-error: true
 
       # Generate dependency inventory
       - name: Generate dependency inventory
@@ -80,7 +79,7 @@ jobs:
 
       # Upload SBOM artifacts
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sbom
           path: |
@@ -96,17 +95,20 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'release'
     needs: [vulnerability-scan, sbom-generation]
     permissions:
-      id-token: write   # Required for SLSA provenance
-      contents: write
+      id-token: write # Required for SLSA provenance
+      contents: read
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       # Generate SLSA provenance attestation for source artifacts
-      # subject-path should point to a built artifact, not the entire workspace.
-      # TODO: chain this job to `needs: [build]` and point at the build output.
+      - name: Prepare build artifact for attestation
+        run: |
+          mkdir -p "${{ github.workspace }}/dist"
+          echo "{\"commit\":\"${{ github.sha }}\",\"repository\":\"${{ github.repository }}\",\"attestedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "${{ github.workspace }}/dist/build-manifest.json"
+
       - name: Generate Provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45 # v2
         with:
           subject-path: '${{ github.workspace }}/dist'
 
@@ -114,10 +116,11 @@ jobs:
       # subject-digest must be the image digest (sha256:<image-hash>), NOT the git commit SHA.
       # This step is skipped unless CONTAINER_DIGEST is provided by a preceding build step.
       - name: Generate Container Provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45 # v2
         if: github.event_name == 'release' && env.CONTAINER_DIGEST != ''
         with:
-          subject-name: 'ghcr.io/${{ github.repository }}'
+          # Must match the image cd.yml publishes (see REGISTRY/IMAGE_NAME there).
+          subject-name: 'ghcr.io/azeebotv/azeebo-all-in-one'
           subject-digest: '${{ env.CONTAINER_DIGEST }}'
           push-to-registry: true
 
@@ -126,11 +129,11 @@ jobs:
     name: License Compliance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -140,15 +143,18 @@ jobs:
         run: |
           echo "Checking for copyleft licenses..."
           # List all licenses
-          pnpm licenses ls --prod 2>/dev/null || echo "License check skipped (pnpm version may not support this command)"
+          # Fail closed: a failed listing must not look like a clean license check.
+          pnpm licenses ls --prod
+          pnpm licenses ls --prod --json > licenses.json
+          test -s licenses.json
 
-          # Block known problematic licenses
-          BLOCKED_LICENSES="GPL-3.0|AGPL-3.0|SSPL-1.0|EUPL-1.1"
-          BLOCKED=$(pnpm licenses ls --prod --json 2>/dev/null | jq -r '.[]? | .licenses[]?' | grep -iE "$BLOCKED_LICENSES" || true)
+          # `pnpm licenses ls --json` is keyed by license expression (e.g. "GPL-3.0",
+          # "(MIT OR GPL-3.0)"). Match whole license tokens so LGPL-3.0 is not blocked.
+          BLOCKED_LICENSES='(^|[ (])(A?GPL-3\.0|SSPL-1\.0|EUPL-1\.1)(-only|-or-later)?($|[ )])'
+          BLOCKED=$(jq -r 'keys[]' licenses.json | grep -E "$BLOCKED_LICENSES" || true)
           if [ -n "$BLOCKED" ]; then
             echo "::error::Blocked copyleft licenses found:"
             echo "$BLOCKED"
             exit 1
           fi
           echo "No blocked licenses found."
-

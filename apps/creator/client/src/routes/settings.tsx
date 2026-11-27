@@ -36,11 +36,12 @@ export default function SettingsPage() {
 
   // Hydrate the form from the saved settings (backend returns defaults when
   // nothing was persisted yet).
-  const { data: saved } = useQuery({
+  const { data: saved, isLoading: loadingSettings, isError: settingsError, refetch: refetchSettings } = useQuery({
     queryKey: ['creator', 'settings'],
     queryFn: async () => {
       const res = await creatorApi.getSettings();
-      return res.success ? (res.data as CreatorSettings) : null;
+      if (!res.success) throw new Error(res.message || 'Failed to load settings');
+      return res.data as CreatorSettings;
     },
   });
 
@@ -72,6 +73,66 @@ export default function SettingsPage() {
   const togglePrivacy = (key: keyof PrivacySettings, value?: boolean) => {
     setPrivacy((prev) => ({ ...prev, [key]: value ?? (!prev[key] as never) }));
   };
+
+  if (loadingSettings) {
+    return (
+      <div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
+        <p style={{ color: 'var(--creator-text-muted)', marginBottom: 24 }}>Loading your settings…</p>
+        <div
+          style={{
+            padding: 32,
+            borderRadius: 12,
+            border: '1px solid var(--creator-border)',
+            textAlign: 'center',
+            color: 'var(--creator-text-muted)',
+          }}
+        >
+          Loading…
+        </div>
+      </div>
+    );
+  }
+
+  if (settingsError) {
+    return (
+      <div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Settings</h1>
+        <div
+          style={{
+            padding: 32,
+            borderRadius: 12,
+            border: '1px solid var(--creator-orange)',
+            backgroundColor: 'rgba(232,66,10,0.08)',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>Failed to load your settings</p>
+          <p style={{ fontSize: 13, color: 'var(--creator-text-muted)', marginBottom: 16 }}>
+            Your previously saved settings could not be retrieved. Do not save until settings have loaded to avoid overwriting them with defaults.
+          </p>
+          <button
+            onClick={() => refetchSettings()}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: '1px solid var(--creator-orange)',
+              backgroundColor: 'transparent',
+              color: 'var(--creator-orange)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Settings are loaded (or confirmed first-time defaults). Safe to edit.
+  const settingsLoaded = !loadingSettings && !settingsError;
 
   return (
     <div>
@@ -185,6 +246,9 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>{item.desc}</div>
               </div>
               <button
+                role="switch"
+                aria-checked={notifications[item.key]}
+                aria-label={item.label}
                 onClick={() => toggleNotification(item.key)}
                 style={{
                   width: 44,
@@ -281,6 +345,9 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 12, color: 'var(--creator-text-muted)' }}>{item.desc}</div>
               </div>
               <button
+                role="switch"
+                aria-checked={privacy[item.key]}
+                aria-label={item.label}
                 onClick={() => togglePrivacy(item.key)}
                 style={{
                   width: 44,
@@ -313,15 +380,16 @@ export default function SettingsPage() {
         {/* Save Button */}
         <button
           onClick={() => settingsMutation.mutate()}
-          disabled={settingsMutation.isPending}
+          disabled={!settingsLoaded || settingsMutation.isPending}
           style={{
             padding: '10px 20px',
             borderRadius: 8,
             border: 'none',
-            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+            background: !settingsLoaded || settingsMutation.isPending ? 'var(--creator-surface)' : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
             color: 'white',
             fontWeight: 600,
-            cursor: 'pointer',
+            cursor: !settingsLoaded || settingsMutation.isPending ? 'not-allowed' : 'pointer',
+            opacity: !settingsLoaded || settingsMutation.isPending ? 0.6 : 1,
           }}
         >
           {settingsMutation.isPending ? 'Saving...' : 'Save All Settings'}

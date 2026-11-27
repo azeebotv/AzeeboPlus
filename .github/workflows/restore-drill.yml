@@ -1,0 +1,119 @@
+name: Restore Drill
+
+# AUD-54: backups that are never restored are Schrödinger's backups. This
+# weekly drill downloads the most recent encrypted backup of a critical
+# database from S3 and runs scripts/verify-backup-restore.sh against a
+# disposable Postgres service container (database azeebo_restore_test).
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      database:
+        description: 'Database to drill'
+        required: true
+        default: 'azeebo_wallet'
+        type: choice
+        options:
+          - azeebo_wallet
+          - azeebo_payment
+          - azeebo_auth
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  restore-drill:
+    name: Restore ${{ github.event.inputs.database || 'azeebo_wallet' }} into disposable Postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.S3_REGION || 'us-east-1' }}
+
+      - name: Download latest backup
+        env:
+          S3_BACKUP_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
+          S3_REGION: ${{ secrets.S3_REGION || 'us-east-1' }}
+          DRILL_DB: ${{ github.event.inputs.database || 'azeebo_wallet' }}
+        run: |
+          mkdir -p /tmp/backups
+          LATEST=$(aws s3 ls "s3://${S3_BACKUP_BUCKET}/backups/${DRILL_DB}/" \
+            --region "${S3_REGION}" \
+            | awk '{print $4}' | grep -E '\.enc$' | sort | tail -1)
+          if [ -z "$LATEST" ]; then
+            echo "::error::No backup found for ${DRILL_DB} in s3://${S3_BACKUP_BUCKET}/backups/${DRILL_DB}/"
+            exit 1
+          fi
+          echo "Downloading ${LATEST}"
+          aws s3 cp "s3://${S3_BACKUP_BUCKET}/backups/${DRILL_DB}/${LATEST}" /tmp/backups/ --region "${S3_REGION}"
+          aws s3 cp "s3://${S3_BACKUP_BUCKET}/backups/${DRILL_DB}/${LATEST}.sha256" /tmp/backups/ --region "${S3_REGION}" || \
+            echo "::warning::No checksum sidecar for ${LATEST} — skipping checksum step"
+
+      - name: Run restore drill
+        env:
+          DB_BACKUP_ENCRYPTION_KEY: ${{ secrets.DB_BACKUP_ENCRYPTION_KEY }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+        run: |
+          chmod +x ./scripts/verify-backup-restore.sh
+          ./scripts/verify-backup-restore.sh "$(ls -t /tmp/backups/*.enc | head -1)"
+
+      - name: Assert restored data is queryable
+        env:
+          DRILL_DB: ${{ github.event.inputs.database || 'azeebo_wallet' }}
+        run: |
+          # The drill database must contain at least the Prisma migration ledger
+          # — proof that schema restore actually happened, not just file ops.
+          TABLES=$(PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d azeebo_restore_test -t -A \
+            -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          if [ "${TABLES:-0}" -lt 1 ]; then
+            echo "::error::Restore drill failed: azeebo_restore_test has no tables in public schema."
+            exit 1
+          fi
+          echo "Restored database contains ${TABLES} tables."
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL not configured; skipping failure notification."
+            exit 0
+          fi
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"🚨 Restore Drill Failed\nDatabase: ${{ github.event.inputs.database || 'azeebo_wallet' }}\nWorkflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"
+            }"

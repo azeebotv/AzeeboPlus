@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { NotificationTemplate } from '@/lib/admin-types';
-import { unwrapList } from '@/lib/payload';
+import { requireData, unwrapList } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 function getTypeStyle(type: string): { bg: string; color: string } {
@@ -33,8 +33,8 @@ export default function AnnouncementsPage() {
   const { data: announcements = [], isLoading } = useQuery({
     queryKey: ['admin', 'announcements'],
     queryFn: async () => {
-      const res = await adminApi.getNotificationTemplates();
-      return res.success ? unwrapList<NotificationTemplate>(res.data).items : [];
+      const data = requireData(await adminApi.getNotificationTemplates(), []);
+      return unwrapList<NotificationTemplate>(data).items;
     },
   });
 
@@ -111,7 +111,16 @@ export default function AnnouncementsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
             <Icon name="bell" size={28} color="var(--admin-orange)" />
             <span>Announcements</span>
           </h1>
@@ -139,7 +148,9 @@ export default function AnnouncementsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>Loading...</p>
+        <p style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: 40 }}>
+          Loading...
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {announcements.map((a) => {
@@ -291,7 +302,14 @@ export default function AnnouncementsPage() {
             </h2>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Name
               </label>
               <input
@@ -312,7 +330,14 @@ export default function AnnouncementsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Type
               </label>
               <select
@@ -340,7 +365,14 @@ export default function AnnouncementsPage() {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Subject
               </label>
               <input
@@ -361,7 +393,14 @@ export default function AnnouncementsPage() {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, color: 'var(--admin-text-muted)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  color: 'var(--admin-text-muted)',
+                  marginBottom: 6,
+                }}
+              >
                 Content
               </label>
               <textarea

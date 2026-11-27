@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { asArray, unwrapList, num, str, bool, isRecord } from './payload';
+import {
+  asArray,
+  unwrapList,
+  num,
+  str,
+  bool,
+  isRecord,
+  assertSuccess,
+  requireData,
+} from './payload';
 
 describe('asArray', () => {
   it('passes through a bare array', () => {
@@ -76,5 +85,54 @@ describe('field guards', () => {
     expect(isRecord([])).toBe(false);
     expect(isRecord(null)).toBe(false);
     expect(isRecord('x')).toBe(false);
+  });
+});
+
+describe('assertSuccess', () => {
+  it('passes the response through on success', () => {
+    const res = { success: true, message: 'ok' };
+    expect(assertSuccess(res)).toBe(res);
+  });
+
+  it('throws the server message on a resolved failure', () => {
+    expect(() => assertSuccess({ success: false, message: 'Wallet service down' })).toThrow(
+      'Wallet service down'
+    );
+  });
+
+  it('throws a generic message when the failure carries none', () => {
+    expect(() => assertSuccess({ success: false })).toThrow('Request failed');
+  });
+});
+
+describe('requireData', () => {
+  it('returns the body on success', () => {
+    expect(requireData({ success: true, data: [{ id: 'a' }] })).toEqual([{ id: 'a' }]);
+  });
+
+  it('throws on a failed read instead of handing back the empty fallback', () => {
+    // The bug this guard exists for: `res.success ? res.data ?? [] : []` made an
+    // outage indistinguishable from an empty table.
+    expect(() => requireData({ success: false, message: 'List unavailable' }, [])).toThrow(
+      'List unavailable'
+    );
+  });
+
+  it('keeps a body-less success empty when the caller supplies a fallback', () => {
+    expect(requireData({ success: true }, [])).toEqual([]);
+    expect(requireData({ success: true, data: null }, null)).toBeNull();
+  });
+
+  it('treats a body-less success as an error when no fallback is given', () => {
+    expect(() => requireData({ success: true })).toThrow('Empty response body');
+    expect(() => requireData({ success: true, message: 'No plan returned' })).toThrow(
+      'No plan returned'
+    );
+  });
+
+  it('still throws on failure when a fallback is present', () => {
+    // apiFetch's network-error shape: success false, statusCode 0, no body.
+    const offline = { success: false, statusCode: 0, message: 'Network error' };
+    expect(() => requireData(offline, {})).toThrow('Network error');
   });
 });

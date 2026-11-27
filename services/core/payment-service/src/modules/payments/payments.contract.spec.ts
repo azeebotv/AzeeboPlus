@@ -8,6 +8,10 @@ import { RateLimitGuard } from '@azeebo/security';
 import { ExecutionContext } from '@nestjs/common';
 import { FeatureFlagService } from '@azeebo/feature-flags';
 
+// Unique per jest run: a live Redis (REDIS_URL set) keeps idempotency keys
+// for 24h, so fixed keys would 409 on the second run.
+const runId = Date.now();
+
 describe('Payments Controller Contract Tests', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -86,6 +90,7 @@ describe('Payments Controller Contract Tests', () => {
       return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-init-${runId}-1`)
         .send({
           amount: 1000,
           currency: 'NGN',
@@ -108,6 +113,7 @@ describe('Payments Controller Contract Tests', () => {
       return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-init-${runId}-2`)
         .send({ amount: 50, currency: 'NGN' })
         .expect(400);
     });
@@ -191,6 +197,7 @@ describe('Payments Controller Contract Tests', () => {
       return request(baseUrl)
         .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
+        .set('Idempotency-Key', `contract-init-${runId}-3`)
         .send({})
         .expect(400);
     });

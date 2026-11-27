@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SuspensionService } from './suspension.service';
 import { CreateSuspensionDto, SuspensionQueryDto } from './dto/suspension.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { AdminGuard } from '@azeebo/security';
 
 interface AuthenticatedRequest {
@@ -25,7 +25,7 @@ interface AuthenticatedRequest {
 
 @ApiTags('User Suspensions')
 @Controller('support/suspensions')
-@UseGuards(AuthGuard)
+@UseGuards(ServiceAuthGuard)
 @ApiBearerAuth()
 export class SuspensionController {
   constructor(@Inject(SuspensionService) private suspensionService: SuspensionService) {}

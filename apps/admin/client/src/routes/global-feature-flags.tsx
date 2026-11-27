@@ -1,9 +1,12 @@
+import { useConfirm } from "@/components/ui";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '@/lib/api/admin';
 import type { GlobalFeatureFlag, LastNightlyRun, StaleFlagMetrics } from '@/lib/admin-types';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 interface ServiceContext {
   label: string;
@@ -61,10 +64,10 @@ function isNumericFlag(flag: GlobalFeatureFlag): boolean {
 
 /** Human labels for the last nightly pass's webhook status. */
 const WEBHOOK_LABEL: Record<LastNightlyRun['webhook'], string> = {
-  posted: 'webhook posted',
-  'skipped-empty': 'skipped · empty',
-  'no-webhook': 'no webhook',
-  failed: 'webhook failed',
+  posted: 'Alert Sent (Slack / Teams)',
+  'skipped-empty': 'Queue Empty · No Alerts',
+  'no-webhook': 'Alert Channel Not Set',
+  failed: 'Alert Delivery Failed',
 };
 const WEBHOOK_BG: Record<LastNightlyRun['webhook'], string> = {
   posted: 'rgba(31,138,76,0.2)',
@@ -99,6 +102,7 @@ const readStoredStale = (): boolean => {
 };
 
 export default function GlobalFeatureFlagsPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -165,7 +169,7 @@ export default function GlobalFeatureFlagsPage() {
     queryKey: ['admin', 'global-feature-flags'],
     queryFn: async () => {
       const res = await adminApi.listGlobalFeatureFlags();
-      return res.success ? (res.data ?? []) : [];
+      return requireData(res, []);
     },
   });
 
@@ -182,7 +186,7 @@ export default function GlobalFeatureFlagsPage() {
     staleTime: 30_000,
     // Poll every 30s — the admin backend caches the Prometheus join for the
     // same window, so the dashboard stays live without hammering Prometheus.
-    refetchInterval: 30_000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   // Most recent nightly pass (audit-recorded): times, counts, webhook status.
@@ -194,7 +198,7 @@ export default function GlobalFeatureFlagsPage() {
       const res = await adminApi.getLastNightlyRun();
       return res.success ? (res.data ?? null) : null;
     },
-    refetchInterval: 60_000,
+    refetchInterval: pollingIntervals.idle,
   });
 
   const saveMutation = useMutation({
@@ -251,8 +255,9 @@ export default function GlobalFeatureFlagsPage() {
     },
   });
 
-  const confirmPurge = () => {
-    if (!window.confirm('Invalidate all cached uploads at the CDN edge (/uploads/*)?')) return;
+  const confirmPurge = async () => {
+    const ok = await confirm({ title: "Purge CDN Cache", message: "Invalidate all cached uploads at the CDN edge (/uploads/*)?", variant: "warning" });
+    if (!ok) return;
     setPurgeFeedback(null);
     purgeMutation.mutate();
   };
@@ -445,29 +450,19 @@ export default function GlobalFeatureFlagsPage() {
     },
   });
 
-  const undoPrune = () => {
+  const undoPrune = async () => {
     if (!pruneFeedback?.removedKeys?.length) return;
-    if (
-      !window.confirm(
-        `Restore ${pruneFeedback.removedKeys.length} flag(s) from the audit archive?\n\n` +
-          pruneFeedback.removedKeys.map((k) => `• ${k}`).join('\n')
-      )
-    )
-      return;
+    const ok = await confirm({ title: "Restore Global Flags", message: `Restore ${pruneFeedback.removedKeys.length} flag(s) from the audit archive?\n\n${pruneFeedback.removedKeys.map((k) => "• " + k).join("\n")}`, variant: "info" });
+    if (!ok) return;
     restoreMutation.mutate(pruneFeedback.removedKeys);
   };
 
-  const confirmPrune = () => {
+  const confirmPrune = async () => {
     if (staleFlags.length === 0) return;
     const keys = staleFlags.map((f) => f.key);
     const list = keys.map((k) => `• ${k}`).join('\n');
-    if (
-      !window.confirm(
-        `Remove ${keys.length} stale flag(s)?\n\nEach is archived to the audit log before deletion; ` +
-          `services fall back to the registered default.\n\n${list}`
-      )
-    )
-      return;
+    const ok = await confirm({ title: "Prune Global Flags", message: `Remove ${keys.length} stale flag(s)? Each is archived to the audit log before deletion; services fall back to the registered default.\n\n${list}`, variant: "danger" });
+    if (!ok) return;
     setPruneFeedback(null);
     pruneMutation.mutate(keys);
   };
@@ -485,10 +480,29 @@ export default function GlobalFeatureFlagsPage() {
     queryKey: ['admin', 'recently-deleted-flags'],
     queryFn: async () => {
       const res = await adminApi.listRecentlyDeletedFlags();
-      return res.data ?? [];
+      return requireData(res, []);
     },
   });
   const [showDeleted, setShowDeleted] = useState(false);
+
+  const quickExtendExpiry = (flag: GlobalFeatureFlag, days: number) => {
+    const targetDate = new Date(Date.now() + days * 86_400_000).toISOString();
+    setStaleDrafts((d) => ({ ...d, [flag.key]: targetDate.slice(0, 10) }));
+    saveMutation.mutate({
+      key: flag.key,
+      data: { staleAfter: targetDate },
+    });
+  };
+
+  const totalFlags = flags.length;
+  const booleanCount = totalFlags - numericCount;
+  const activeCount = flags.filter((f) => !isNumericFlag(f) && f.enabled).length;
+  const targetedCount = flags.filter(
+    (f) =>
+      !isNumericFlag(f) &&
+      ((f.rolloutPercentage !== undefined && f.rolloutPercentage < 100) ||
+        (f.userIds && f.userIds.length > 0))
+  ).length;
 
   return (
     <div>
@@ -501,37 +515,52 @@ export default function GlobalFeatureFlagsPage() {
       <div
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'space-between',
           alignItems: 'center',
+          gap: 16,
           marginBottom: 24,
         }}
       >
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginBottom: 6,
+            }}
+          >
             <Icon name="flag" size={26} color="var(--admin-orange)" />
             Global Feature Flags
           </h1>
-          <p style={{ color: 'var(--admin-text-muted)', marginTop: 4 }}>
-            {flags.length} flags ({numericCount} numeric) · stored in Redis, merged with service
-            defaults
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: 14 }}>
+            System-wide feature flags stored in Redis and merged with service defaults.
           </p>
           {staleMetrics && (
-            <>
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <p
                 style={{
-                  marginTop: 4,
                   fontSize: 12,
-                  color: servingStaleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+                  color:
+                    servingStaleFlags.length > 0
+                      ? 'var(--admin-orange)'
+                      : 'var(--admin-text-muted)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
+                  margin: 0,
                 }}
               >
                 {staleMetrics.available ? (
                   servingStaleFlags.length > 0 ? (
                     <>
                       <Icon name="alertTriangle" size={14} color="var(--admin-orange)" />
-                      <span>{servingStaleFlags.length} stale flag(s) actively served past expiry (last 5m)</span>
+                      <span style={{ fontWeight: 600 }}>
+                        {servingStaleFlags.length} stale flag(s) actively served past expiry (last 5m)
+                      </span>
                     </>
                   ) : (
                     'No stale flag is currently being served past expiry'
@@ -541,12 +570,23 @@ export default function GlobalFeatureFlagsPage() {
                 )}
               </p>
               {staleMetrics.available && autoDisabledStaleFlags.length > 0 && (
-                <p style={{ marginTop: 4, fontSize: 12, color: 'var(--admin-orange)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--admin-orange)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    margin: 0,
+                  }}
+                >
                   <Icon name="alertTriangle" size={14} color="var(--admin-orange)" />
-                  <span>{autoDisabledStaleFlags.length} stale flag(s) auto-disabled by the self-disable safety (flag_auto_disabled_total)</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {autoDisabledStaleFlags.length} stale flag(s) auto-disabled by self-disable safety
+                  </span>
                 </p>
               )}
-            </>
+            </div>
           )}
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -556,12 +596,16 @@ export default function GlobalFeatureFlagsPage() {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              border: '1px solid var(--admin-surface)',
-              background: staleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-bg)',
+              border: '1px solid var(--admin-card)',
+              background: staleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-surface)',
               color: staleFlags.length > 0 ? 'white' : 'var(--admin-text-muted)',
               cursor: staleFlags.length > 0 ? 'pointer' : 'not-allowed',
               fontWeight: 600,
               fontSize: 13,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 150ms ease',
             }}
             title={
               staleFlags.length === 0
@@ -569,6 +613,7 @@ export default function GlobalFeatureFlagsPage() {
                 : 'Archive + remove every flag past its staleAfter date'
             }
           >
+            <Icon name="trash" size={14} color={staleFlags.length > 0 ? 'white' : 'var(--admin-text-muted)'} />
             {pruneMutation.isPending ? 'Removing…' : `Remove stale flags (${staleFlags.length})`}
           </button>
           {pruneFeedback && (
@@ -616,6 +661,125 @@ export default function GlobalFeatureFlagsPage() {
         </div>
       </div>
 
+      {/* 4-Card KPI Metric Dashboard */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 16,
+          marginBottom: 24,
+        }}
+      >
+        {/* Card 1: Total Flags */}
+        <div
+          style={{
+            padding: '16px 20px',
+            backgroundColor: 'var(--admin-surface)',
+            border: '1px solid var(--admin-card)',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: 'var(--admin-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Flags
+            </span>
+            <Icon name="flag" size={18} color="var(--admin-orange)" />
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-text)' }}>
+            {totalFlags}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+            {booleanCount} boolean · {numericCount} numeric
+          </div>
+        </div>
+
+        {/* Card 2: Active Flags */}
+        <div
+          style={{
+            padding: '16px 20px',
+            backgroundColor: 'var(--admin-surface)',
+            border: '1px solid var(--admin-card)',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: 'var(--admin-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Active Flags
+            </span>
+            <div style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--admin-green)' }} />
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-green)' }}>
+            {activeCount}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+            {booleanCount > 0 ? Math.round((activeCount / booleanCount) * 100) : 0}% of boolean flags enabled
+          </div>
+        </div>
+
+        {/* Card 3: Targeted Rollouts */}
+        <div
+          style={{
+            padding: '16px 20px',
+            backgroundColor: 'var(--admin-surface)',
+            border: '1px solid var(--admin-card)',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: 'var(--admin-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Targeted Rollouts
+            </span>
+            <Icon name="sliders" size={18} color="#60A5FA" />
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-text)' }}>
+            {targetedCount}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4 }}>
+            Canary / user-specific overrides
+          </div>
+        </div>
+
+        {/* Card 4: Stale Candidates */}
+        <div
+          style={{
+            padding: '16px 20px',
+            backgroundColor: staleFlags.length > 0 ? 'rgba(232,66,10,0.08)' : 'var(--admin-surface)',
+            border: staleFlags.length > 0 ? '1px solid rgba(232,66,10,0.35)' : '1px solid var(--admin-card)',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: staleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Stale Candidates
+            </span>
+            <Icon name="alertTriangle" size={18} color={staleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-text-muted)'} />
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: staleFlags.length > 0 ? 'var(--admin-orange)' : 'var(--admin-text)' }}>
+            {staleFlags.length}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{servingStaleFlags.length > 0 ? `${servingStaleFlags.length} served past expiry` : 'Ready for archival'}</span>
+            {staleFlags.length > 0 && !staleOnly && (
+              <button
+                onClick={enterStaleMode}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--admin-orange)',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  padding: 0,
+                  textDecoration: 'underline',
+                }}
+              >
+                Review &rarr;
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Last nightly pass (audit-recorded): times, counts, webhook status. */}
       {lastRun && (
         <div
@@ -634,7 +798,9 @@ export default function GlobalFeatureFlagsPage() {
         >
           <span style={{ color: 'var(--admin-text-muted)', fontWeight: 600 }}>
             Last nightly pass ·{' '}
-            <span style={{ color: 'var(--admin-text)' }}>{new Date(lastRun.ranAt).toLocaleString()}</span>
+            <span style={{ color: 'var(--admin-text)' }}>
+              {new Date(lastRun.ranAt).toLocaleString()}
+            </span>
           </span>
           <span style={{ color: 'var(--admin-text-muted)' }}>
             {lastRun.staleCount} stale global · {lastRun.universeStaleCount} universe
@@ -668,10 +834,10 @@ export default function GlobalFeatureFlagsPage() {
                 background: 'rgba(232,66,10,0.25)',
                 color: 'var(--admin-orange)',
               }}
-              title="Auto-prune is enabled but no STALE_FLAG_OPS_WEBHOOK_URL is set — the pass blocked removals to prevent silent pruning. Configure the webhook or set STALE_FLAG_ALLOW_PRUNE_WITHOUT_WEBHOOK=true."
+              title="Automatic cleanup is paused because no operations alert channel is configured. Connect an alert webhook or allow unnotified cleanup in server settings to proceed."
             >
               <Icon name="alertTriangle" size={12} color="var(--admin-orange)" />
-              <span>prune blocked · no webhook</span>
+              <span>cleanup paused · alerts unconfigured</span>
             </span>
           )}
           <span
@@ -719,7 +885,11 @@ export default function GlobalFeatureFlagsPage() {
             <span>
               Recently removed flags ({recentlyDeleted.length}) — restorable from the audit archive
             </span>
-            <Icon name={showDeleted ? 'chevronDown' : 'chevronRight'} size={14} color="var(--admin-text-muted)" />
+            <Icon
+              name={showDeleted ? 'chevronDown' : 'chevronRight'}
+              size={14}
+              color="var(--admin-text-muted)"
+            />
           </button>
           {showDeleted && (
             <div style={{ padding: '0 18px 18px' }}>
@@ -745,8 +915,9 @@ export default function GlobalFeatureFlagsPage() {
                   </div>
                   {f.archived && (
                     <button
-                      onClick={() => {
-                        if (!window.confirm(`Restore "${f.key}" from the audit archive?`)) return;
+                      onClick={async () => {
+                        const ok = await confirm({ title: "Restore Flag", message: `Restore "${f.key}" from the audit archive?`, variant: "info" });
+    if (!ok) return;
                         restoreMutation.mutate([f.key]);
                       }}
                       disabled={restoreMutation.isPending}
@@ -806,18 +977,19 @@ export default function GlobalFeatureFlagsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <button
           onClick={() => setContextFilter('all')}
           style={{
             padding: '6px 14px',
             borderRadius: 999,
-            border: '1px solid var(--admin-surface)',
-            background: contextFilter === 'all' ? 'var(--admin-orange)' : 'transparent',
-            color: contextFilter === 'all' ? 'white' : 'var(--admin-text-muted)',
+            border: contextFilter === 'all' ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+            background: contextFilter === 'all' ? 'var(--admin-orange)' : 'var(--admin-surface)',
+            color: contextFilter === 'all' ? '#ffffff' : 'var(--admin-text-muted)',
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: 13,
+            transition: 'all 150ms ease',
           }}
         >
           All
@@ -829,12 +1001,13 @@ export default function GlobalFeatureFlagsPage() {
             style={{
               padding: '6px 14px',
               borderRadius: 999,
-              border: '1px solid var(--admin-surface)',
-              background: contextFilter === ctx.label ? 'var(--admin-orange)' : 'transparent',
-              color: contextFilter === ctx.label ? 'white' : 'var(--admin-text-muted)',
+              border: contextFilter === ctx.label ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+              background: contextFilter === ctx.label ? 'var(--admin-orange)' : 'var(--admin-surface)',
+              color: contextFilter === ctx.label ? '#ffffff' : 'var(--admin-text-muted)',
               cursor: 'pointer',
               fontWeight: 600,
               fontSize: 13,
+              transition: 'all 150ms ease',
             }}
             title={ctx.description}
           >
@@ -846,17 +1019,18 @@ export default function GlobalFeatureFlagsPage() {
           style={{
             padding: '6px 14px',
             borderRadius: 999,
-            border: '1px solid var(--admin-surface)',
-            background: contextFilter === 'other' ? 'var(--admin-orange)' : 'transparent',
-            color: contextFilter === 'other' ? 'white' : 'var(--admin-text-muted)',
+            border: contextFilter === 'other' ? '1px solid var(--admin-orange)' : '1px solid var(--admin-card)',
+            background: contextFilter === 'other' ? 'var(--admin-orange)' : 'var(--admin-surface)',
+            color: contextFilter === 'other' ? '#ffffff' : 'var(--admin-text-muted)',
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: 13,
+            transition: 'all 150ms ease',
           }}
         >
           Other
         </button>
-        {/* "Stale only" toggle — switch the view without the nav badge. */}
+        {/* "Stale only" toggle — switch the view without the nav badge. High WCAG AA contrast. */}
         <button
           onClick={toggleStaleMode}
           title={
@@ -867,24 +1041,66 @@ export default function GlobalFeatureFlagsPage() {
           style={{
             padding: '6px 14px',
             borderRadius: 999,
-            border: staleOnly ? '1px solid #FF9E6B' : '1px solid var(--admin-surface)',
-            background: staleOnly ? 'var(--admin-orange)' : 'transparent',
-            color: staleOnly ? 'var(--admin-text-muted)' : 'var(--admin-text-muted)',
+            border: staleOnly ? '1px solid #FF9E6B' : '1px solid var(--admin-card)',
+            background: staleOnly ? 'var(--admin-orange)' : 'var(--admin-surface)',
+            color: staleOnly ? '#ffffff' : 'var(--admin-text-muted)',
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: 13,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'all 150ms ease',
           }}
         >
-          {staleOnly ? `Stale only (${staleFlags.length})` : 'Stale only'}
+          <Icon name="clock" size={13} color={staleOnly ? '#ffffff' : 'var(--admin-text-muted)'} />
+          {staleOnly ? `Stale only (${staleFlags.length})` : `Stale only (${staleFlags.length})`}
         </button>
       </div>
 
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search flags by key, description or service..."
-        style={{ ...inputStyle, marginBottom: 24 }}
-      />
+      <div style={{ position: 'relative', marginBottom: 24 }}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search flags by key, description or service..."
+          style={{
+            ...inputStyle,
+            paddingLeft: 38,
+            paddingRight: search ? 36 : 16,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            left: 12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+          }}
+        >
+          <Icon name="search" size={16} color="var(--admin-text-muted)" />
+        </div>
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 2,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            title="Clear search"
+          >
+            <Icon name="x" size={14} color="var(--admin-text-muted)" />
+          </button>
+        )}
+      </div>
 
       {isLoading && <p style={{ color: 'var(--admin-text-muted)' }}>Loading flags…</p>}
 
@@ -924,22 +1140,27 @@ export default function GlobalFeatureFlagsPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
               {!isNumeric && (
                 <button
+                  role="switch"
+                  aria-checked={flag.enabled}
+                  aria-label={`Toggle ${flag.key}`}
                   onClick={() =>
                     saveMutation.mutate({
                       key: flag.key,
                       data: { enabled: !flag.enabled },
                     })
                   }
+                  disabled={saveMutation.isPending}
                   style={{
-                    width: 44,
+                    width: 46,
                     height: 24,
                     borderRadius: 999,
                     border: 'none',
-                    background: flag.enabled ? 'var(--admin-green)' : 'var(--admin-surface)',
-                    cursor: 'pointer',
+                    background: flag.enabled ? 'var(--admin-green)' : 'rgba(255,255,255,0.12)',
+                    cursor: saveMutation.isPending ? 'wait' : 'pointer',
                     position: 'relative',
                     flexShrink: 0,
                     marginTop: 2,
+                    transition: 'background-color 200ms ease',
                   }}
                   title={flag.enabled ? 'Click to disable' : 'Click to enable'}
                 >
@@ -947,12 +1168,13 @@ export default function GlobalFeatureFlagsPage() {
                     style={{
                       position: 'absolute',
                       top: 3,
-                      left: flag.enabled ? 23 : 3,
+                      left: flag.enabled ? 25 : 3,
                       width: 18,
                       height: 18,
                       borderRadius: 999,
                       background: 'white',
-                      transition: 'left 0.15s ease',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                      transition: 'left 160ms cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   />
                 </button>
@@ -1063,14 +1285,20 @@ export default function GlobalFeatureFlagsPage() {
                     </span>
                   )}
                   {flag.owner && (
-                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>owner: {flag.owner}</span>
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
+                      owner: {flag.owner}
+                    </span>
                   )}
                 </div>
                 {ctx?.description && (
-                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginTop: 4 }}>{ctx.description}</p>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginTop: 4 }}>
+                    {ctx.description}
+                  </p>
                 )}
                 {flag.description && flag.description !== 'Default flag' && (
-                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginTop: 2 }}>{flag.description}</p>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: 13, marginTop: 2 }}>
+                    {flag.description}
+                  </p>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
                   {isNumeric ? (
@@ -1143,7 +1371,9 @@ export default function GlobalFeatureFlagsPage() {
                             borderRadius: 8,
                             border: '1px solid var(--admin-orange)',
                             background: 'rgba(232,66,10,0.12)',
-                            color: purgeMutation.isPending ? 'var(--admin-text-muted)' : 'var(--admin-orange)',
+                            color: purgeMutation.isPending
+                              ? 'var(--admin-text-muted)'
+                              : 'var(--admin-orange)',
                             fontWeight: 600,
                             fontSize: 12,
                             cursor: purgeMutation.isPending ? 'wait' : 'pointer',
@@ -1200,7 +1430,11 @@ export default function GlobalFeatureFlagsPage() {
                             [flag.key]: { ...targetingDraft, rollout: e.target.value },
                           })
                         }
-                        style={{ width: 140, accentColor: 'var(--admin-orange)', cursor: 'pointer' }}
+                        style={{
+                          width: 140,
+                          accentColor: 'var(--admin-orange)',
+                          cursor: 'pointer',
+                        }}
                         aria-label={`${flag.key} rollout percentage`}
                       />
                       <span style={{ color: 'var(--admin-text)', fontSize: 13, minWidth: 44 }}>
@@ -1227,7 +1461,9 @@ export default function GlobalFeatureFlagsPage() {
                           padding: '6px 14px',
                           borderRadius: 8,
                           border: 'none',
-                          background: targetingDirty ? 'var(--admin-orange)' : 'var(--admin-surface)',
+                          background: targetingDirty
+                            ? 'var(--admin-orange)'
+                            : 'var(--admin-surface)',
                           color: targetingDirty ? 'white' : 'var(--admin-text-muted)',
                           fontWeight: 600,
                           fontSize: 12,
@@ -1245,7 +1481,9 @@ export default function GlobalFeatureFlagsPage() {
                           borderRadius: 8,
                           border: '1px solid var(--admin-surface)',
                           background: 'transparent',
-                          color: hasTargeting ? 'var(--admin-text-muted)' : 'var(--admin-text-muted)',
+                          color: hasTargeting
+                            ? 'var(--admin-text-muted)'
+                            : 'var(--admin-text-muted)',
                           fontWeight: 600,
                           fontSize: 12,
                           cursor: hasTargeting ? 'pointer' : 'not-allowed',
@@ -1289,17 +1527,58 @@ export default function GlobalFeatureFlagsPage() {
                     aria-label={`${flag.key} stale-after date`}
                   />
                   <button
+                    type="button"
+                    onClick={() => quickExtendExpiry(flag, 30)}
+                    disabled={saveMutation.isPending}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--admin-card)',
+                      background: 'rgba(255,255,255,0.06)',
+                      color: 'var(--admin-text)',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 150ms ease',
+                    }}
+                    title="Extend expiry by 30 days"
+                  >
+                    +30d
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => quickExtendExpiry(flag, 90)}
+                    disabled={saveMutation.isPending}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--admin-card)',
+                      background: 'rgba(255,255,255,0.06)',
+                      color: 'var(--admin-text)',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 150ms ease',
+                    }}
+                    title="Extend expiry by 90 days"
+                  >
+                    +90d
+                  </button>
+                  <button
                     onClick={() => commitStaleAfter(flag)}
-                    disabled={!staleDrafts[flag.key]}
+                    disabled={!staleDrafts[flag.key] || saveMutation.isPending}
                     style={{
                       padding: '6px 14px',
                       borderRadius: 8,
                       border: 'none',
-                      background: staleDrafts[flag.key] ? 'var(--admin-orange)' : 'var(--admin-surface)',
+                      background: staleDrafts[flag.key]
+                        ? 'var(--admin-orange)'
+                        : 'var(--admin-surface)',
                       color: staleDrafts[flag.key] ? 'white' : 'var(--admin-text-muted)',
                       fontWeight: 600,
                       fontSize: 12,
                       cursor: staleDrafts[flag.key] ? 'pointer' : 'not-allowed',
+                      transition: 'all 150ms ease',
                     }}
                     title="Set the date after which this flag is a removal candidate"
                   >
@@ -1309,23 +1588,35 @@ export default function GlobalFeatureFlagsPage() {
                     onClick={() =>
                       saveMutation.mutate({ key: flag.key, data: { staleAfter: undefined } })
                     }
-                    disabled={!flag.staleAfter}
+                    disabled={!flag.staleAfter || saveMutation.isPending}
                     style={{
                       padding: '6px 14px',
                       borderRadius: 8,
-                      border: '1px solid var(--admin-surface)',
+                      border: '1px solid var(--admin-card)',
                       background: 'transparent',
-                      color: flag.staleAfter ? 'var(--admin-text-muted)' : 'var(--admin-text-muted)',
+                      color: flag.staleAfter
+                        ? 'var(--admin-text)'
+                        : 'var(--admin-text-muted)',
                       fontWeight: 600,
                       fontSize: 12,
                       cursor: flag.staleAfter ? 'pointer' : 'not-allowed',
+                      transition: 'all 150ms ease',
                     }}
                     title="Remove the expiry (flag never goes stale)"
                   >
                     Clear expiry
                   </button>
                   {flag.staleAfter && (
-                    <span style={{ color: 'var(--admin-text-muted)', fontSize: 11 }}>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: isStale(flag) ? 'rgba(232,66,10,0.2)' : 'rgba(255,255,255,0.05)',
+                        color: isStale(flag) ? 'var(--admin-orange)' : 'var(--admin-text-muted)',
+                      }}
+                    >
                       {isStale(flag)
                         ? 'STALE — removal candidate'
                         : `expires ${flag.staleAfter.slice(0, 10)}`}
@@ -1358,7 +1649,7 @@ function KnownFlagsReference() {
     queryKey: ['admin', 'known-flags'],
     queryFn: async () => {
       const res = await adminApi.listKnownFlags();
-      return res.success ? res.data : undefined;
+      return requireData(res);
     },
   });
 
@@ -1393,7 +1684,11 @@ function KnownFlagsReference() {
             ({isLoading ? '…' : `${data?.total ?? 0} across ${data?.domains.length ?? 0} domains`})
           </span>
         </span>
-        <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} color="var(--admin-text-muted)" />
+        <Icon
+          name={open ? 'chevronDown' : 'chevronRight'}
+          size={14}
+          color="var(--admin-text-muted)"
+        />
       </button>
       {open && (
         <div style={{ padding: '0 18px 18px' }}>

@@ -25,11 +25,16 @@ export default function ChallengeSubmitDialog({
 
   // Uploads whose bytes are actually in blob storage — the only ones that can
   // be attached to a challenge entry (title-only entries stay allowed).
-  const { data: uploads, isLoading: uploadsLoading } = useQuery({
+  const {
+    data: uploads,
+    isLoading: uploadsLoading,
+    isError: uploadsFailed,
+    error: uploadsError,
+  } = useQuery({
     queryKey: ['creator', 'uploads'],
     queryFn: async () => {
       const res = await creatorApi.getUploads();
-      return res.success ? (res.data as UploadProgress[]) : [];
+      return creatorApi.assertSuccess<UploadProgress[]>(res);
     },
   });
   const storedContent = (uploads ?? []).filter((u) => u.storage === 'stored');
@@ -87,6 +92,8 @@ export default function ChallengeSubmitDialog({
             <div style={{ fontSize: 13, color: 'var(--creator-text-muted)', padding: '10px 14px', border: '1px dashed var(--creator-border)', borderRadius: 8 }}>
               Loading your uploads…
             </div>
+          ) : uploadsFailed ? (
+            <div style={errorTextStyle()}>{creatorApi.errorMessage(uploadsError)}</div>
           ) : storedContent.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--creator-text-muted)', padding: '10px 14px', border: '1px dashed var(--creator-border)', borderRadius: 8 }}>
               No stored uploads yet — finish an upload first to attach it

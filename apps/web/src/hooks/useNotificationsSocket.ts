@@ -31,7 +31,7 @@ export function useNotificationsSocket(options?: {
   onConnect?: () => void;
   onDisconnect?: () => void;
 }) {
-  const { user, token } = useAuth();
+  const { user, token, isAuthenticated } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -42,10 +42,16 @@ export function useNotificationsSocket(options?: {
   const eventListenersRef = useRef<Map<string, Set<EventCallback>>>(new Map());
 
   const fetchUnreadCountRest = useCallback(async () => {
-    if (!token || !mountedRef.current) return;
+    if (!isAuthenticated || !mountedRef.current) return;
     try {
+      const headers: Record<string, string> = {};
+      // The access token is httpOnly, so a reloaded session has none in JS.
+      // The cookie authenticates the request on its own; the header is only a
+      // convenience for the in-memory copy right after login.
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch('/api/v1/notifications/unread-count', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -57,7 +63,7 @@ export function useNotificationsSocket(options?: {
     } catch {
       // Best-effort REST poll
     }
-  }, [token, options]);
+  }, [isAuthenticated, token, options]);
 
   const getWsUrl = useCallback(() => {
     return process.env.NEXT_PUBLIC_NOTIFICATION_WS_URL || null;
@@ -65,11 +71,14 @@ export function useNotificationsSocket(options?: {
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
-    if (!token) return; // Only connect if authenticated
+    if (!isAuthenticated) return; // Only connect if authenticated
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const url = getWsUrl();
-    if (!url) {
+    // The socket authenticates with a bearer token, and a reloaded session has
+    // none (the access token is httpOnly). Poll over REST instead of opening a
+    // socket the server would reject.
+    if (!url || !token) {
       // WS endpoint not explicitly configured — fall back directly to REST polling
       fetchUnreadCountRest();
       if (!pollingIntervalRef.current) {
@@ -182,7 +191,7 @@ export function useNotificationsSocket(options?: {
         pollingIntervalRef.current = setInterval(fetchUnreadCountRest, POLLING_INTERVAL_MS);
       }
     }
-  }, [getWsUrl, token, options, fetchUnreadCountRest]);
+  }, [getWsUrl, isAuthenticated, token, options, fetchUnreadCountRest]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -212,10 +221,11 @@ export function useNotificationsSocket(options?: {
     };
   }, []);
 
-  // Connect when user is authenticated with a token
+  // Connect when the session is active; the cookie carries auth for the
+  // REST fallback, so a JS-readable token is not required.
   useEffect(() => {
     mountedRef.current = true;
-    if (user && token) {
+    if (isAuthenticated) {
       connect();
       fetchUnreadCountRest();
     }
@@ -224,7 +234,7 @@ export function useNotificationsSocket(options?: {
       mountedRef.current = false;
       disconnect();
     };
-  }, [user, token, connect, disconnect, fetchUnreadCountRest]);
+  }, [isAuthenticated, user, token, connect, disconnect, fetchUnreadCountRest]);
 
   return {
     isConnected,

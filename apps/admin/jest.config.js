@@ -1,13 +1,15 @@
+const { sharedModuleNameMapper } = require('../../jest.shared.config.js');
+
 module.exports = {
-  moduleFileExtensions: ["js", "json", "ts"],
-  rootDir: "src",
-  testRegex: ".*\.spec\.ts$",
+  moduleFileExtensions: ['js', 'json', 'ts'],
+  rootDir: 'src',
+  testRegex: '.*\.spec\.ts$',
   transform: {
-    "^.+\.(t|j)s$": "ts-jest",
+    '^.+\.(t|j)s$': 'ts-jest',
   },
-  collectCoverageFrom: ["**/*.(t|j)s"],
-  coverageDirectory: "../coverage",
-  testEnvironment: "node",
+  collectCoverageFrom: ['**/*.(t|j)s'],
+  coverageDirectory: '../coverage',
+  testEnvironment: 'node',
   passWithNoTests: false,
   coverageThreshold: {
     global: {
@@ -16,5 +18,8 @@ module.exports = {
       lines: 80,
       statements: 80,
     },
+  },
+  moduleNameMapper: {
+    ...sharedModuleNameMapper,
   },
 };

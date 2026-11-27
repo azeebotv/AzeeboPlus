@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 // Azeebo+ Service Worker v1.0
 // Provides offline caching, background sync, and stale-while-revalidate strategies
 

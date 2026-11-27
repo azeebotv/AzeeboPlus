@@ -50,6 +50,22 @@ export class BundleController {
     return this.bundleService.getBundleComparison();
   }
 
+  @Get('current')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user bundle subscription' })
+  @ApiResponse({ status: 200, description: 'Current bundle subscription' })
+  async getCurrentBundle(@Request() req: AuthenticatedRequest): Promise<BundleSubscription | null> {
+    return this.bundleService.getCurrentBundle(req.user.id);
+  }
+
+  @Get(':id/quote')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get prorated upgrade quote for a bundle' })
+  @ApiResponse({ status: 200, description: 'Prorated upgrade quote with credits' })
+  async getUpgradeQuote(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.bundleService.getUpgradeQuote(req.user.id, id);
+  }
+
   @Get(':id')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -122,13 +138,5 @@ export class BundleController {
     @Param('id') id: string
   ): Promise<BundleSubscription> {
     return this.bundleService.cancelSubscription(req.user.id, id);
-  }
-
-  @Get('current')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current user bundle subscription' })
-  @ApiResponse({ status: 200, description: 'Current bundle subscription' })
-  async getCurrentBundle(@Request() req: AuthenticatedRequest): Promise<BundleSubscription | null> {
-    return this.bundleService.getCurrentBundle(req.user.id);
   }
 }

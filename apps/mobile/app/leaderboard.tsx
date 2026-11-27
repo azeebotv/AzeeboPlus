@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { engagementApi } from '@azeebo/react-data';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import { colors } from '../src/theme';
+import { brand } from '@azeebo/design-tokens';
 
 interface LeaderboardEntry {
   rank: number;
@@ -83,7 +84,7 @@ export default function LeaderboardScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView accessibilityLabel="Leaderboard Screen" style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading leaderboard..." />
       </SafeAreaView>
     );
@@ -109,7 +110,7 @@ export default function LeaderboardScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={() => refetch()}
-            colors={['#E8420A']}
+            colors={[brand.flame]}
           />
         }
       >
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   filterText: {
     fontSize: 14,
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: brand.flame,
   },
   categoryText: {
     fontSize: 12,
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
   topPoints: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   listContainer: {
     gap: 8,
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
   },
   listItemCurrentUser: {
     borderWidth: 2,
-    borderColor: '#E8420A',
+    borderColor: brand.flame,
     backgroundColor: colors.bg.deep,
   },
   rankText: {
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
   pointsText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: brand.flame,
   },
   errorContainer: {
     flex: 1,

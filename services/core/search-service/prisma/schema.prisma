@@ -7,6 +7,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl   = env("DIRECT_DATABASE_URL")
 }
 
 // Category A migration: admin-managed suggestion entries for the search
@@ -114,6 +115,10 @@ model ContentItem {
   @@index([contentType])
   @@index([status])
   @@index([creatorId])
+  // GIN trigram indexes back both similarity() and ILIKE '%…%' fuzzy search
+  // (re-landed in 20261005010000_pg_trgm_fuzzy_search); names pinned to match.
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "content_items_title_trgm_idx", type: Gin)
+  @@index([description(ops: raw("gin_trgm_ops"))], map: "content_items_description_trgm_idx", type: Gin)
 }
 
 model CreatorProfile {
@@ -131,6 +136,8 @@ model CreatorProfile {
   @@map("creator_profiles")
   @@index([userId])
   @@index([universe])
+  @@index([displayName(ops: raw("gin_trgm_ops"))], map: "creator_profiles_displayname_trgm_idx", type: Gin)
+  @@index([bio(ops: raw("gin_trgm_ops"))], map: "creator_profiles_bio_trgm_idx", type: Gin)
 }
 
 model Universe {
@@ -147,6 +154,8 @@ model Universe {
   @@map("universes")
   @@index([name])
   @@index([isEnabled])
+  @@index([name(ops: raw("gin_trgm_ops"))], map: "universes_name_trgm_idx", type: Gin)
+  @@index([displayName(ops: raw("gin_trgm_ops"))], map: "universes_displayname_trgm_idx", type: Gin)
 }
 
 model Category {

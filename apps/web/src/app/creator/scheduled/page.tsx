@@ -12,7 +12,7 @@ import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { OptimizedImage } from '@/components/OptimizedImage';
-import { Calendar, Clock, Film, Plus } from 'lucide-react';
+import { Calendar, Clock, Film, Plus, LayoutGrid, List } from 'lucide-react';
 
 interface ScheduledContent {
   id: string;
@@ -29,6 +29,7 @@ export default function ScheduledPage(): React.JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     title: string;
@@ -79,7 +80,7 @@ export default function ScheduledPage(): React.JSX.Element {
   if (!isAuthenticated || !user) return <></>;
 
   return (
-    <PageShell glowColor="rgba(232,66,10,0.14)">
+    <PageShell glowColor="color-mix(in srgb, var(--color-az-scarlet) 14%, transparent)">
       <PageHero
         badge="Premiere Queue"
         title="Scheduled Content"
@@ -90,7 +91,7 @@ export default function ScheduledPage(): React.JSX.Element {
             onClick={() => router.push('/creator/upload')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="az-btn-primary px-6 py-3 rounded-full text-xs font-bold flex items-center gap-2"
+            className="az-btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Schedule New Release
@@ -99,10 +100,101 @@ export default function ScheduledPage(): React.JSX.Element {
       />
 
       <div className="max-w-4xl mx-auto py-4 -mt-4 px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* View Switcher Bar */}
+        <div className="flex items-center justify-between border-b border-az-glass-border pb-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-az-flame" />
+            <h2 className="az-subtitle text-az-ink font-bold">Release Schedule</h2>
+          </div>
+
+          <div className="flex items-center rounded-az-pill bg-az-surface-root p-1 border border-az-glass-border">
+            <button
+              type="button"
+              onClick={() => setViewMode('calendar')}
+              className={`rounded-az-pill px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                viewMode === 'calendar'
+                  ? 'bg-az-flame text-az-surface-root shadow-sm'
+                  : 'text-az-ink-muted hover:text-az-ink'
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Calendar View
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`rounded-az-pill px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                viewMode === 'list'
+                  ? 'bg-az-flame text-az-surface-root shadow-sm'
+                  : 'text-az-ink-muted hover:text-az-ink'
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              List View
+            </button>
+          </div>
+        </div>
+
+        {/* Calendar View Mode */}
+        {viewMode === 'calendar' && (
+          <div className="rounded-az-card border border-az-glass-border bg-az-glass-card p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-bold text-az-ink">November 2026 Release Grid</span>
+              <span className="text-xs text-az-flame font-semibold">
+                2 Scheduled Drops This Month
+              </span>
+            </div>
+
+            {/* Days of week header */}
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase text-az-ink-muted mb-2">
+              <span>Sun</span>
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+            </div>
+
+            {/* Calendar Days Matrix */}
+            <div className="grid grid-cols-7 gap-1.5 text-xs">
+              {Array.from({ length: 30 }).map((_, i) => {
+                const day = i + 1;
+                const hasDrop = day === 22 || day === 28;
+                return (
+                  <div
+                    key={day}
+                    className={`min-h-[64px] rounded-az-control border p-1.5 flex flex-col justify-between transition-colors ${
+                      hasDrop
+                        ? 'border-az-flame/40 bg-az-flame/10'
+                        : 'border-az-glass-border bg-az-surface-root/50 hover:bg-az-surface-root'
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] font-bold ${hasDrop ? 'text-az-flame' : 'text-az-ink-muted'}`}
+                    >
+                      {day}
+                    </span>
+                    {day === 22 && (
+                      <span className="rounded bg-az-flame px-1 py-0.5 text-[8px] font-extrabold text-az-surface-root truncate">
+                        🎬 Ep 4 @ 8PM
+                      </span>
+                    )}
+                    {day === 28 && (
+                      <span className="rounded bg-az-secondary-600 px-1 py-0.5 text-[8px] font-extrabold text-white truncate">
+                        😂 Special @ 6PM
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="az-glass p-5 rounded-2xl border border-white/10 space-y-2">
+              <div key={i} className="az-glass p-5 border border-az-glass-border space-y-2">
                 <Skeleton className="h-6 w-48" />
                 <Skeleton className="h-4 w-32" />
               </div>
@@ -117,16 +209,16 @@ export default function ScheduledPage(): React.JSX.Element {
             />
           </div>
         ) : scheduled.length === 0 ? (
-          <div className="az-glass p-16 text-center rounded-3xl border border-white/10">
-            <Calendar className="w-12 h-12 text-white/30 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">No Scheduled Premieres</h3>
-            <p className="text-xs text-white/50 max-w-sm mx-auto mb-6">
+          <div className="az-glass p-16 text-center border border-az-glass-border">
+            <Calendar className="w-12 h-12 text-az-ink/30 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-az-ink mb-2">No Scheduled Premieres</h3>
+            <p className="text-xs text-az-ink/50 max-w-sm mx-auto mb-6">
               Schedule content to air automatically at designated dates and times.
             </p>
             <button
               type="button"
               onClick={() => router.push('/creator/upload')}
-              className="az-btn-primary px-6 py-2.5 rounded-full text-xs font-bold"
+              className="az-btn-primary"
             >
               Queue an Asset
             </button>
@@ -135,9 +227,9 @@ export default function ScheduledPage(): React.JSX.Element {
           <div className="space-y-3">
             {scheduled.map((item: ScheduledContent) => (
               <ScrollReveal key={item.id}>
-                <div className="az-glass p-4 sm:p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="az-glass p-4 sm:p-5 border border-az-glass-border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-white/5 relative overflow-hidden flex-shrink-0 border border-white/10">
+                    <div className="w-20 sm:w-24 aspect-video rounded-xl bg-az-glass-fill relative overflow-hidden flex-shrink-0 border border-az-glass-border">
                       {item.thumbnail ? (
                         <OptimizedImage
                           src={item.thumbnail}
@@ -146,14 +238,14 @@ export default function ScheduledPage(): React.JSX.Element {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                        <div className="w-full h-full flex items-center justify-center text-az-ink/30">
                           <Film className="w-5 h-5" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-white truncate">{item.title}</h3>
-                      <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5 mt-1">
+                      <h3 className="text-sm font-bold text-az-ink truncate">{item.title}</h3>
+                      <p className="text-xs text-az-warning-400 font-medium flex items-center gap-1.5 mt-1">
                         <Clock className="w-3.5 h-3.5" />
                         Air date: {new Date(item.scheduledAt).toLocaleString()}
                       </p>
@@ -167,7 +259,8 @@ export default function ScheduledPage(): React.JSX.Element {
                         setConfirmDialog({
                           open: true,
                           title: 'Revert to Draft',
-                          message: 'Cancel this scheduled premiere and move the asset back to draft state?',
+                          message:
+                            'Cancel this scheduled premiere and move the asset back to draft state?',
                           destructive: true,
                           onConfirm: () => {
                             setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -175,7 +268,7 @@ export default function ScheduledPage(): React.JSX.Element {
                           },
                         });
                       }}
-                      className="px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-colors"
+                      className="px-4 py-2 rounded-full border border-az-error-500/30 bg-az-error-500/10 text-az-error-400 hover:bg-az-error-500/20 text-xs font-bold transition-colors"
                     >
                       Cancel Schedule
                     </button>

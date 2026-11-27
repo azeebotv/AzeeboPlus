@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api/admin';
 import type { SupportTicket, SupportStats } from '@/lib/admin-types';
+import { requireData } from '@/lib/payload';
 import { Icon } from '@/components/Icons';
 
 export default function SupportPage() {
@@ -20,8 +21,7 @@ export default function SupportPage() {
     queryKey: ['admin', 'support-stats'],
     queryFn: async () => {
       const res = await adminApi.getSupportStats();
-      if (res.success && res.data) return res.data as SupportStats;
-      return { open: 0, inProgress: 0, resolved: 0, closed: 0 };
+      return requireData(res, { open: 0, inProgress: 0, resolved: 0, closed: 0 });
     },
   });
 
@@ -35,10 +35,11 @@ export default function SupportPage() {
         priority: priorityFilter === 'all' ? undefined : priorityFilter,
         search: search || undefined,
       });
-      if (res.success && res.data) {
-        return res.data as { items: SupportTicket[]; total: number; totalPages: number };
-      }
-      return { items: [], total: 0, totalPages: 1 };
+      return requireData(res, null) as {
+        items: SupportTicket[];
+        total: number;
+        totalPages: number;
+      } | null;
     },
   });
 
@@ -297,7 +298,11 @@ export default function SupportPage() {
                         </p>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--admin-text)' }}>
-                        {t.userName || t.userEmail || t.userId.slice(0, 8)}
+                        {t.userName ||
+                          t.userEmail ||
+                          (t as { user?: { displayName?: string; email?: string } }).user?.displayName ||
+                          (t as { user?: { email?: string } }).user?.email ||
+                          (t.userId ? t.userId.slice(0, 8) : 'Unknown')}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span

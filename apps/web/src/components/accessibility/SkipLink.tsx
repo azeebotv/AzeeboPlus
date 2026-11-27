@@ -8,12 +8,13 @@ export function SkipLink() {
         position: 'absolute',
         top: -40,
         left: 0,
-        background: 'var(--brand-orange)',
-        color: 'white',
+        background: 'var(--color-az-flame)',
+        color: 'var(--color-az-ink)',
         padding: '8px 16px',
         zIndex: 100,
         textDecoration: 'none',
         fontWeight: 600,
+        borderRadius: 'var(--radius-az-control)',
       }}
       onFocus={(e) => {
         e.currentTarget.style.top = '0';

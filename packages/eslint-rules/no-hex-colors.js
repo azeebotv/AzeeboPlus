@@ -7,6 +7,11 @@
  * Options:
  *   allowList: string[] - Hex colors to allow (e.g., ['#000000', '#FFFFFF'])
  *   allowTransparent: boolean - Allow 'transparent' keyword (default: true)
+ *   retired: string[] - Hexes the brand has superseded. Reported even when the
+ *     file also matches `retiredExemptPaths` — the ban is checked BEFORE the
+ *     allow-list, so a retired color cannot hide inside `allowList`.
+ *   retiredExemptPaths: string[] - Substrings of the (absolute) file path that
+ *     are still migrating and may keep a retired hex.
  */
 
 const HEX_COLOR_REGEX = /#[0-9A-Fa-f]{3,8}\b/g;
@@ -35,6 +40,14 @@ function create(context) {
   const options = context.options[0] || {};
   const allowList = (options.allowList || []).map((c) => c.toLowerCase());
   const allowTransparent = options.allowTransparent !== false;
+  // Superseded brand accents stay in the shared allowList only for the internal
+  // consoles. The ban is checked BEFORE the allow-list and keyed on
+  // context.filename, which is absolute — so it holds whether ESLint runs from
+  // the repo root or from a workspace directory (the ratchet does the latter).
+  const retired = (options.retired || []).map((c) => c.toLowerCase());
+  const retiredExemptPaths = options.retiredExemptPaths || [];
+  const filename = context.filename || context.getFilename();
+  const retiredExempt = retiredExemptPaths.some((frag) => filename.includes(frag));
   // A literal inside StyleSheet.create matches BOTH the StyleSheet visitor
   // and the generic Literal visitor below — dedupe so each distinct hex at
   // each site reports exactly once (keyed by node position + hex, because a
@@ -93,6 +106,18 @@ function create(context) {
 
     for (const hex of matches) {
       const lowerHex = hex.toLowerCase();
+
+      if (retired.includes(lowerHex) && !retiredExempt) {
+        const reportKey = `${node.range[0]}:${lowerHex}`;
+        if (reportedKeys.has(reportKey)) continue;
+        reportedKeys.add(reportKey);
+        context.report({
+          node,
+          messageId: 'retiredBrandAccent',
+          data: { color: hex },
+        });
+        continue;
+      }
 
       if (allowList.includes(lowerHex)) continue;
 
@@ -193,6 +218,18 @@ module.exports = {
             description: 'Allow the "transparent" keyword',
             default: true,
           },
+          retired: {
+            type: 'array',
+            items: { type: 'string' },
+            uniqueItems: true,
+            description: 'Superseded brand accents — reported even when allowListed',
+          },
+          retiredExemptPaths: {
+            type: 'array',
+            items: { type: 'string' },
+            uniqueItems: true,
+            description: 'Path fragments whose files may still use retired accents',
+          },
         },
         additionalProperties: false,
       },
@@ -200,6 +237,9 @@ module.exports = {
     messages: {
       noHexColor:
         "Hardcoded hex color '{{color}}' detected. Use a design token instead.",
+      retiredBrandAccent:
+        "'{{color}}' is a retired brand accent. Use #E31E24 (scarlet) or #EC691F (flame) " +
+        "from the design tokens instead — the old pair is gone from the public surfaces.",
     },
   },
   create,

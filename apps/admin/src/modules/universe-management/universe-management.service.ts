@@ -5,7 +5,9 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
+import { resolveFeatureFlagRedisUrl } from '@azeebo/feature-flags';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
@@ -27,8 +29,11 @@ const FLAG_REDIS_PREFIX = 'feature_flags:';
 const universeFlagKey = (universeName: string, feature: string): string =>
   `${FLAG_REDIS_PREFIX}universe.${universeName}.${feature}`;
 
+/** Backoff between publish attempts — transient Redis blips should not drift the store. */
+const PUBLISH_RETRY_BACKOFF_MS = [100, 250];
+
 @Injectable()
-export class UniverseManagementService {
+export class UniverseManagementService implements OnApplicationBootstrap {
   private readonly logger = new Logger(UniverseManagementService.name);
   private redis: Redis | null = null;
 
@@ -46,8 +51,12 @@ export class UniverseManagementService {
     if (this.redis) {
       return this.redis;
     }
-    const url =
-      process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
+    // Same resolver the FeatureFlagService uses — the publisher MUST land on
+    // the same DB index as the cache or universe flags go invisible to every
+    // consumer (they share the feature_flags:* keyspace).
+    const url = resolveFeatureFlagRedisUrl(
+      process.env.FEATURE_FLAG_REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379'
+    );
     try {
       this.redis = new Redis(url, {
         lazyConnect: true,
@@ -61,36 +70,49 @@ export class UniverseManagementService {
     }
   }
 
-  /** Publishes a universe flag to the runtime Redis store so services honor it. */
+  /**
+   * Publishes a universe flag to the runtime Redis store so services honor it.
+   * Returns whether the publish succeeded (after up to 2 retries with small
+   * backoff) — callers surface failures as `flagSync` so a swallowed Redis
+   * error never leaves Postgres and Redis silently diverging.
+   */
   private async publishFlagToRedis(
     universeName: string,
     featureKey: string,
     isEnabled: boolean,
     metadata?: Record<string, unknown> | null
-  ): Promise<void> {
+  ): Promise<boolean> {
     const redis = this.getFlagRedis();
-    if (!redis) return;
+    if (!redis) return false;
     const key = `universe.${universeName}.${featureKey}`;
-    try {
-      await redis.set(
-        universeFlagKey(universeName, featureKey),
-        JSON.stringify({
-          key,
-          enabled: isEnabled,
-          description:
-            metadata && typeof metadata.description === 'string' ? metadata.description : undefined,
-          rolloutPercentage:
-            metadata && typeof metadata.rolloutPercentage === 'number'
-              ? metadata.rolloutPercentage
-              : undefined,
-          userIds: metadata && Array.isArray(metadata.userIds) ? metadata.userIds : undefined,
-          metadata: metadata ?? undefined,
-          lastToggledBy: 'admin',
-        })
-      );
-      this.logger.log(`Published flag ${key} (enabled=${isEnabled}) to Redis`);
-    } catch (error) {
-      this.logger.warn(`Failed to publish flag ${key} to Redis: ${error}`);
+    const payload = JSON.stringify({
+      key,
+      enabled: isEnabled,
+      description:
+        metadata && typeof metadata.description === 'string' ? metadata.description : undefined,
+      rolloutPercentage:
+        metadata && typeof metadata.rolloutPercentage === 'number'
+          ? metadata.rolloutPercentage
+          : undefined,
+      userIds: metadata && Array.isArray(metadata.userIds) ? metadata.userIds : undefined,
+      metadata: metadata ?? undefined,
+      lastToggledBy: 'admin',
+    });
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await redis.set(universeFlagKey(universeName, featureKey), payload);
+        this.logger.log(`Published flag ${key} (enabled=${isEnabled}) to Redis`);
+        return true;
+      } catch (error) {
+        if (attempt >= PUBLISH_RETRY_BACKOFF_MS.length) {
+          this.logger.warn(
+            `Failed to publish flag ${key} to Redis after ${attempt + 1} attempts: ${error}`
+          );
+          return false;
+        }
+        this.logger.warn(`Flag publish ${key} failed (attempt ${attempt + 1}), retrying: ${error}`);
+        await new Promise((resolve) => setTimeout(resolve, PUBLISH_RETRY_BACKOFF_MS[attempt]));
+      }
     }
   }
 
@@ -112,8 +134,132 @@ export class UniverseManagementService {
   private async publishUniverseEnabledToRedis(
     universeName: string,
     isEnabled: boolean
+  ): Promise<boolean> {
+    return this.publishFlagToRedis(universeName, 'enabled', isEnabled);
+  }
+
+  /** Shape returned by toggle/bulk/update/create: did Redis get the sentinel, and for which keys. */
+  private flagSync(failedKeys: string[]): { ok: boolean; failedKeys: string[] } {
+    return { ok: failedKeys.length === 0, failedKeys };
+  }
+
+  /** Sentinel Redis key for a universe name (the `universe.<name>.enabled` nav flag). */
+  private enabledKey(universeName: string): string {
+    return `universe.${universeName}.enabled`;
+  }
+
+  /**
+   * Audits a swallowed Redis publish so the drift is on record (Postgres is the
+   * source of truth; `resyncUniverse` heals it). Fail-open: never masks the
+   * caller's own response.
+   */
+  private async auditFlagSyncFailure(
+    targetId: string,
+    actorId: string | undefined,
+    details: Record<string, unknown>
   ): Promise<void> {
-    await this.publishFlagToRedis(universeName, 'enabled', isEnabled);
+    try {
+      await this.auditService.log({
+        actorId: actorId ?? 'system',
+        action: 'universe.flag_sync_failed',
+        targetType: 'universe',
+        targetId,
+        details,
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to audit flag-sync failure for ${targetId}: ${error}`);
+    }
+  }
+
+  /**
+   * Republishes one universe's enabled sentinel from Postgres truth — the manual
+   * heal for a `flagSync.ok === false` response (Redis write failed after
+   * retries, so the runtime store still holds the previous state).
+   */
+  async resyncUniverse(id: string, actorId?: string) {
+    const universe = await this.prisma.universe.findUnique({ where: { id } });
+    if (!universe) {
+      throw new NotFoundException(`Universe with ID ${id} not found`);
+    }
+    const published = await this.publishUniverseEnabledToRedis(universe.name, universe.isEnabled);
+    if (!published) {
+      await this.auditFlagSyncFailure(universe.id, actorId, {
+        key: this.enabledKey(universe.name),
+        reason: 'redis_unavailable',
+        via: 'resync',
+      });
+    }
+    return {
+      id: universe.id,
+      name: universe.name,
+      isEnabled: universe.isEnabled,
+      flagSync: this.flagSync(published ? [] : [this.enabledKey(universe.name)]),
+    };
+  }
+
+  /**
+   * At boot, republish every universe's enabled sentinel from Postgres truth —
+   * Redis is a derived cache, so a restart heals any drift from writes that
+   * failed while Redis was down. Reserved canonical slugs with no DB row (e.g.
+   * `music`) get an enabled row first so they become toggleable like the rest.
+   */
+  async onApplicationBootstrap(): Promise<void> {
+    await this.ensureReservedUniverseRows();
+    try {
+      const universes = await this.prisma.universe.findMany({
+        select: { name: true, isEnabled: true },
+      });
+      const failed: string[] = [];
+      for (const universe of universes) {
+        const published = await this.publishUniverseEnabledToRedis(
+          universe.name,
+          universe.isEnabled
+        );
+        if (!published) failed.push(this.enabledKey(universe.name));
+      }
+      if (failed.length > 0) {
+        this.logger.warn(
+          `Boot sentinel republish incomplete (${failed.length}/${universes.length}): ${failed.join(', ')}`
+        );
+      } else {
+        this.logger.log(`Republished ${universes.length} universe enabled sentinels to Redis`);
+      }
+    } catch (error) {
+      this.logger.warn(`Boot sentinel republish skipped (DB unavailable): ${error}`);
+    }
+  }
+
+  /**
+   * Creates `universes` rows for canonical slugs that have no admin row yet.
+   * The gateway derives its sentinel defaults from `UNIVERSE_SLUGS` (Part 2
+   * convention), so without a row there is nothing for the admin UI to toggle
+   * and no publisher for the key — the universe would be permanently ON.
+   */
+  private async ensureReservedUniverseRows(): Promise<void> {
+    // `music` is the reserved slug documented in packages/shared-types/src/universe.ts;
+    // other UNIVERSE_SLUGS entries are seeded via prisma/seed/universes*.sql.
+    const reservedSlugs: Array<{ slug: string; displayName: string }> = [
+      { slug: 'music', displayName: 'Music' },
+    ];
+    try {
+      for (const { slug, displayName } of reservedSlugs) {
+        const existing = await this.prisma.universe.findUnique({ where: { name: slug } });
+        if (existing) continue;
+        await this.prisma.universe.create({
+          data: {
+            name: slug,
+            displayName,
+            description: `Reserved universe: ${slug}`,
+            isEnabled: true,
+            sortOrder: 100,
+            metadata: { reserved: true } as InputJsonValue,
+          },
+        });
+        this.logger.log(`Created reserved universe row: ${slug}`);
+      }
+    } catch (error) {
+      this.logger.warn(`Reserved universe row bootstrap skipped (DB unavailable): ${error}`);
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -129,15 +275,10 @@ export class UniverseManagementService {
 
   async getAllUniverses(query: QueryUniverseDto) {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        search,
-        isEnabled,
-        sortBy = 'sortOrder',
-        sortOrder = 'asc',
-      } = query;
-      const skip = (page - 1) * limit;
+      const pageNum = Math.max(1, Number(query.page) || 1);
+      const limitNum = Math.max(1, Math.min(100, Number(query.limit) || 20));
+      const { search, isEnabled, sortBy = 'sortOrder', sortOrder = 'asc' } = query;
+      const skip = (pageNum - 1) * limitNum;
 
       const where: Prisma.UniverseWhereInput = {};
 
@@ -166,7 +307,7 @@ export class UniverseManagementService {
           },
           orderBy: { [sortBy]: sortOrder },
           skip,
-          take: limit,
+          take: limitNum,
         }),
         this.prisma.universe.count({ where }),
       ]);
@@ -182,9 +323,9 @@ export class UniverseManagementService {
         data: items,
         meta: {
           total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
         },
       };
     } catch (error) {
@@ -264,7 +405,7 @@ export class UniverseManagementService {
     }
   }
 
-  async createUniverse(data: CreateUniverseDto) {
+  async createUniverse(data: CreateUniverseDto, actorId?: string) {
     try {
       const existingUniverse = await this.prisma.universe.findUnique({
         where: { name: data.name },
@@ -290,16 +431,23 @@ export class UniverseManagementService {
         },
       });
 
-      await this.publishUniverseEnabledToRedis(universe.name, universe.isEnabled);
+      const published = await this.publishUniverseEnabledToRedis(universe.name, universe.isEnabled);
+      const failedKeys = published ? [] : [this.enabledKey(universe.name)];
+      if (!published)
+        await this.auditFlagSyncFailure(universe.id, actorId, {
+          key: this.enabledKey(universe.name),
+          reason: 'redis_unavailable',
+          via: 'create',
+        });
       this.logger.log(`Created universe: ${universe.name}`);
-      return universe;
+      return { ...universe, flagSync: this.flagSync(failedKeys) };
     } catch (error) {
       this.logger.error('Failed to create universe', error);
       throw error;
     }
   }
 
-  async updateUniverse(id: string, data: UpdateUniverseDto) {
+  async updateUniverse(id: string, data: UpdateUniverseDto, actorId?: string) {
     try {
       const existingUniverse = await this.prisma.universe.findUnique({
         where: { id },
@@ -328,12 +476,23 @@ export class UniverseManagementService {
       // The edit page can change the enabled state too — keep the runtime nav
       // sentinel in sync (same key the toggles publish: universe.<name>.enabled)
       // so web/mobile nav gating follows edits, not just toggle/bulk/create.
+      let flagSync: { ok: boolean; failedKeys: string[] } | undefined;
       if (data.isEnabled !== undefined) {
-        await this.publishUniverseEnabledToRedis(universe.name, universe.isEnabled);
+        const published = await this.publishUniverseEnabledToRedis(
+          universe.name,
+          universe.isEnabled
+        );
+        flagSync = this.flagSync(published ? [] : [this.enabledKey(universe.name)]);
+        if (!published)
+          await this.auditFlagSyncFailure(universe.id, actorId, {
+            key: this.enabledKey(universe.name),
+            reason: 'redis_unavailable',
+            via: 'update',
+          });
       }
 
       this.logger.log(`Updated universe: ${universe.name}`);
-      return universe;
+      return flagSync ? { ...universe, flagSync } : universe;
     } catch (error) {
       this.logger.error(`Failed to update universe ${id}`, error);
       throw error;
@@ -376,7 +535,7 @@ export class UniverseManagementService {
     }
   }
 
-  async toggleUniverse(id: string, isEnabled: boolean) {
+  async toggleUniverse(id: string, isEnabled: boolean, actorId?: string) {
     try {
       const universe = await this.prisma.universe.update({
         where: { id },
@@ -386,16 +545,27 @@ export class UniverseManagementService {
         },
       });
 
-      await this.publishUniverseEnabledToRedis(universe.name, isEnabled);
-      this.logger.log(`Toggled universe ${universe.name} to ${isEnabled ? 'enabled' : 'disabled'}`);
-      return universe;
+      const published = await this.publishUniverseEnabledToRedis(universe.name, isEnabled);
+      const failedKeys = published ? [] : [this.enabledKey(universe.name)];
+      if (!published)
+        await this.auditFlagSyncFailure(universe.id, actorId, {
+          key: this.enabledKey(universe.name),
+          reason: 'redis_unavailable',
+          via: 'toggle',
+        });
+      this.logger.log(
+        `Toggled universe ${universe.name} to ${isEnabled ? 'enabled' : 'disabled'}${
+          published ? '' : ' (Redis publish FAILED)'
+        }`
+      );
+      return { ...universe, flagSync: this.flagSync(failedKeys) };
     } catch (error) {
       this.logger.error(`Failed to toggle universe ${id}`, error);
       throw error;
     }
   }
 
-  async bulkToggle(data: BulkToggleUniverseDto) {
+  async bulkToggle(data: BulkToggleUniverseDto, actorId?: string) {
     try {
       const { ids, isEnabled } = data;
 
@@ -415,17 +585,28 @@ export class UniverseManagementService {
         data: { isEnabled },
       });
 
+      const failedKeys: string[] = [];
       for (const universe of existingUniverses) {
-        await this.publishUniverseEnabledToRedis(universe.name, isEnabled);
+        const published = await this.publishUniverseEnabledToRedis(universe.name, isEnabled);
+        if (!published) failedKeys.push(this.enabledKey(universe.name));
+      }
+      if (failedKeys.length > 0) {
+        await this.auditFlagSyncFailure(ids.join(','), actorId, {
+          keys: failedKeys,
+          reason: 'redis_unavailable',
+          via: 'bulk',
+        });
       }
 
       this.logger.log(
-        `Bulk toggled ${result.count} universes to ${isEnabled ? 'enabled' : 'disabled'}`
+        `Bulk toggled ${result.count} universes to ${isEnabled ? 'enabled' : 'disabled'}` +
+          (failedKeys.length > 0 ? ` (${failedKeys.length} Redis publishes FAILED)` : '')
       );
 
       return {
         message: `Successfully ${isEnabled ? 'enabled' : 'disabled'} ${result.count} universes`,
         count: result.count,
+        flagSync: this.flagSync(failedKeys),
       };
     } catch (error) {
       this.logger.error('Failed to bulk toggle universes', error);

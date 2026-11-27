@@ -74,25 +74,25 @@ export function ConfirmDialog({
       ref={dialogRef}
       tabIndex={-1}
     >
-      <div className="bg-white dark:bg-[#18151e] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transition-colors">
-        <h2 id="confirm-title" className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <div className="az-glass text-az-ink max-w-md w-full mx-4 p-6 transition-colors">
+        <h2 id="confirm-title" className="az-title text-az-ink mb-2">
           {title}
         </h2>
-        <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 leading-relaxed">{message}</p>
+        <p className="az-body text-az-ink-muted mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button
             ref={cancelRef}
             onClick={onCancel}
-            className="min-h-[44px] px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] transition-colors inline-flex items-center justify-center"
+            className="min-h-[44px] px-5 py-2.5 text-sm font-medium text-az-ink/70 bg-az-glass-card rounded-xl hover:bg-az-ink/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-az-flame transition-colors inline-flex items-center justify-center"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
-            className={`min-h-[44px] px-5 py-2.5 text-sm font-medium text-white rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all inline-flex items-center justify-center ${
+            className={`min-h-[44px] px-5 py-2.5 text-sm font-medium text-az-surface-root rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all inline-flex items-center justify-center ${
               destructive
-                ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-500'
-                : 'bg-[var(--brand-orange)] hover:bg-[#c83a08] focus-visible:ring-[var(--brand-orange)]'
+                ? 'bg-az-error-500 hover:bg-az-error-600 focus-visible:ring-az-error-500'
+                : 'bg-az-flame hover:bg-az-scarlet focus-visible:ring-az-flame'
             }`}
           >
             {confirmLabel}

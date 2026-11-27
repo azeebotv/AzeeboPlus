@@ -5,8 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/api';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import AppHeader from '@/components/layout/AppHeader';
-import AppFooter from '@/components/layout/AppFooter';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/layout/PageHero';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { GlowCard } from '@/components/motion/GlowCard';
@@ -31,6 +31,12 @@ interface RentalOption {
   price: number;
   duration?: string;
   label: string;
+}
+
+function rentalOptionClass(isSelected: boolean): string {
+  return isSelected
+    ? 'rounded-az-panel border-2 border-az-flame bg-az-scarlet/10 p-4 text-left transition-all'
+    : 'rounded-az-panel border-2 border-az-ink/10 bg-az-ink/5 p-4 text-left transition-all';
 }
 
 function RentalPageContent(): React.JSX.Element {
@@ -60,10 +66,11 @@ function RentalPageContent(): React.JSX.Element {
   });
 
   const purchaseMutation = useMutation({
-    mutationFn: async ({ movieId, type }: { movieId: string; type: string }) => {
-      const res = await apiFetch('/api/v1/movies/rental/purchase', {
+    mutationFn: async ({ movieId }: { movieId: string; type: string }) => {
+      // Backend rents by path param and charges the fixed fee server-side.
+      const res = await apiFetch(`/api/v1/movies/${movieId}/rent`, {
         method: 'POST',
-        body: JSON.stringify({ movieId, type }),
+        body: JSON.stringify({}),
       });
       if (res.success) return res.data;
       throw new Error(res.message || 'Failed to process rental');
@@ -103,47 +110,25 @@ function RentalPageContent(): React.JSX.Element {
     : [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--brand-near-black)' }}>
-      <AppHeader active="Movies" />
-
-      {/* Hero */}
-      <section
-        className="relative py-16 sm:py-20"
-        style={{ background: 'linear-gradient(135deg, #E8420A 0%, var(--bg-primary) 100%)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-white mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            FilmRent Movies
-          </motion.h1>
-          <motion.p
-            className="text-xl text-white/80 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Rent or buy premium movies on demand
-          </motion.p>
-        </div>
-      </section>
+    <PageShell activeNav="Movies" maxWidth="7xl">
+      <PageHero
+        title="FilmRent Movies"
+        subtitle="Rent or buy premium movies on demand"
+        glowColor="color-mix(in srgb, var(--color-az-flame) 18%, transparent)"
+      />
 
       {/* Movies Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <section>
         <ScrollReveal>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
-            Available to Rent
-          </h2>
+          <h2 className="az-section-title mb-6 text-az-ink sm:mb-8">Available to Rent</h2>
         </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <Skeleton height="240px" borderRadius="0" />
-                <div className="p-4 space-y-3">
+                <Skeleton height="240px" borderRadius="0" className="sm:h-[240px]" />
+                <div className="space-y-3 p-4">
                   <Skeleton height="20px" width="70%" />
                   <Skeleton height="16px" width="50%" />
                   <Skeleton height="36px" borderRadius="0" />
@@ -158,7 +143,7 @@ function RentalPageContent(): React.JSX.Element {
             onButtonPress={() => moviesQuery.refetch()}
           />
         ) : movies.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {movies.map((movie, index) => (
               <motion.div
                 key={movie.id}
@@ -174,46 +159,36 @@ function RentalPageContent(): React.JSX.Element {
                       alt={movie.title}
                       width={400}
                       height={240}
-                      className="w-full h-48 sm:h-56 object-cover"
+                      className="h-48 w-full object-cover sm:h-56"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-near-black)]/80 to-transparent" />
-                    <div className="absolute top-2 right-2">
-                      <span
-                        className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                        style={{
-                          backgroundColor: 'rgba(232,66,10,0.9)',
-                          color: 'var(--brand-white)',
-                        }}
-                      >
+                    <div className="absolute inset-0 az-scrim" />
+                    <div className="absolute right-2 top-2">
+                      <span className="az-caption rounded-az-pill bg-az-scarlet/90 px-2.5 py-1 font-semibold text-az-ink">
                         ₦{movie.rentalPrice.toLocaleString()}
                       </span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{
-                          backgroundColor: 'rgba(232,66,10,0.2)',
-                          color: 'var(--brand-orange)',
-                        }}
-                      >
+                      <span className="az-caption mb-2 inline-block rounded-az-pill bg-az-scarlet/20 px-2.5 py-0.5 text-az-flame">
                         {movie.genre}
                       </span>
-                      <h3 className="text-lg font-bold text-white">{movie.title}</h3>
+                      <h3 className="az-title text-az-ink">{movie.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
-                    <div className="flex items-center gap-2 text-xs text-white/40 mb-3">
+                    <div className="az-caption mb-3 flex items-center gap-2 text-az-ink/40">
                       <span>{movie.rating}</span>
-                      <span>·</span>
+                      <span aria-hidden="true">·</span>
                       <span>{movie.year}</span>
-                      <span>·</span>
+                      <span aria-hidden="true">·</span>
                       <span>{movie.duration}</span>
                     </div>
-                    <p className="text-sm text-white/50 mb-4 line-clamp-2">{movie.description}</p>
+                    <p className="az-body mb-4 line-clamp-2 text-az-ink-muted">
+                      {movie.description}
+                    </p>
                     <motion.button
                       type="button"
                       onClick={() => setSelectedMovie(movie)}
-                      className="az-btn-primary w-full"
+                      className="az-btn-primary"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -225,8 +200,8 @@ function RentalPageContent(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No movies available for rental</p>
+          <div className="py-12 text-center">
+            <p className="az-lead text-az-ink/50">No movies available for rental</p>
           </div>
         )}
       </section>
@@ -234,60 +209,54 @@ function RentalPageContent(): React.JSX.Element {
       {/* Rental Modal */}
       {selectedMovie && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={() => {
             setSelectedMovie(null);
             setSelectedOption(null);
           }}
         >
           <div
-            className="az-glass p-6 rounded-2xl max-w-md w-full"
+            className="az-glass w-full max-w-md p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label={selectedMovie.title}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-4 mb-4">
+            <div className="mb-4 flex items-center gap-4">
               <OptimizedImage
                 src={selectedMovie.thumbnail}
                 alt={selectedMovie.title}
                 width={80}
                 height={120}
-                className="w-16 h-24 object-cover rounded-lg"
+                className="h-24 w-16 rounded-az-card object-cover"
               />
               <div>
-                <h3 className="text-lg font-bold text-white">{selectedMovie.title}</h3>
-                <p className="text-sm text-white/50">
+                <h3 className="az-subtitle text-az-ink">{selectedMovie.title}</h3>
+                <p className="az-body text-az-ink-muted">
                   {selectedMovie.genre} · {selectedMovie.year}
                 </p>
               </div>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="mb-6 space-y-3">
               {rentalOptions.map((option) => (
                 <motion.button
                   key={option.id}
                   type="button"
                   onClick={() => setSelectedOption(option)}
-                  className="w-full p-4 rounded-xl text-left transition-all"
-                  style={{
-                    border: `2px solid ${selectedOption?.id === option.id ? 'var(--brand-orange)' : 'rgba(255,255,255,0.1)'}`,
-                    backgroundColor:
-                      selectedOption?.id === option.id
-                        ? 'rgba(232,66,10,0.1)'
-                        : 'rgba(255,255,255,0.05)',
-                  }}
+                  aria-pressed={selectedOption?.id === option.id}
+                  className={rentalOptionClass(selectedOption?.id === option.id)}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-white font-semibold">{option.label}</p>
+                      <p className="az-body-strong text-az-ink">{option.label}</p>
                       {option.duration && (
-                        <p className="text-xs text-white/40">{option.duration}</p>
+                        <p className="az-caption text-az-ink/40">{option.duration}</p>
                       )}
                     </div>
-                    <p className="text-lg font-bold" style={{ color: 'var(--brand-orange)' }}>
-                      ₦{option.price.toLocaleString()}
-                    </p>
+                    <p className="az-subtitle text-az-flame">₦{option.price.toLocaleString()}</p>
                   </div>
                 </motion.button>
               ))}
@@ -305,7 +274,7 @@ function RentalPageContent(): React.JSX.Element {
                   }
                 }}
                 disabled={!selectedOption || purchaseMutation.isPending}
-                className="w-full py-3 rounded-full font-semibold transition-all az-btn-primary"
+                className="az-btn-primary transition-all"
                 whileHover={selectedOption ? { scale: 1.02 } : undefined}
                 whileTap={selectedOption ? { scale: 0.98 } : undefined}
               >
@@ -321,7 +290,7 @@ function RentalPageContent(): React.JSX.Element {
                   setSelectedMovie(null);
                   setSelectedOption(null);
                 }}
-                className="w-full py-2 rounded-full text-white/50 border border-white/10 hover:bg-white/5 transition-colors text-sm"
+                className="az-body w-full rounded-az-pill border border-az-glass-border px-4 py-2 text-az-ink-muted transition-colors hover:bg-az-glass-fill"
               >
                 Cancel
               </button>
@@ -330,22 +299,19 @@ function RentalPageContent(): React.JSX.Element {
         </div>
       )}
 
-      <AppFooter />
-
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
-          style={{
-            backgroundColor:
-              toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-            color: toast.type === 'success' ? 'var(--color-success-500)' : 'var(--color-error-500)',
-          }}
+          className={`fixed bottom-6 right-6 z-50 rounded-az-panel border px-6 py-3 shadow-az-lifted ${
+            toast.type === 'success'
+              ? 'border-az-success-500/30 bg-az-success-500/15 text-az-success-500'
+              : 'border-az-error-500/30 bg-az-error-500/15 text-az-error-500'
+          }`}
+          role="alert"
         >
           {toast.message}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -355,8 +321,8 @@ export default function RentalPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--brand-near-black)]">
-          <p className="text-white/50 text-lg">Loading...</p>
+        <div className="flex min-h-screen items-center justify-center bg-az-surface-root">
+          <p className="az-lead text-az-ink-muted">Loading...</p>
         </div>
       }
     >

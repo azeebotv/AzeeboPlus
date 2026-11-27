@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@azeebo/react-data/contexts/AuthContext';
 import GuestHomepage from '@/components/homepage/GuestHomepage';
 import AuthenticatedHomepage from '@/components/homepage/AuthenticatedHomepage';
+import { brand } from '@azeebo/design-tokens';
 
 /**
  * Root home tab — serves distinct experiences based on authentication status.
@@ -20,8 +21,8 @@ export default function HomeTab() {
   // Loading state: minimal skeleton to avoid layout shift
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E8420A" />
+      <SafeAreaView accessibilityLabel="Home Screen" style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={brand.flame} />
       </SafeAreaView>
     );
   }

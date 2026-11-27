@@ -1,10 +1,47 @@
-import { LogRedactionService } from './log-redaction.service';
+import { createHash, createHmac } from 'crypto';
+import { LogRedactionService, pseudonymizeIdentifier } from './log-redaction.service';
 
 describe('LogRedactionService', () => {
   let service: LogRedactionService;
 
   beforeEach(() => {
     service = new LogRedactionService();
+  });
+
+  describe('pseudonymizeIdentifier', () => {
+    afterEach(() => {
+      delete process.env.LOG_PSEUDONYM_SECRET;
+    });
+
+    it('never contains the original identifier', () => {
+      const out = pseudonymizeIdentifier('alice@example.com');
+      expect(out).not.toContain('alice');
+      expect(out).toMatch(/^id_[0-9a-f]{12}$/);
+    });
+
+    it('is deterministic for the same input', () => {
+      expect(pseudonymizeIdentifier('+2348012345678')).toBe(
+        pseudonymizeIdentifier('+2348012345678')
+      );
+    });
+
+    it('differs for different inputs', () => {
+      expect(pseudonymizeIdentifier('a@x.com')).not.toBe(pseudonymizeIdentifier('b@x.com'));
+    });
+
+    it('keys the digest with LOG_PSEUDONYM_SECRET when set', () => {
+      process.env.LOG_PSEUDONYM_SECRET = 'test-secret';
+      const expected = createHmac('sha256', 'test-secret')
+        .update('alice@example.com')
+        .digest('hex')
+        .slice(0, 12);
+      expect(pseudonymizeIdentifier('alice@example.com')).toBe(`id_${expected}`);
+    });
+
+    it('falls back to plain sha256 without a secret', () => {
+      const expected = createHash('sha256').update('alice@example.com').digest('hex').slice(0, 12);
+      expect(pseudonymizeIdentifier('alice@example.com')).toBe(`id_${expected}`);
+    });
   });
 
   describe('redactString', () => {

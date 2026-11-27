@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { colors, radius } from '../../src/theme';
 import { apiClient } from '@azeebo/react-data/api/client';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { brand } from '@azeebo/design-tokens';
 
 interface Genre {
   id: string;
@@ -26,7 +27,7 @@ const GENRE_COLORS: Record<string, string> = {
   thriller: '#1E293B',
   documentary: '#10B981',
   animation: '#06B6D4',
-  nollywood: '#E8420A',
+  nollywood: brand.flame,
 };
 
 export default function MoviesGenreScreen() {
@@ -59,7 +60,7 @@ export default function MoviesGenreScreen() {
       style={[styles.container, { backgroundColor: isDark ? colors.bg.primary : '#fff' }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Browse by Genre</Text>

@@ -80,8 +80,7 @@ export class ParticipationService {
       id: opt.id,
       label: opt.text,
       votes: opt.voteCount,
-      percentage:
-        poll.totalVotes > 0 ? Math.round((opt.voteCount / poll.totalVotes) * 100) : 0,
+      percentage: poll.totalVotes > 0 ? Math.round((opt.voteCount / poll.totalVotes) * 100) : 0,
     }));
 
     return {
@@ -94,19 +93,17 @@ export class ParticipationService {
     };
   }
 
-  private async buildQuizResult(
-    attempt: {
+  private async buildQuizResult(attempt: {
+    id: string;
+    userId: string;
+    score: number;
+    answers: unknown;
+    quiz: {
       id: string;
-      userId: string;
-      score: number;
-      answers: unknown;
-      quiz: {
-        id: string;
-        title: string;
-        questions: { id: string; question: string; points: number }[];
-      };
-    }
-  ): Promise<ParticipationResult> {
+      title: string;
+      questions: { id: string; question: string; points: number }[];
+    };
+  }): Promise<ParticipationResult> {
     const completedAttempts = await this.prisma.quizAttempt.findMany({
       where: { quizId: attempt.quiz.id, completedAt: { not: null } },
       select: { userId: true, answers: true },

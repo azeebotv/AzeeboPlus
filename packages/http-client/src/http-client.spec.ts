@@ -209,7 +209,7 @@ describe('ApiClient', () => {
       expect(mockedAxios.create).toHaveBeenCalledWith(
         expect.objectContaining({
           baseURL: 'http://test-api.com',
-          timeout: 30000,
+          timeout: 5000,
         })
       );
     });
@@ -217,7 +217,8 @@ describe('ApiClient', () => {
     it('should create with custom config', () => {
       new ApiClient({
         baseUrl: 'http://custom.com',
-        timeout: 5000,
+        // Explicit override — long jobs opt out of the 5s default (AUD-21).
+        timeout: 30000,
         tokenStorage: new NoopTokenStorage(),
         defaultHeaders: { 'X-Custom': 'value' },
       });
@@ -225,7 +226,7 @@ describe('ApiClient', () => {
       expect(mockedAxios.create).toHaveBeenCalledWith(
         expect.objectContaining({
           baseURL: 'http://custom.com',
-          timeout: 5000,
+          timeout: 30000,
           headers: expect.objectContaining({ 'X-Custom': 'value' }),
         })
       );

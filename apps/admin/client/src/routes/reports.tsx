@@ -1,3 +1,4 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ const totalOf = (m: Record<string, number> | undefined) =>
   Object.values(m ?? {}).reduce((a, b) => a + b, 0);
 
 export default function ReportsPage() {
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isEnabled } = useAdminFlags();
@@ -250,8 +252,8 @@ export default function ReportsPage() {
                     Run
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Delete report "${r.name}"?`)) {
+                    onClick={async () => {
+                      if (await confirm({ title: "Delete Report", message: `Delete report "${r.name}"?`, variant: "danger" })) {
                         deleteMutation.mutate(r.id);
                       }
                     }}

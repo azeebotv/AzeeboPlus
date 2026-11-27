@@ -7,11 +7,11 @@ name: Build & Push All-in-One Image
 # the main CI/CD pipeline triggered from main/develop branches.
 on:
   push:
-    branches: [Dev-Branch, Major-Upgrade]
+    branches: [Dev-Branch]
   workflow_dispatch:
     inputs:
       no_cache:
-        description: "Force full rebuild (skip all cache)"
+        description: 'Force full rebuild (skip all cache)'
         required: false
         type: boolean
         default: true
@@ -42,7 +42,12 @@ jobs:
           df -h
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Load platform domains from registry
+        run: |
+          node scripts/generate-domain-env.mjs --check
+          grep -v '^#' deploy/domains.env >> "$GITHUB_ENV"
 
       - name: Print build info
         run: |
@@ -51,10 +56,10 @@ jobs:
           echo "No-cache: ${{ inputs.no_cache || false }}"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -62,7 +67,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -71,7 +76,7 @@ jobs:
 
       - name: Build and push (cached)
         if: ${{ !inputs.no_cache }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./Dockerfile.all-in-one
@@ -81,11 +86,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
 
       - name: Build and push (no cache)
         if: ${{ inputs.no_cache }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./Dockerfile.all-in-one
@@ -96,7 +101,7 @@ jobs:
           cache-to: ''
           no-cache: true
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://staging.azeeboplus.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || format('https://{0}', env.STAGING_HOST) }}
 
       - name: Print image info
         run: |
@@ -109,7 +114,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-push]
     timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
     steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Test image starts and health endpoint responds
         run: |
           echo "==> Pulling image..."
@@ -123,12 +138,15 @@ jobs:
           docker run -d --name smoke-test \
             -e NODE_ENV=production \
             -e ALL_IN_ONE=true \
+            -e DEMO_MODE=true \
             -e POSTGRES_PASSWORD=smoke_test_password \
             -e REDIS_PASSWORD=smoke_test_password \
             -e "JWT_ACCESS_SECRET=${JWT_ACCESS}" \
             -e "JWT_REFRESH_SECRET=${JWT_REFRESH}" \
             -e "GATEWAY_SECRET=${GATEWAY_SEC}" \
             -e "INTERNAL_API_KEY=${INTERNAL_KEY}" \
+            -e "ALLOWED_ORIGINS=http://localhost:3013,http://localhost:4000" \
+            -e "WEBHOOK_SECRET=smoke_webhook_secret" \
             -p 3013:3013 \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev"
 
@@ -167,7 +185,19 @@ jobs:
           }
 
           echo "==> Bootstrapping CSRF cookie (GET /api/v1/content/home)..."
-          CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+          CODE="000"
+          for i in $(seq 1 12); do
+            CODE=$(curl -s -c /tmp/cookies.txt -o /tmp/smoke.out -w "%{http_code}" "$BASE/api/v1/content/home")
+            if [ "$CODE" = "200" ]; then
+              break
+            fi
+            if [ "$CODE" = "502" ] || [ "$CODE" = "503" ] || [ "$CODE" = "000" ]; then
+              echo "⏳ content-service not ready yet (HTTP $CODE), retrying ($i/12)..."
+              sleep 5
+            else
+              break
+            fi
+          done
           [ "$CODE" = "200" ] || fail "content/home returned $CODE (expected 200)"
           echo "✅ content/home 200"
           CSRF=$(awk '$6=="_csrf" {print $7}' /tmp/cookies.txt)

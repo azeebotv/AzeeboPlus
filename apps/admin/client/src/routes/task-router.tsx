@@ -1,7 +1,9 @@
+import { useConfirm } from "@/components/ui";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/base';
 import { Icon } from '@/components/Icons';
+import { pollingIntervals } from '@azeebo/design-tokens';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -72,6 +74,7 @@ const workClassLabel = (w: string) => {
 /* ── Component ─────────────────────────────────────────────────────────────── */
 
 export default function TaskRouterPage() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [domainFilter, setDomainFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
@@ -102,7 +105,7 @@ export default function TaskRouterPage() {
       if (classFilter) params.set('workClass', classFilter);
       return apiFetch<TaskClassification[]>(`/api/v1/analytics/tasks/classifications?${params}`);
     },
-    refetchInterval: 30000,
+    refetchInterval: pollingIntervals.dashboard,
   });
 
   const statsQuery = useQuery({
@@ -1042,11 +1045,8 @@ export default function TaskRouterPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `Delete classification "${task.taskType}"? Routing will 404 for it.`
-                            )
+                        onClick={async () => {
+                          if (await confirm({ title: "Delete Classification", message: `Delete classification "${task.taskType}"? Routing will 404 for it.`, variant: "danger" })
                           ) {
                             deleteMutation.mutate(task.taskType);
                           }
