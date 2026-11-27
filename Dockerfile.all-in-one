@@ -286,8 +286,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "==> Flattened dist inventory:" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
     echo "==> Packaging workspace package dists for runtime" && \
-    find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
-      tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true
+    { find packages -maxdepth 2 -name "dist" -type d -o -path "*/src/prisma/client" -type d 2>/dev/null | \
+      tar czf /tmp/pkg-dist.tar.gz -C /app -T - 2>/dev/null || true; }
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ---- Verify ALL outputs exist — crash if anything is missing ----
