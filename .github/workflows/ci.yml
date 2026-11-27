@@ -205,6 +205,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages required by web
+        run: pnpm --filter "@azeebo/web^..." run build
       - name: Install Playwright browsers
         run: pnpm --filter @azeebo/web exec playwright install chromium --with-deps
       - name: Run web E2E tests (Chromium only on CI)
