@@ -95,40 +95,53 @@
       - cell "—"
 - paragraph: "/Context only: these belong to other projects on this host dialing Postgres :\\d+ directly — not azeebo processes, and never counted as bypasses\\. Shown because foreign fleets often bind IPv6 loopback \\(::1\\) exclusively, which changes where you look when chasing connections\\./"
 - text: /Foreign dialer persistence — ledger, last \d+[hmsp]+/
+- group "Persistence window":
+  - button /\d+[hmsp]+/ [disabled]
+  - button "7d"
+  - button "14d"
 - table:
   - rowgroup:
-    - row "Foreign project Flagged passes History Span Last seen":
+    - row "Foreign project Flagged passes History Conns Span Last seen":
       - columnheader "Foreign project"
       - columnheader "Flagged passes"
       - columnheader "History"
+      - columnheader "Conns"
       - columnheader "Span"
       - columnheader "Last seen"
       - columnheader
   - rowgroup:
-    - 'row /\/Users\/other\/YCN\/services\/gateway 8 Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 5 passes [\d,.]+[hmsp]+ \d+:\d+:\d+ AM sustained — tracking issue ↗/':
-      - cell "/Users/other/YCN/services/gateway"
+    - row /YCN-other — 2 workspaces · \d+ passes · peak 6 conns · 1 sustained/:
+      - cell /YCN-other — 2 workspaces · \d+ passes · peak 6 conns · 1 sustained/
+    - 'row /YCN-other 8 Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 5 passes Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 6 conns [\d,.]+[hmsp]+ \d+:\d+:\d+ AM sustained — tracking issue ↗/':
+      - cell "YCN-other"
       - cell "8"
       - 'cell /Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 5 passes/':
         - 'img /Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 5 passes/'
+      - 'cell /Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 6 conns/':
+        - 'img /Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 6 conns/'
       - cell /[\d,.]+[hmsp]+/
       - cell /\d+:\d+:\d+ AM/
       - cell "sustained — tracking issue ↗":
         - link "sustained — tracking issue ↗":
           - /url: https://github.com/azeebotv/AzeeboPlus/issues/42
-    - 'row /\/Users\/other\/YCN\/services\/rewards 3 Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 1 pass [\d,.]+[hmsp]+ \d+:\d+:\d+ AM below threshold/':
-      - cell "/Users/other/YCN/services/rewards"
+    - 'row /YCN-other 3 Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 1 pass Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 2 conns [\d,.]+[hmsp]+ \d+:\d+:\d+ AM below threshold/':
+      - cell "YCN-other"
       - cell "3"
       - 'cell /Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 1 pass/':
         - 'img /Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 1 pass/'
+      - 'cell /Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 2 conns/':
+        - 'img /Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 2 conns/'
       - cell /[\d,.]+[hmsp]+/
       - cell /\d+:\d+:\d+ AM/
       - cell "below threshold"
-    - 'row /\/Users\/me\/YCN\/services\/api \d+ Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 3 passes [\d,.]+[hmsp]+ \d+:\d+:\d+ AM approved — not tracked/':
-      - cell "/Users/me/YCN/services/api"
+    - 'row /YCN-mine \d+ Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 3 passes Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 2 conns [\d,.]+[hmsp]+ \d+:\d+:\d+ AM approved — not tracked/':
+      - cell "YCN-mine"
       - cell /\d+/
       - 'cell /Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 3 passes/':
         - 'img /Flagged passes per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak bucket: 3 passes/'
+      - 'cell /Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 2 conns/':
+        - 'img /Peak conns per \d+[hmsp]+ bucket, last \d+[hmsp]+ \(oldest → newest\) — peak: 2 conns/'
       - cell /[\d,.]+[hmsp]+/
       - cell /\d+:\d+:\d+ AM/
       - cell "approved — not tracked"
-- paragraph: "/Per-workspace persistence from the pool-audit ledger \\(same run\\/gap semantics as the nightly foreign-dialer tracker — a span ≥ \\d+[hmsp]+ is what opens its tracking issue\\)\\. History shows each workspace's flagged passes per ~\\d+[hmsp]+ bucket across the window \\(bar height scales to the row's own peak\\)\\. This is history, not a live scan: a workspace can appear here after it stopped dialing\\./"
+- paragraph: "/Per-workspace persistence from the pool-audit ledger \\(same run\\/gap semantics as the nightly foreign-dialer tracker — a span ≥ \\d+[hmsp]+ is what opens its tracking issue\\)\\. Rows are grouped by owning project \\(POOL_FOREIGN_PROJECT_ROOTS prefix match; unmatched workspaces stand alone\\)\\. History shows each workspace's flagged passes per ~\\d+[hmsp]+ bucket across the window \\(bar height scales to the row's own peak\\)\\. This is history, not a live scan: a workspace can appear here after it stopped dialing\\./"

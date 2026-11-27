@@ -298,7 +298,11 @@ export default function SupportPage() {
                         </p>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--admin-text)' }}>
-                        {t.userName || t.userEmail || t.userId.slice(0, 8)}
+                        {t.userName ||
+                          t.userEmail ||
+                          (t as { user?: { displayName?: string; email?: string } }).user?.displayName ||
+                          (t as { user?: { email?: string } }).user?.email ||
+                          (t.userId ? t.userId.slice(0, 8) : 'Unknown')}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span

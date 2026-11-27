@@ -11,15 +11,15 @@ const MOCK_ADMIN_USER = {
 const ADMIN_NAV_ITEMS = [
   { href: '/', label: 'Dashboard' },
   { href: '/overview', label: 'Overview' },
-  { href: '/users', label: 'Users' },
-  { href: '/content', label: 'Content' },
+  { href: '/users', label: 'Users Directory' },
+  { href: '/content', label: 'Content Library' },
   { href: '/content-review', label: 'Review Queue' },
   { href: '/creators', label: 'Creators' },
   { href: '/reality', label: 'Reality Shows' },
   { href: '/universes', label: 'Universes' },
   { href: '/wallets', label: 'Wallets' },
-  { href: '/financial', label: 'Financial' },
-  { href: '/payment-gateways', label: 'Payments' },
+  { href: '/financial', label: 'Financial Overview' },
+  { href: '/payment-gateways', label: 'Payment Gateways' },
   { href: '/engagement', label: 'Engagement' },
   { href: '/notifications', label: 'Notifications' },
   { href: '/announcements', label: 'Announcements' },
@@ -36,6 +36,14 @@ async function mockAuth(
     localStorage.setItem('azeebo_admin_user', JSON.stringify(user));
     localStorage.setItem('azeebo_admin_user_token', 'test-admin-token');
   }, MOCK_ADMIN_USER);
+
+  await page.route('**/api/v1/auth/me**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: MOCK_ADMIN_USER }),
+    });
+  });
 
   await page.route('**/api/v1/admin/dashboard/stats', async (route) => {
     await route.fulfill({
@@ -101,28 +109,66 @@ async function mockAuth(
 
 test.describe('Admin App Smoke Tests', () => {
   test.describe('Login Page', () => {
-    test('should render login form with email and password fields', async ({ page }) => {
-      await page.goto('/login');
+    test('should redirect unauthenticated users to web sign-in', async ({ page }) => {
+      await page.route('http://localhost:4000/**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          body: '<html><body><h1>Web Login</h1></body></html>',
+        });
+      });
 
-      await expect(page.locator('input[type="email"]')).toBeVisible();
-      await expect(page.locator('input[type="password"]')).toBeVisible();
-      await expect(page.locator('button[type="submit"]')).toBeVisible();
+      await page.goto('/login');
+      await expect(page).toHaveURL(/http:\/\/localhost:4000\/auth\/login/);
     });
 
-    test('should display Azeebo+ Admin branding', async ({ page }) => {
+    test('should display Console branding and role-denied message for non-admin users', async ({ page }) => {
+      await page.route('**/api/v1/auth/me**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { id: 'user-1', email: 'user@azeebo.com', role: 'user' },
+          }),
+        });
+      });
+
       await page.goto('/login');
 
-      await expect(page.locator('h1')).toContainText('Azeebo+ Admin');
+      await expect(page.locator('h1')).toContainText("This account can't open the Console");
+      await expect(page.getByText('Console', { exact: true })).toBeVisible();
     });
 
-    test('should show Sign In button text', async ({ page }) => {
+    test('should show Sign in with an admin account link when role-denied', async ({ page }) => {
+      await page.route('**/api/v1/auth/me**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { id: 'user-1', email: 'user@azeebo.com', role: 'user' },
+          }),
+        });
+      });
+
       await page.goto('/login');
 
-      await expect(page.locator('button[type="submit"]')).toContainText('Sign In');
+      await expect(page.getByRole('link', { name: 'Sign in with an admin account' })).toBeVisible();
     });
   });
 
   test.describe('Protected Route Redirects', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.route('http://localhost:4000/**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          body: '<html><body><h1>Web Login</h1></body></html>',
+        });
+      });
+    });
+
     const protectedRoutes = [
       '/',
       '/overview',
@@ -146,7 +192,7 @@ test.describe('Admin App Smoke Tests', () => {
     for (const route of protectedRoutes) {
       test(`should redirect ${route || '/'} to login when unauthenticated`, async ({ page }) => {
         await page.goto(route);
-        await expect(page).toHaveURL(/.*login/);
+        await expect(page).toHaveURL(/.*\/auth\/login|.*\/login/);
       });
     }
   });
@@ -159,7 +205,7 @@ test.describe('Admin App Smoke Tests', () => {
     test('should load dashboard after authentication', async ({ page }) => {
       await page.goto('/');
 
-      await expect(page.locator('h1')).toContainText('Admin Dashboard');
+      await expect(page.locator('h1')).toContainText('Executive Dashboard');
     });
 
     test('should display quick action links on dashboard', async ({ page }) => {
@@ -167,13 +213,14 @@ test.describe('Admin App Smoke Tests', () => {
 
       await expect(page.getByRole('link', { name: 'Manage Users' })).toBeVisible();
       await expect(page.getByRole('link', { name: 'Review Queue', exact: true })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Manage Creators' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Creator Channels' })).toBeVisible();
     });
 
     test('should display top bar with logo', async ({ page }) => {
       await page.goto('/');
 
-      await expect(page.locator('header a')).toContainText('Azeebo+ Admin');
+      await expect(page.locator('header a img[alt="Azeebo+"]')).toBeVisible();
+      await expect(page.locator('header a')).toContainText('Console');
     });
 
     test('should display user email in top bar', async ({ page }) => {
@@ -200,7 +247,7 @@ test.describe('Admin App Smoke Tests', () => {
       await expect(sidebar).toBeVisible();
 
       for (const item of ADMIN_NAV_ITEMS) {
-        await expect(sidebar.getByText(item.label)).toBeVisible();
+        await expect(sidebar.getByText(item.label, { exact: true })).toBeVisible();
       }
     });
 

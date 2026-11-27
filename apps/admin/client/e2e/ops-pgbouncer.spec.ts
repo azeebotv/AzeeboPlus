@@ -182,6 +182,18 @@ async function mockOpsEndpoints(page: Page, pgbouncerData: unknown) {
       })
   );
 
+  await page.route('**/api/v1/auth/me**', (route) =>
+    json(
+      route,
+      ok({
+        id: 'e2e-admin',
+        email: 'admin@azeebo.com',
+        displayName: 'Test Admin',
+        role: 'admin',
+      })
+    )
+  );
+
   await page.route('**/api/v1/admin/ops/status', (route) =>
     json(
       route,
@@ -335,11 +347,11 @@ test.describe('Ops Health pgbouncer card render sweep', () => {
       persistenceTable.getByRole('link', { name: /approved|below threshold/ })
     ).toHaveCount(0);
 
-    // Sparklines: one per row, each carrying its own label with peak count.
-    const sparklines = persistenceTable.getByRole('img');
+    // Sparklines: two per row (Flagged passes + Peak conns).
+    const sparklines = persistenceTable.getByRole('img', { name: /Flagged passes/ });
     await expect(sparklines).toHaveCount(3);
     await expect(
-      sparklines.filter({ hasText: '' }).nth(0)
+      sparklines.nth(0)
     ).toHaveAttribute('aria-label', /Flagged passes per 2h bucket.*peak bucket: 5 passes/);
   });
 
