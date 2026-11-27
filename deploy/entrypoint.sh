@@ -73,9 +73,21 @@ fi
 if [ -z "${GATEWAY_SECRET:-}" ] && [ -z "${INTERNAL_API_KEY:-}" ]; then
   MISSING_VARS+=("GATEWAY_SECRET or INTERNAL_API_KEY (Required for internal service proxying - must be >= 32 characters)")
 else
-  GATEWAY_SECRET="${GATEWAY_SECRET:-$INTERNAL_API_KEY}"
+  if [ -z "${GATEWAY_SECRET:-}" ]; then
+    GATEWAY_SECRET="$(printf '%s' "gateway:${INTERNAL_API_KEY}" | sha256sum | cut -d' ' -f1)"
+  fi
+  if [ -z "${INTERNAL_API_KEY:-}" ]; then
+    INTERNAL_API_KEY="$(printf '%s' "internal:${GATEWAY_SECRET}" | sha256sum | cut -d' ' -f1)"
+  fi
+  if [ "$GATEWAY_SECRET" = "$INTERNAL_API_KEY" ]; then
+    echo "WARN: GATEWAY_SECRET and INTERNAL_API_KEY are identical; deriving distinct INTERNAL_API_KEY for all-in-one mode." >&2
+    INTERNAL_API_KEY="$(printf '%s' "internal:${GATEWAY_SECRET}" | sha256sum | cut -d' ' -f1)"
+  fi
   if [ ${#GATEWAY_SECRET} -lt 32 ]; then
     INVALID_VARS+=("GATEWAY_SECRET (Current length: ${#GATEWAY_SECRET} chars; must be at least 32 characters)")
+  fi
+  if [ ${#INTERNAL_API_KEY} -lt 32 ]; then
+    INVALID_VARS+=("INTERNAL_API_KEY (Current length: ${#INTERNAL_API_KEY} chars; must be at least 32 characters)")
   fi
 fi
 
@@ -282,7 +294,7 @@ REDISCONF
 chown root:redis /etc/redis/redis.conf
 chmod 640 /etc/redis/redis.conf
 mkdir -p /var/lib/redis 2>/dev/null || true
-chown redis:redis /var/lib/redis 2>/dev/null || true
+chown -R redis:redis /var/lib/redis 2>/dev/null || true
 
 # ============================================================
 # 6. Configure PgBouncer
@@ -704,7 +716,9 @@ WEBHOOK_SECRET="${WEBHOOK_SECRET:-$GATEWAY_SECRET}"
 JWT_ACCESS_SECRET="$(printf '%s' "$JWT_ACCESS_SECRET" | tr -d '\r\n')"
 JWT_REFRESH_SECRET="$(printf '%s' "$JWT_REFRESH_SECRET" | tr -d '\r\n')"
 GATEWAY_SECRET="$(printf '%s' "$GATEWAY_SECRET" | tr -d '\r\n')"
+INTERNAL_API_KEY="$(printf '%s' "$INTERNAL_API_KEY" | tr -d '\r\n')"
 WEBHOOK_SECRET="$(printf '%s' "$WEBHOOK_SECRET" | tr -d '\r\n')"
+export GATEWAY_SECRET INTERNAL_API_KEY
 # In all-in-one mode, localhost origins are expected for inter-service communication
 export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://${APP_HOST},https://${ADMIN_HOST},https://${CREATOR_HOST}}"
 REDIS_URL_VAL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
@@ -795,6 +809,7 @@ export NODE_ENV="production"
 export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
 export JWT_REFRESH_SECRET="\${JWT_REFRESH_SECRET}"
 export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
 export WEBHOOK_SECRET="\${WEBHOOK_SECRET}"
 export JWT_ISSUER="\${JWT_ISSUER:-azeebo-auth}"
 export JWT_AUDIENCE="\${JWT_AUDIENCE:-azeebo-api}"
@@ -879,6 +894,7 @@ export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="3013"
 export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
 export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
 export REDIS_PASSWORD="\${REDIS_PASSWORD}"
 export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
 export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
@@ -943,6 +959,7 @@ export PORT="4016"
 export NODE_ENV="production"
 export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
 export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
 export REDIS_PASSWORD="\${REDIS_PASSWORD}"
 export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
 export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
@@ -1008,6 +1025,7 @@ export PORT="4014"
 export NODE_ENV="production"
 export JWT_ACCESS_SECRET="\${JWT_ACCESS_SECRET}"
 export GATEWAY_SECRET="\${GATEWAY_SECRET}"
+export INTERNAL_API_KEY="\${INTERNAL_API_KEY}"
 export REDIS_PASSWORD="\${REDIS_PASSWORD}"
 export REDIS_URL="\${REDIS_URL:-redis://:\${REDIS_PASSWORD}@127.0.0.1:6379}"
 export EVENT_BUS_REDIS_URL="\${EVENT_BUS_REDIS_URL:-\${REDIS_URL}}"
